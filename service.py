@@ -89,7 +89,8 @@ class Service:
         self.maintenance={'running':False,'message':'','last_run':store.setting('memory_ai_last')}
         keys.is_admin = self.is_admin
         for uid in set(settings.admins+settings.allowed):
-            store.authorize(uid,settings.max_users)
+            if uid in settings.admins or not store.rows('SELECT user_id FROM access_blocks WHERE user_id=?',(uid,)):
+                store.authorize(uid,settings.max_users)
 
     def is_admin(self,uid):
         return uid in self.settings.admins or str(uid)==self.store.setting('bootstrap_admin')

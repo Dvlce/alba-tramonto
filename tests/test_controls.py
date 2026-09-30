@@ -311,4 +311,15 @@ class ControlsTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue({'memory_key','feedback','web_key','export_key'}<=commands)
 
 
+
+    async def test_35_explicit_revocation_survives_configured_user_restart(self):
+        await self.request('/api/admin/users',{'action':'deny','user_id':'2'})
+        restarted=Service(self.store,self.settings,self.keys,self.engine,self.backups)
+        self.assertFalse(self.store.allowed(2))
+        self.assertTrue(self.store.allowed(1))
+        await restarted.handle(self.event('/web_key'))
+        self.assertFalse(self.store.allowed(2))
+        await self.request('/api/admin/users',{'action':'allow','user_id':'2'})
+        self.assertTrue(self.store.allowed(2))
+
 if __name__=='__main__': unittest.main()
