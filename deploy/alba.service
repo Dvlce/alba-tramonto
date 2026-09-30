@@ -1,0 +1,39 @@
+[Unit]
+Description=Alba - AI locale Telegram e web
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alba
+Group=alba
+WorkingDirectory=/home/dvlce/supporto-ai
+ExecStart=/home/dvlce/supporto-ai/.venv/bin/python app.py
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=tmpfs
+BindReadOnlyPaths=/home/dvlce/supporto-ai
+ReadWritePaths=/home/dvlce/supporto-ai/data /home/dvlce/supporto-ai/backups
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectProc=invisible
+LockPersonality=true
+RestrictSUIDSGID=false
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+TasksMax=96
+MemoryMax=512M
+LimitAS=1G
+CPUWeight=80
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+{
+  "katex": {
+    "version": "0.18.9",
+    "integrity": "sha512-8ad9RyoKsb/g8/yLFE+KAlP+DhbCTRUNi/V9XGsxn0R+trJJltNwzcDNo0q/DEkOy5fQUQTAQyCXCYSE+OakTQ==",
+    "source": "https://registry.npmjs.org/katex/-/katex-0.18.9.tgz"
+  },
+  "dompurify": {
+    "version": "3.4.16",
+    "integrity": "sha512-sqo+pNp3qRhCIpbgRi1y8Tgk27Bo2Ry7w0dC1NBeNTdZChWjz9Xb/KOoZbRP/R6pQZ80Qw8YhXw13hWWBbMRnQ==",
+    "source": "https://registry.npmjs.org/dompurify/-/dompurify-3.4.16.tgz"
+  },
+  "mathjs": {
+    "version": "15.2.0",
+    "integrity": "sha512-UAQzSVob9rNLdGpqcFMYmSu9dkuLYy7Lr2hBEQS5SHQdknA9VppJz3cy2KkpMzTODunad6V6cNv+5kOLsePLow==",
+    "source": "https://registry.npmjs.org/mathjs/-/mathjs-15.2.0.tgz"
+  }
+}

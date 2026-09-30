@@ -1,0 +1,15 @@
+.env
+PRIMO_ACCESSO.txt
+ACCESSO_WEB_ADMIN.txt
+.venv/
+data/
+backups/
+__pycache__/
+*.pyc
+artifacts/
+
+dist/
+android/build/
+*.p12
+*.keystore
+*.idsig

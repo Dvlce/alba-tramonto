@@ -1,0 +1,152 @@
+import base64
+import copy
+import json
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from aiohttp.test_utils import TestClient,TestServer
+from app import web_app
+from backups import Backups
+from config import Settings
+from engine import Engine
+from security import Keys,secret_file
+from service import Service
+from store import Store,Scope
+from tramonto import content_data
+
+PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=')
+
+class TramontoTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.tmp=tempfile.TemporaryDirectory(); root=Path(self.tmp.name)
+        for name in ('tramonto.html','tramonto.js','tramonto.css','tramonto-lab.js'): shutil.copy2(Path(__file__).resolve().parents[1]/name,root/name)
+        self.settings=Settings(root=root,admins=(1,4),allowed=(2,3))
+        self.store=Store(self.settings.data/'alba.sqlite3'); self.keys=Keys(self.store,secret_file(self.settings.data/'auth.key'))
+        self.backups=Backups(self.store,self.settings)
+        self.service=Service(self.store,self.settings,self.keys,Engine(self.store,self.settings,None),self.backups)
+        for uid in (1,2,3,4): self.store.register(uid,'Persona '+str(uid))
+        self.headers={}
+        for uid in (1,2,3,4):
+            cookie,csrf=self.keys.create_session(uid,True)
+            self.headers[uid]={'Cookie':'session='+cookie,'X-CSRF-Token':csrf}
+        self.client=TestClient(TestServer(web_app(self.service))); await self.client.start_server()
+        response=await self.req('/notebooks','POST',{'title':'Matematica'})
+        self.book=(await response.json())['id']
+        response=await self.req('/notes','POST',{'notebook_id':self.book,'title':'Limiti'})
+        self.note=(await response.json())['id']
+    async def asyncTearDown(self):
+        await self.client.close(); self.store.close(); self.tmp.cleanup()
+    async def req(self,path,method='GET',body=None,uid=1,raw=False,headers=None):
+        return await self.client.request(method,path if raw else '/api/tramonto'+path,json=body,headers=self.headers[uid] if headers is None else headers,allow_redirects=False)
+    async def document(self,note=None,uid=1): return await (await self.req('/notes/'+str(note or self.note),uid=uid)).json()
+    async def update(self,changes=None):
+        value=await self.document(); value.update(changes or {}); return await self.req('/notes/'+str(self.note),'PUT',value)
+    async def upload(self,data=PNG,note=None,uid=1):
+        return await self.client.post('/api/tramonto/notes/'+str(note or self.note)+'/images',data=data,headers={**self.headers[uid],'Content-Type':'image/png','X-Image-Name':'foto.png'})
+
+    async def test_01_unauthenticated_page_redirects_to_login(self):
+        response=await self.req('/tramonto',raw=True,headers={}); self.assertEqual(response.status,302); self.assertEqual(response.headers['Location'],'/?next=tramonto')
+    async def test_02_user_cannot_open_page_or_assets(self):
+        for path in ('/tramonto','/tramonto-assets/tramonto.js','/tramonto-assets/tramonto.css'):
+            self.assertEqual((await self.req(path,uid=2,raw=True)).status,403)
+    async def test_03_user_cannot_call_any_notebook_api(self):
+        for method,path,body in (('GET','/notebooks',None),('POST','/notebooks',{'title':'No'}),('DELETE','/notebooks/'+str(self.book),None),('GET','/notes',None),('GET','/notes/'+str(self.note),None),('PUT','/notes/'+str(self.note),{}),('GET','/images/1',None)):
+            self.assertEqual((await self.req(path,method,body,uid=2)).status,403)
+    async def test_04_admin_page_and_csp(self):
+        response=await self.req('/tramonto',raw=True); self.assertEqual(response.status,200)
+        self.assertIn('Tramonto',await response.text()); self.assertIn("script-src 'self'",response.headers['Content-Security-Policy']); self.assertIn("style-src-attr 'unsafe-inline'",response.headers['Content-Security-Policy'])
+    async def test_05_books_are_separated_between_admins(self):
+        self.assertEqual((await (await self.req('/notebooks',uid=4)).json())['notebooks'],[])
+        self.assertEqual((await self.req('/notes?notebook='+str(self.book),uid=4)).status,403)
+    async def test_06_other_admin_cannot_read_update_delete_notes(self):
+        for method in ('GET','PUT','DELETE'):
+            self.assertEqual((await self.req('/notes/'+str(self.note),method,{} if method=='PUT' else None,uid=4)).status,403)
+    async def test_07_forged_owner_and_query_rejected(self):
+        for body in ({'title':'No','user_id':4},{'title':'No','scope':'group'},{'title':'No','owner_id':4}):
+            self.assertEqual((await self.req('/notebooks','POST',body)).status,403)
+        for path in ('/notebooks?user_id=4','/notes?user_id=4'):
+            self.assertEqual((await self.req(path)).status,403)
+    async def test_08_csrf_required_for_mutations(self):
+        headers={'Cookie':self.headers[1]['Cookie']}
+        response=await self.req('/notebooks','POST',{'title':'No'},headers=headers); self.assertEqual(response.status,403)
+    async def test_09_save_and_search(self):
+        response=await self.update({'title':'Il seno','subject':'matematica'}); self.assertEqual(response.status,200)
+        values=(await (await self.req('/notes?q=seno')).json())['notes']; self.assertEqual([v['id'] for v in values],[self.note])
+    async def test_10_concurrent_edits_keep_first_and_return_conflict(self):
+        value=await self.document(); value['title']='Primo'; self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        value['title']='Obsoleto'; response=await self.req('/notes/'+str(self.note),'PUT',value)
+        self.assertEqual(response.status,409); self.assertEqual((await response.json())['code'],'version_conflict'); self.assertEqual((await self.document())['title'],'Primo')
+    async def test_11_html_is_sanitized_on_server(self):
+        value=await self.document(); value['content']['html']='<p onclick="alert(1)">Ciao<img src=x onerror=alert(2)></p><script>alert(3)</script><iframe src="https://bad.test"></iframe>'
+        self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        html=(await self.document())['content']['html']; self.assertIn('<p>Ciao</p>',html)
+        for bad in ('onclick','<img','<script','<iframe','onerror','https://'): self.assertNotIn(bad,html)
+    async def test_12_font_paper_formulas_persist(self):
+        value=await self.document(); value['content'].update({'font':'mono','paper':'grid','formulas':[r'\lim_{x\to 0}\frac{\sin x}{x}=1']})
+        await self.req('/notes/'+str(self.note),'PUT',value); stored=(await self.document())['content']; self.assertEqual(stored['font'],'mono'); self.assertEqual(stored['paper'],'grid'); self.assertEqual(stored['formulas'],value['content']['formulas'])
+    async def test_13_graph_and_limit_configuration_persist(self):
+        value=await self.document(); value['content']['graph']['expressions']=['sin(x)','cos(x)','x^2']; value['content']['limit']['point']='+inf'
+        await self.req('/notes/'+str(self.note),'PUT',value); self.assertEqual((await self.document())['content']['graph']['expressions'],['sin(x)','cos(x)','x^2'])
+    async def test_14_drawing_strokes_persist(self):
+        value=await self.document(); value['content']['drawing']['strokes']=[{'color':'#ff8844','size':3,'points':[[20,30],[50,70]]}]
+        await self.req('/notes/'+str(self.note),'PUT',value); self.assertEqual((await self.document())['content']['drawing'],value['content']['drawing'])
+    async def test_15_circuit_components_and_wires_persist(self):
+        value=await self.document(); circuit={'components':[{'id':key,'type':'resistor','x':100*i,'y':200,'rotation':90,'label':key,'value':'10k'} for i,key in enumerate(('a','b'),1)],'wires':[{'id':'w1','from':{'component':'a','port':1},'to':{'component':'b','port':0}}]}
+        value['content']['circuit']=circuit; await self.req('/notes/'+str(self.note),'PUT',value); self.assertEqual((await self.document())['content']['circuit'],circuit)
+    async def test_16_png_upload_fetch_and_save(self):
+        response=await self.upload(); self.assertEqual(response.status,201); image=(await response.json())['id']
+        value=await self.document(); value['content']['images']=[image]; await self.req('/notes/'+str(self.note),'PUT',value)
+        response=await self.req('/images/'+str(image)); self.assertEqual(await response.read(),PNG); self.assertEqual(response.headers['Content-Type'],'image/png')
+    async def test_17_svg_and_html_upload_rejected(self):
+        for data in (b'<svg onload="alert(1)"></svg>',b'<html>hello</html>'):
+            self.assertEqual((await self.upload(data)).status,403)
+    async def test_18_image_owner_isolation(self):
+        image=(await (await self.upload()).json())['id']
+        for uid in (2,4):
+            for method in ('GET','DELETE'): self.assertEqual((await self.req('/images/'+str(image),method,uid=uid)).status,403)
+            self.assertEqual((await self.upload(uid=uid)).status,403)
+    async def test_19_image_cannot_be_attached_to_another_note(self):
+        image=(await (await self.upload()).json())['id']; other=(await (await self.req('/notes','POST',{'notebook_id':self.book})).json())['id']
+        value=await self.document(other); value['content']['images']=[image]
+        self.assertEqual((await self.req('/notes/'+str(other),'PUT',value)).status,403)
+    async def test_20_delete_image_updates_note_version(self):
+        image=(await (await self.upload()).json())['id']; value=await self.document(); value['content']['images']=[image]; await self.req('/notes/'+str(self.note),'PUT',value)
+        version=(await self.document())['version']; await self.req('/images/'+str(image),'DELETE')
+        value=await self.document(); self.assertEqual(value['content']['images'],[]); self.assertEqual(value['version'],version+1)
+    async def test_21_delete_notebook_cascades(self):
+        await self.upload(); await self.req('/notebooks/'+str(self.book),'DELETE')
+        for table in ('notebooks','notes','note_images'): self.assertEqual(self.store.rows('SELECT * FROM '+table),[])
+    async def test_22_notes_are_not_ai_memories(self):
+        await self.update({'title':'Il segreto del quaderno'}); self.assertEqual(self.store.profile(1),[])
+        self.assertEqual(self.store.rows('SELECT * FROM memories'),[]); self.assertEqual(self.store.rows('SELECT * FROM messages'),[])
+    async def test_23_forget_erases_notebooks_and_images(self):
+        await self.upload(); self.store.forget_user(1)
+        for table in ('notebooks','notes','note_images','web_sessions'): self.assertEqual(self.store.rows('SELECT * FROM '+table+' WHERE user_id=1'),[])
+    async def test_24_encrypted_backup_restores_notes_and_images(self):
+        await self.upload(); source=self.backups.create('manual'); restored=self.settings.data/'restored.sqlite3'; self.backups.restore(source,restored)
+        db=Store(restored)
+        try:
+            self.assertEqual(db.rows('SELECT title FROM notes')[0]['title'],'Limiti'); self.assertEqual(db.rows('SELECT data FROM note_images')[0]['data'],PNG); self.assertEqual(db.rows('SELECT * FROM web_sessions'),[])
+        finally: db.close()
+    async def test_25_move_note_only_to_own_notebook(self):
+        book=(await (await self.req('/notebooks','POST',{'title':'Privato'},uid=4)).json())['id']
+        self.assertEqual((await self.update({'notebook_id':book})).status,403)
+    async def test_26_rename_notebook(self):
+        self.assertEqual((await self.req('/notebooks/'+str(self.book),'PATCH',{'title':'Telecom'})).status,200)
+        self.assertEqual((await (await self.req('/notebooks')).json())['notebooks'][0]['title'],'Telecom')
+    def test_27_invalid_graph_ranges_and_nan_rejected(self):
+        for key,value in (('x_min',float('nan')),('x_max',-10),('y_min',True)):
+            data=content_data({}); data['graph'][key]=value
+            with self.assertRaises(ValueError): content_data(data)
+    def test_28_invalid_drawing_rejected(self):
+        data=content_data({}); data['drawing']['strokes']=[{'color':'#ffffff','size':3,'points':[[1001,20]]}]
+        with self.assertRaises(ValueError): content_data(data)
+    def test_29_malformed_types_raise_validation_error(self):
+        for key in ('font','paper','graph','drawing','circuit','images'):
+            data=content_data({}); data[key]=[] if key!='images' else [True]
+            with self.assertRaises(ValueError): content_data(data)
+    def test_30_unknown_circuit_endpoint_rejected(self):
+        data=content_data({}); data['circuit']['wires']=[{'id':'a','from':{'component':'missing','port':0},'to':{'component':'missing','port':1}}]
+        with self.assertRaises(ValueError): content_data(data)
+
