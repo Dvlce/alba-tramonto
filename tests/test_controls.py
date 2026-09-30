@@ -2,6 +2,7 @@ import asyncio
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from datetime import datetime
 from aiohttp.test_utils import TestClient,TestServer
@@ -228,10 +229,17 @@ class ControlsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_27_password_rotation_during_login_rejects_old_hash(self):
         name,old=self.keys.set_web_password(2,2)
-        pending=asyncio.create_task(self.keys.password_session(name,old))
-        await asyncio.sleep(0)
-        self.keys.set_web_password(2,2)
-        with self.assertRaises(PermissionError): await pending
+        started=asyncio.Event(); release=asyncio.Event()
+        async def delayed_hash(function,*args):
+            started.set(); await release.wait()
+            return function(*args)
+        with patch('security.asyncio.to_thread',delayed_hash):
+            pending=asyncio.create_task(self.keys.password_session(name,old))
+            await started.wait()
+            self.keys.set_web_password(2,2)
+            release.set()
+            with self.assertRaises(PermissionError): await pending
+        self.assertEqual(self.store.rows('SELECT * FROM web_sessions WHERE user_id=2'),[])
 
     async def test_31_telegram_optional_updates_do_not_stop_the_bot(self):
         telegram=Telegram(self.service,None,'synthetic-token')
@@ -251,7 +259,7 @@ class ControlsTests(unittest.IsolatedAsyncioTestCase):
         telegram=Telegram(self.service,None,'synthetic-token')
         telegram.bot={'first_name':'Alba'}
         self.store.set_setting('telegram_identity_configured',1)
-        self.store.set_setting('telegram_commands_version','wellbeing-20260930')
+        self.store.set_setting('telegram_commands_version','consent-20260930')
         methods=[]
         async def api(method,payload=None): methods.append(method); return True
         telegram.api=api; await telegram.configure_bot()
@@ -286,6 +294,21 @@ class ControlsTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(status,403)
         status,_=await self.request('/api/admin/action',{'action':'memory_schedule','night_time':'22:30'})
         self.assertEqual(status,200); self.assertEqual(self.store.setting('memory_night_time'),'22:30')
+
+
+
+    async def test_34_telegram_menu_includes_private_consent_and_feedback(self):
+        telegram=Telegram(self.service,None,'synthetic-token')
+        telegram.bot={'first_name':'Alba'}
+        self.store.set_setting('telegram_identity_configured',1)
+        menus=[]
+        async def api(method,payload=None):
+            if method=='setMyCommands': menus.append(payload['commands'])
+            return True
+        telegram.api=api
+        await telegram.configure_bot()
+        commands={entry['command'] for entry in menus[0]}
+        self.assertTrue({'memory_key','feedback','web_key','export_key'}<=commands)
 
 
 if __name__=='__main__': unittest.main()

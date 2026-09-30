@@ -156,11 +156,11 @@ class Telegram:
         if configured:
             self.service.store.set_setting('telegram_identity_configured',1)
         commands=['start','help','profile','memory','timeline','search','stats','export','export_key',
-                  'export_personality','export_prompt','forget','backup','web_key','web_password','stop','group','admin','privacy','cookies','policy']
-        if self.service.store.setting('telegram_commands_version')!='wellbeing-20260930':
+                  'export_personality','export_prompt','forget','backup','web_key','web_password','memory_key','feedback','stop','group','admin','privacy','cookies','policy']
+        if self.service.store.setting('telegram_commands_version')!='consent-20260930':
             try:
                 await self.api('setMyCommands',{'commands':[{'command':c,'description':c.replace('_',' ')} for c in commands]})
-                self.service.store.set_setting('telegram_commands_version','wellbeing-20260930')
+                self.service.store.set_setting('telegram_commands_version','consent-20260930')
             except (ClientError,asyncio.TimeoutError,ValueError) as exc:
                 log.warning('Elenco comandi Telegram rinviato (%s)',type(exc).__name__)
         try: await self.api('deleteWebhook',{'drop_pending_updates':False})
