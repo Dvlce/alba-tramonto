@@ -2,7 +2,7 @@
 .tool-pane .image-import{color:var(--accent-text)}
 @media(max-width:1050px){.notes-app{padding:0 20px}.notes-layout{grid-template-columns:230px minmax(0,1fr);gap:15px}.notes-workspace{padding:21px}.notes-account{max-width:350px}.notes-header{gap:12px}.note-actions .secondary-button{font-size:9px;padding:7px}}
 @media(max-width:760px){.notes-app{padding:0 15px}.notes-header{flex-wrap:wrap}.notes-account{max-width:none;justify-content:flex-start;gap:9px}.notes-layout{grid-template-columns:1fr}.notebooks-panel{position:static;padding:19px}.book-list{display:flex;overflow:auto}.book-list button{flex-shrink:0}.note-list{max-height:190px;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}.notes-local{font-size:9px}.notes-workspace{padding:19px;min-height:500px}.note-title{font-size:26px}.note-tabs button{padding:9px;font-size:10px}.graph-ranges{grid-template-columns:repeat(2,1fr)}.rich-editor{padding:15px;font-size:15px;min-height:350px}.note-properties{gap:9px}.space-switch summary{font-size:30px}.limit-table{font-size:10px}}
-@media print{body{background:white!important;color:black!important}.notes-header,.notebooks-panel,.notes-footer,.note-actions,.note-properties,.note-tabs,.format-toolbar,.tool-actions,.formula-snippets,.tool-pane>label,.tool-pane>textarea,.component-palette,.component-properties,.limit-inputs,.image-import,.image-card button,#notesError,#formulaInput,#addFormula{display:none!important}.notes-app{max-width:none;padding:0}.notes-layout{display:block;margin:0}.notes-workspace{border:0;box-shadow:none!important;padding:0;backdrop-filter:none!important}.tool-pane[hidden]{display:block!important}.tool-pane{break-inside:avoid;margin-top:25px}.rich-editor{border:0;min-height:0;background:white!important;color:black}.note-title{color:black}.formula-card button{display:none}.image-list{grid-template-columns:1fr 1fr}svg,canvas{max-height:550px}#plotSvg,#circuitSvg{border-color:#ddd}.tool-pane input,.tool-pane textarea{display:none!important}}
+@media print{body{background:white!important;color:black!important}.notes-header,.notebooks-panel,.notes-footer,.note-actions,.note-properties,.note-tabs,.format-toolbar,.tool-actions,.formula-snippets,.tool-pane>label,.tool-pane>textarea,.component-palette,.component-properties,.limit-inputs,.image-import,.image-card button,#notesError,#formulaInput,#addFormula{display:none!important}.notes-app{max-width:none;padding:0}.notes-layout{display:block;margin:0}.notes-workspace{border:0;box-shadow:none!important;padding:0;backdrop-filter:none!important}.tool-pane[hidden]{display:block!important}.tool-pane{break-inside:avoid;margin-top:25px}.rich-editor{border:0;min-height:0;color:black}.note-title{color:black}.formula-card button{display:none}.image-list{grid-template-columns:1fr 1fr}svg,canvas{max-height:550px}#plotSvg,#circuitSvg{border-color:#ddd}.tool-pane input,.tool-pane textarea{display:none!important}}
 /* A quiet desk, with physical A4 sheets rather than an unbounded editor. */
 .page-navigation{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0}.page-navigation span{font-size:11px;color:var(--muted);margin-right:auto}.a4-frame{position:relative;width:100%;max-width:794px;margin:20px auto;overflow:hidden;background:var(--surface-alt);border-radius:4px}.a4-sheet{width:794px;height:1123px;padding:60px;box-sizing:border-box;transform-origin:top left;background:var(--surface);box-shadow:0 4px 25px #0001;position:relative}.a4-sheet .rich-editor{box-sizing:border-box;width:674px;height:960px;min-height:0;padding:0;border:0;border-radius:0;font-size:16px;line-height:28px;overflow:hidden;background-color:transparent}.rich-editor p,.rich-editor div{margin:0;line-height:28px;min-height:28px}.rich-editor h1,.rich-editor h2,.rich-editor h3,.rich-editor h4{line-height:56px;margin:0;font-family:inherit}.rich-editor blockquote{margin:0;padding-left:16px;line-height:28px}.rich-editor pre{margin:0;padding:0 10px;line-height:28px}.rich-editor ul,.rich-editor ol{margin:0;line-height:28px}.rich-editor li{line-height:28px}.rich-editor table{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin:0;line-height:28px}.rich-editor td,.rich-editor th{padding:0 7px;line-height:28px;overflow-wrap:anywhere}.sheet-number{position:absolute;bottom:26px;left:60px;right:60px;text-align:center;font:12px Georgia,serif;color:var(--muted)}[data-paper=ruled] .rich-editor,[data-paper=cornell] .rich-editor{background-image:linear-gradient(to bottom,transparent 27px,var(--line) 27px,var(--line) 28px);background-size:100% 28px;background-position:0 var(--rule-offset,-6px);line-height:28px}[data-paper=cornell] .a4-sheet{border-left:2px solid #e3a4a4}[data-paper=engineering] .rich-editor{background-image:linear-gradient(#91b7aa55 1px,transparent 1px),linear-gradient(90deg,#91b7aa55 1px,transparent 1px),linear-gradient(#91b7aa22 1px,transparent 1px),linear-gradient(90deg,#91b7aa22 1px,transparent 1px);background-size:28px 28px,28px 28px,7px 7px,7px 7px}[data-paper=music] .rich-editor{background-image:repeating-linear-gradient(transparent 0,transparent 10px,var(--line) 10px,var(--line) 11px,transparent 11px,transparent 20px,var(--line) 20px,var(--line) 21px,transparent 21px,transparent 30px,var(--line) 30px,var(--line) 31px,transparent 31px,transparent 40px,var(--line) 40px,var(--line) 41px,transparent 41px,transparent 50px,var(--line) 50px,var(--line) 51px,transparent 51px,transparent 84px)}[data-paper=isometric] .rich-editor{background-image:linear-gradient(30deg,transparent 49%,var(--line) 50%,transparent 51%),linear-gradient(-30deg,transparent 49%,var(--line) 50%,transparent 51%),linear-gradient(90deg,transparent 49%,var(--line) 50%,transparent 51%);background-size:28px 48px}.table-tools,.calculus-tools,.simulation-settings{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.table-tools label,.calculus-tools label,.simulation-settings label{display:grid;gap:5px}.table-tools input{width:70px}.calculus-tools input{width:150px}.simulation-settings input,.simulation-settings select{width:140px}.simulation-panel{padding:20px;margin:25px 0;background:var(--surface-alt);border:1px solid var(--line);border-radius:17px}.lab-table{border-collapse:collapse;width:100%;font-size:12px;overflow-wrap:anywhere}.lab-table th,.lab-table td{border-bottom:1px solid var(--line);padding:9px;text-align:left}.simulation-plot,#networkSvg{width:100%;height:auto;max-width:100%;border:1px solid var(--line);border-radius:12px;margin:15px 0}#networkSvg{touch-action:none}.network-node{cursor:grab}.network-console{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 ui-monospace,monospace;background:var(--bg);padding:18px;border-radius:10px}#networkCli{display:flex;gap:10px;align-items:end;flex-wrap:wrap}#networkCli label{display:grid;flex:1;gap:7px}#networkCommand{width:100%}#sourceParams{display:flex;flex-wrap:wrap;gap:12px;width:100%}#sourceParams input{width:120px}.collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:22px;margin:30px 0}.notebook-cover{display:flex;flex-direction:column;justify-content:space-between;text-align:left;min-height:270px;padding:25px 25px 23px 33px;border:0;border-left:9px solid #0002;border-radius:3px 15px 15px 3px;box-shadow:5px 7px 18px #0001;transition:transform .25s,box-shadow .25s;color:#25382f;background:#e9dfc2}.notebook-cover:hover{transform:translateY(-6px) rotate(-1deg);box-shadow:6px 14px 23px #0002}.notebook-cover strong{font:24px Georgia,serif;overflow-wrap:anywhere}.notebook-cover small{font-size:10px}.cover-symbol{font:45px Georgia,serif;opacity:.55}.cover-1{background:#d2e3d4}.cover-2{background:#eecfb6}.cover-3{background:#d9d3e8}.cover-4{background:#c4dce7}#collectionSearch{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:12px;max-width:100%}.format-toolbar{background:var(--surface-alt);border:1px solid var(--line);padding:10px;border-radius:13px;position:sticky;top:5px;z-index:4}.format-toolbar button{background:var(--surface);min-height:32px}.component-palette{max-height:150px;overflow:auto;padding:4px}.tool-pane [hidden],.notes-workspace [hidden]{display:none!important}
 @media(max-width:700px){.notes-app{padding:0 12px}.notes-workspace{padding:14px}.notes-account{gap:7px}.collection-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.notebook-cover{min-height:210px;padding:15px}.notebook-cover strong{font-size:19px}.simulation-panel{padding:12px}.calculus-tools input{width:130px}}
@@ -10,3 +10,97 @@
 @media print{@page{size:A4;margin:0}body,.notes-app,.notes-layout,.notes-workspace{margin:0;padding:0;width:210mm;max-width:none;display:block;background:white!important;border:0;box-shadow:none}.notes-header,.notebooks-panel,.notes-footer,.note-heading,.note-properties,.note-tabs,.format-toolbar,.page-navigation,.table-tools,#pageHint,#notesError{display:none!important}.a4-frame{height:297mm!important;width:210mm;max-width:none;margin:0;overflow:hidden}.a4-sheet{transform:none!important;width:210mm;height:297mm;background:white;color:black;box-shadow:none}.a4-sheet .rich-editor{color:black}.sheet-number{color:#555}}
 .word-insert{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0;padding:13px;background:var(--surface-alt);border:1px solid var(--line);border-radius:12px}#imageInspector{display:flex;gap:10px;flex-wrap:wrap;width:100%}#imageInspector label{display:grid;gap:5px}#inlineImageWidth{width:90px}.rich-editor img{display:inline-block;max-width:100%;max-height:900px;height:auto;vertical-align:bottom;cursor:grab;object-fit:contain}.rich-editor img[data-layout=left]{float:left;margin:0 16px 0 0}.rich-editor img[data-layout=right]{float:right;margin:0 0 0 16px}.rich-editor img[data-layout=center]{display:block;margin:0 auto}.rich-editor img:active{outline:2px solid var(--accent)}
 @media print{#pane-text{display:block!important}#pane-math,#pane-draw,#pane-circuit,#pane-network,#pane-images,.word-insert,#bookCollection{display:none!important}}
+
+/* Notebook workspace: commands, paper and object settings have distinct places. */
+.notes-app{max-width:1740px;padding:0 28px}
+.notes-header{padding:18px 0;gap:24px}
+.notes-layout{grid-template-columns:240px minmax(0,1fr);gap:24px;margin-top:24px}
+.notebooks-panel{padding:22px;border-radius:16px;animation:none!important}
+#notebookDrawer>summary{display:none}
+@media(max-width:760px){#notebookDrawer>summary{display:list-item;cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);min-height:28px}}
+.notebooks-panel h2{font-size:22px}
+.book-list button,.note-list button{font-size:13px;min-height:40px}
+.note-list small,.book-list small{font-size:10px}
+.note-list button.active{border-color:var(--accent);background:var(--surface)}
+.notes-local{font-size:11px}
+.notes-workspace{background:transparent;border:0;padding:0;box-shadow:none!important;animation:none;backdrop-filter:none!important}
+.document-controls{padding:22px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.note-heading{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.note-title{flex:1;min-width:200px;font-size:28px;width:auto;letter-spacing:-.5px}
+.note-actions{margin:0;gap:8px}
+.note-actions #saveStatus{font-size:11px}
+.note-actions .secondary-button{font-size:11px;padding:8px 11px}
+.note-actions #saveNote{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.note-properties{margin-top:18px;gap:20px;padding-top:16px}
+.note-properties label{font-size:12px}
+.note-properties select{font-size:12px;padding:7px 9px;background:var(--surface)}
+.note-tabs{gap:3px;margin:22px 0 16px;overflow-x:auto;flex-wrap:nowrap}
+.note-tabs button{white-space:nowrap;font-size:12px;padding:10px 13px;min-height:44px}
+.note-tabs button.active{font-weight:600;background:var(--surface-alt);border-radius:9px 9px 0 0}
+.editor-ribbon{display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;position:sticky;top:8px;z-index:8;box-shadow:var(--shadow)}
+.format-toolbar{display:flex;align-items:center;gap:5px;flex:1;position:static;padding:0;margin:0;background:transparent;border:0;border-radius:0}
+.format-toolbar strong{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:0 8px 0 2px}
+.format-toolbar button{font-size:11px;padding:7px 9px;min-height:34px;background:var(--surface);border-radius:6px}
+.insert-menu{position:relative;flex-shrink:0}
+.insert-menu>summary{list-style:none;cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-alt);font-size:12px;min-height:36px}
+.insert-menu>summary::-webkit-details-marker{display:none}
+.insert-menu[open]>summary{border-color:var(--accent)}
+.insert-menu-body{position:absolute;right:0;top:44px;width:350px;max-width:calc(100vw - 52px);padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 36px #0002;display:flex;flex-wrap:wrap;gap:10px;z-index:10}
+.insert-menu .word-insert,.insert-menu .table-tools{margin:0;padding:0;background:transparent;border:0;width:100%;gap:10px}
+.insert-menu .word-insert .tool-note{font-size:11px;margin:0}
+.insert-menu .table-tools label{font-size:11px}
+.insert-menu .table-tools input{width:70px}
+.insert-menu .table-tools select{max-width:160px}
+.page-navigation{gap:8px;margin:16px 0}
+.page-navigation .secondary-button{font-size:11px;min-height:34px}
+.page-navigation span{font-size:12px}
+.page-navigation label{display:flex;align-items:center;gap:6px;font-size:11px}
+.page-navigation select{font-size:12px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.a4-frame.zoomed{overflow-x:auto}
+.editor-deck{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:18px;align-items:start}
+.editor-desk{min-width:0;background:var(--surface-alt);border:1px solid var(--line);border-radius:12px;padding:20px}
+.a4-frame{margin:0 auto;border-radius:2px;overflow:hidden;background:var(--surface);box-shadow:0 6px 24px #263c3115}
+.a4-sheet{background:var(--surface);color:var(--text);box-shadow:none;overflow:hidden}
+.a4-sheet .rich-editor{font-size:16px;line-height:28px;font-weight:400}
+.a4-sheet .rich-editor h1,.a4-sheet .rich-editor h2,.a4-sheet .rich-editor h3,.a4-sheet .rich-editor h4{display:block;clear:both;background:var(--surface);font-family:inherit;letter-spacing:0;margin:0;padding:0;line-height:56px;font-weight:600}
+.a4-sheet .rich-editor h1{font-size:28px}
+.a4-sheet .rich-editor h2{font-size:24px}
+.a4-sheet .rich-editor h3{font-size:20px}
+.a4-sheet .rich-editor h4{font-size:18px}
+.a4-sheet .rich-editor p,.a4-sheet .rich-editor div{line-height:28px;margin:0}
+.a4-sheet .rich-editor:empty::before{font-size:16px;line-height:28px}
+.sheet-number{display:block;text-align:center;margin:0;padding:0;border:0}
+.sheet-title{position:absolute;left:60px;right:60px;top:24px;font:12px/20px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.object-inspector{position:sticky;top:100px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:0}
+.inspector-hint{font-size:12px;color:var(--muted);line-height:1.8}
+.object-inspector:has(#imageInspector:not([hidden])) .inspector-hint{display:none}
+#imageInspector{display:flex;flex-direction:column;gap:14px;width:100%}
+#imageInspector strong{font-size:12px;font-weight:600;color:var(--accent);padding-bottom:12px;border-bottom:1px solid var(--line)}
+#imageInspector label{font-size:12px;display:grid;gap:6px}
+#imageInspector input,#imageInspector select{width:100%;font-size:13px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+#imageInspector button{min-height:36px;font-size:12px;width:100%}
+.image-selection{position:absolute;z-index:5;pointer-events:none;border:2px solid var(--accent);border-radius:2px;box-sizing:border-box}
+.image-resize-handle{position:absolute;right:-9px;bottom:-9px;width:24px;height:24px;padding:0;border:2px solid var(--accent);border-radius:6px;pointer-events:auto;touch-action:none;cursor:nwse-resize;background:var(--surface);color:var(--accent);font-size:15px;line-height:20px}
+.formula-card .formula-insert{position:static;width:auto;height:auto;font-size:12px;border:1px solid var(--line);border-radius:8px;margin-top:14px}
+.formula-preview{padding:16px;background:#fffdf7;color:#263c31;border:1px solid var(--line);border-radius:10px}
+.tool-pane:not(#pane-text){padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.tool-pane:not(#pane-text)>.secondary-button:last-child{background:var(--accent);color:var(--accent-text);font-size:13px;padding:12px 16px;margin-top:16px}
+.tool-pane .tool-note,.tool-pane .tool-message{font-size:12px}
+.tool-pane .secondary-button{font-size:12px;padding:8px 12px}
+.component-palette button{font-size:12px;min-height:34px}
+.notes-footer{padding:24px 0}
+@media(max-width:1200px){.editor-deck{grid-template-columns:minmax(0,1fr)}.object-inspector{position:static;order:-1}.inspector-hint{line-height:1.6}.object-inspector #imageInspector{flex-direction:row;align-items:end;flex-wrap:wrap;gap:10px}.object-inspector #imageInspector strong{width:100%;padding:0;border:0}.object-inspector #imageInspector label{flex:1;min-width:120px}.object-inspector #imageInspector button{width:auto}.editor-desk{padding:18px}}
+@media(max-width:760px){.notes-app{padding:0 14px}.notes-header{gap:14px;flex-wrap:wrap}.notes-layout{grid-template-columns:minmax(0,1fr);gap:18px}.notebooks-panel{position:static;padding:18px}.notebooks-panel h2{font-size:20px}.book-list{display:flex;overflow:auto}.notes-local{display:none}.note-list{max-height:145px;grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.notes-workspace{padding:0}.document-controls{padding:18px}.note-title{font-size:25px;min-width:0;width:100%;flex-basis:100%}.note-actions{width:100%;gap:6px}.note-actions #saveStatus{width:100%;margin-bottom:4px}.note-actions .secondary-button{min-height:36px;font-size:11px}.note-properties{gap:10px}.note-properties label{font-size:11px;flex-wrap:wrap}.note-properties select{font-size:12px}.note-tabs{margin-top:18px}.editor-ribbon{position:static;flex-wrap:wrap}.format-toolbar{flex-basis:100%}.format-toolbar strong{width:100%;padding:0 0 4px}.format-toolbar button{min-height:36px}.insert-menu{width:100%}.insert-menu-body{left:0;right:auto;max-width:calc(100vw - 50px)}.page-navigation{flex-wrap:wrap}.page-navigation #splitPages{margin-left:auto;font-size:10px}.editor-desk{padding:10px}.tool-pane:not(#pane-text){padding:16px}.object-inspector{padding:14px}.object-inspector #imageInspector button{font-size:11px}.notes-account{justify-content:flex-start}.notes-account select{font-size:11px}.space-switch summary{font-size:28px}}
+@media print{
+ @page{size:A4;margin:0}
+ html,body{margin:0!important;padding:0!important;background:white!important;color:black!important}
+ .notes-app,.notes-layout,.notes-workspace,#noteEditor,#pane-text,.editor-deck,.editor-desk{display:block!important;width:210mm!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:white!important;box-shadow:none!important;animation:none!important;backdrop-filter:none!important}
+ .notes-header,.notebooks-panel,.notes-footer,.document-controls,.note-heading,.note-properties,.note-tabs,.editor-ribbon,.page-navigation,.object-inspector,.word-insert,.table-tools,.image-selection,#pageHint,#notesError,#bookCollection,#emptyNote{display:none!important}
+ #pane-math,#pane-draw,#pane-circuit,#pane-network,#pane-images{display:none!important}
+ .a4-frame{display:block!important;width:210mm!important;height:297mm!important;margin:0!important;max-width:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important}
+ .a4-sheet{--surface:white;--text:#172318;--muted:#555;--line:#dce3df;transform:none!important;width:210mm!important;height:297mm!important;margin:0!important;padding:60px!important;overflow:hidden!important;background:white!important;color:black!important;box-shadow:none!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .a4-sheet .rich-editor{width:674px!important;height:960px!important;margin:0!important;padding:0!important;color:black!important;overflow:hidden!important;border:0!important;min-height:0!important}
+ .a4-sheet .rich-editor:empty::before{display:none!important}
+ .rich-editor img{max-height:900px!important;break-inside:avoid}
+ .sheet-title,.sheet-number{display:block!important;color:#555!important}
+}

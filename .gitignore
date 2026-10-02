@@ -13,3 +13,5 @@ android/build/
 *.p12
 *.keystore
 *.idsig
+.superdesign/tmp/
+.superdesign/init/
