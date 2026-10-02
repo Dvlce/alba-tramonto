@@ -11,13 +11,14 @@ function cleanHtml(value){return DOMPurify.sanitize(value,{ALLOWED_TAGS:TAGS,ALL
 function error(message=''){$('notesError').textContent=message;}
 function preference(key,fallback){try{return localStorage.getItem('alba.'+key)||fallback;}catch(_){return fallback;}}
 function appearance(){
-  const theme=preference('theme',matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),style=preference('surfaceStyle','classic');
-  document.documentElement.dataset.theme=['light','dark'].includes(theme)?theme:'light';
-  document.documentElement.dataset.style=['classic','neo','glass'].includes(style)?style:'classic';
-  $('notesTheme').value=document.documentElement.dataset.theme;$('notesStyle').value=document.documentElement.dataset.style;
+  const theme=preference('tramontoTheme',preference('theme',matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')),style=preference('tramontoStyle',preference('surfaceStyle','classic')),palette=preference('tramontoPalette','sage');
+  document.documentElement.dataset.theme=['light','dark','gray','black'].includes(theme)?theme:'light';
+  document.documentElement.dataset.style=['classic','neo','glass','clay','cyber','brutal','scrap','surreal'].includes(style)?style:'classic';
+  document.documentElement.dataset.palette=['sage','graphite','ocean','violet','rose','amber'].includes(palette)?palette:'sage';
+  $('notesTheme').value=document.documentElement.dataset.theme;$('notesStyle').value=document.documentElement.dataset.style;$('notesPalette').value=document.documentElement.dataset.palette;
 }
 appearance();
-for(const [id,key]of [['notesTheme','theme'],['notesStyle','surfaceStyle']])$(id).addEventListener('change',()=>{try{localStorage.setItem('alba.'+key,$(id).value);}catch(_){}appearance();});
+for(const [id,key]of [['notesTheme','tramontoTheme'],['notesStyle','tramontoStyle'],['notesPalette','tramontoPalette']])$(id).addEventListener('change',()=>{try{localStorage.setItem('alba.'+key,$(id).value);}catch(_){}appearance();window.TramontoLab?.fitPage();});
 async function api(path,method='GET',body){
   const response=await fetch(path,{method,credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:body===undefined?undefined:JSON.stringify(body)});
   let data;try{data=await response.json();}catch(_){throw new Error('Il server non è disponibile. Le modifiche restano in questa pagina: esportale prima di chiudere.');}
@@ -202,7 +203,7 @@ function renderCircuit(){
     spec.ports.forEach((point,index)=>group.appendChild(svgNode('circle',{cx:point[0],cy:point[1],r:4.5,fill:wireStart&&wireStart.component===part.id&&wireStart.port===index?'#d38651':'#fffcf3',stroke:'#789476','stroke-width':1.5,'data-port':index,'data-owner':part.id,class:'circuit-terminal'})));
     svg.appendChild(group);svg.appendChild(svgNode('text',{x:part.x,y:part.y+48,'text-anchor':'middle',fill:'#44543e','font-family':'sans-serif','font-size':12},part.label+(part.value?' · '+part.value:'')));
   }
-  const part=doc.content.circuit.components.find(value=>value.id===selectedPart);$('componentForm').hidden=!part;if(part){$('componentLabel').value=part.label;$('componentValue').value=part.value;}window.TramontoLab?.component(part);
+  const part=doc.content.circuit.components.find(value=>value.id===selectedPart);$('componentForm').hidden=!part;if(part){$('componentLabel').value=part.label;$('componentValue').value=part.value;}window.TramontoLab?.component(part);window.TramontoLab?.circuitSelection?.render();
 }
 document.querySelector('.component-palette').addEventListener('click',event=>{const button=event.target.closest('[data-component]');if(!button)return;placing=button.dataset.component;circuitMode='place';wireStart=null;document.querySelectorAll('[data-component]').forEach(item=>item.classList.toggle('active',item===button));$('circuitMessage').textContent='Tocca il foglio per aggiungere: '+PARTS[placing].name+'.';});
 $('selectCircuit').addEventListener('click',()=>{circuitMode='select';placing=null;wireStart=null;$('circuitMessage').textContent='Trascina un componente per spostarlo. Tocca un filo per selezionarlo.';});
@@ -217,8 +218,8 @@ $('circuitSvg').addEventListener('pointerdown',event=>{
 $('circuitSvg').addEventListener('pointermove',event=>{if(!drag||!doc)return;const part=doc.content.circuit.components.find(value=>value.id===drag.id),point=circuitPoint(event);part.x=Math.max(40,Math.min(960,point.x+drag.dx));part.y=Math.max(40,Math.min(600,point.y+drag.dy));drag.moved=true;renderCircuit();});
 function endDrag(){if(drag?.moved)changed();drag=null;}
 $('circuitSvg').addEventListener('pointerup',endDrag);$('circuitSvg').addEventListener('pointercancel',endDrag);
-$('rotateCircuit').addEventListener('click',()=>{const part=doc?.content.circuit.components.find(value=>value.id===selectedPart);if(part){historyCircuit();part.rotation=(part.rotation+90)%360;renderCircuit();changed();}});
-function deletePart(){if(!doc||(!selectedPart&&!selectedWire))return;historyCircuit();if(selectedPart){doc.content.circuit.components=doc.content.circuit.components.filter(value=>value.id!==selectedPart);doc.content.circuit.wires=doc.content.circuit.wires.filter(value=>value.from.component!==selectedPart&&value.to.component!==selectedPart);}else doc.content.circuit.wires=doc.content.circuit.wires.filter(value=>value.id!==selectedWire);selectedPart=selectedWire=null;renderCircuit();changed();}
+$('rotateCircuit').addEventListener('click',()=>{if(window.TramontoLab?.circuitSelection?.rotate())return;const part=doc?.content.circuit.components.find(value=>value.id===selectedPart);if(part){historyCircuit();part.rotation=(part.rotation+90)%360;renderCircuit();changed();}});
+function deletePart(){if(window.TramontoLab?.circuitSelection?.remove())return;if(!doc||(!selectedPart&&!selectedWire))return;historyCircuit();if(selectedPart){doc.content.circuit.components=doc.content.circuit.components.filter(value=>value.id!==selectedPart);doc.content.circuit.wires=doc.content.circuit.wires.filter(value=>value.from.component!==selectedPart&&value.to.component!==selectedPart);}else doc.content.circuit.wires=doc.content.circuit.wires.filter(value=>value.id!==selectedWire);selectedPart=selectedWire=null;renderCircuit();changed();}
 $('deleteCircuitPart').addEventListener('click',deletePart);$('circuitSvg').addEventListener('keydown',event=>{if(['Delete','Backspace'].includes(event.key)){event.preventDefault();deletePart();}});
 $('undoCircuit').addEventListener('click',()=>{if(doc&&circuitHistory.length){doc.content.circuit=circuitHistory.pop();selectedPart=selectedWire=null;renderCircuit();changed();}});
 $('componentForm').addEventListener('submit',event=>{event.preventDefault();const part=doc?.content.circuit.components.find(value=>value.id===selectedPart);if(part){historyCircuit();part.label=$('componentLabel').value;part.value=$('componentValue').value;window.TramontoLab?.updateComponent(part);renderCircuit();changed();}});

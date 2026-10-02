@@ -10,9 +10,10 @@ AI conversazionale locale, Telegram e web, con memoria nel tempo. Tramonto è il
 - 20 utenti autorizzati, 5 persone attive, coda, Stop, limiti mensili di token, calendario di utilizzo, CPU/RAM/disco ogni 2 secondi, audit e backup cifrati con retention.
 - Tema chiaro/scuro, classico/neomorfismo/vetro, logo animato e Albi, mascotte albicocca originale.
 - Tramonto: raccolta quaderni, otto stili di carta, quattro font, tabelle e modelli. Pagine A4 numerate, continuazione del testo lungo e ripristino della pagina/posizione. Immagini incollate/caricate, trascinabili e ridimensionabili, con testo a fianco. Formule, grafici e laboratori inseribili nella pagina come immagini PNG, con selezione, maniglia di ridimensionamento, larghezza, allineamento e spostamento nel testo. Comandi raggruppati, impostazioni dell’oggetto accanto al foglio e stampa della sola pagina A4.
+- Aspetto di Tramonto: Classico, Neomorfismo, Vetro, Claymorphism, Cybercore, Neobrutalism, Scrapbook e Surrealism. Luminosità chiara/scura/grigia/nera e sei palette indipendenti, conservate sul dispositivo; stampa A4 bianca senza decorazioni. Icone Lucide locali con licenza inclusa.
 - Matematica: LaTeX/KaTeX, tre curve, funzioni trigonometriche/iperboliche, limiti numerici, derivate simboliche, integrali e zeri numerici. Le stime numeriche non sostituiscono dimostrazioni.
 - Elettronica: 28 dispositivi, generatore di funzioni, strumenti, fili, rotazione/undo; ngspice locale isolato per DC, transitorio, sweep AC e DC, grafici/CSV/netlist. Modelli generici didattici, non una replica di Multisim.
-- Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato simulato, console show e CIDR. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
+- Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato e traceroute didattici, controllo IP/gateway/collegamenti, duplicazione e disposizione a griglia. CIDR con intervallo host/wildcard, suddivisione uniforme e VLSM, rapporti e tabelle inseribili nel quaderno. Selezione multipla con Maiusc/clic, pressione prolungata o area, spostamento del gruppo, Canc/Delete e Annulla nei circuiti e nelle topologie. Console show/diagnose/traceroute. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
 
 ## Installazione Linux / Raspberry Pi
 
@@ -76,7 +77,7 @@ Per integrare il motore in un sistema esistente: [alba-local-kit](https://github
 .venv/bin/python -m unittest discover -s tests
 ```
 
-314 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
+314 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
 
 Alba è un supporto alla riflessione e ai problemi quotidiani, non un servizio clinico o di emergenza. I controlli di provenienza riducono gli errori, ma un modello può ancora produrre risposte inesatte. Il gestore configura privacy, contatti, accessi e manutenzione.
 

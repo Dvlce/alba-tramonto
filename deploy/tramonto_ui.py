@@ -12,6 +12,7 @@ from pathlib import Path
 FILES = (
     'vendor/html2canvas.min.js', 'vendor/html2canvas-pseudo.css',
     'vendor/HTML2CANVAS_LICENSE', 'vendor/manifest.json',
+    'vendor/tramonto-icons.js', 'vendor/LUCIDE_LICENSE',
     'tramonto.css', 'tramonto.js', 'tramonto-lab.js', 'tramonto.html',
     'dist/alba-albi.apk', 'dist/SHA256SUMS',
 )

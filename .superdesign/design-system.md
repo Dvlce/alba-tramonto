@@ -15,3 +15,7 @@ Paper lines are a subtle page background tied to a stable 28px text baseline; he
 Desktop sidebar about 250–275px, content centered; A4 aspect 210:297. Spacing built around 8/12/16/24/32px; controls 36–40px high with 44px touch targets on mobile, clear 12–14px labels. Border 1px; radius 8–12px controls and 16px panels; gentle shadows only on elevated layers and paper. Use one dominant sage action per area, apricot sparingly. Sidebar becomes a drawer or compact notebook switch on narrow screens, formatting can wrap or scroll, and page fits width without horizontally overflowing the viewport.
 
 Use native semantic buttons/labels, visible focus, status announcements, contrast-aware text and accessible tab/selection state. Respect reduced motion. A save failure must stay clearly visible without covering the writing surface. Keep private-data and server implementation explanations in appropriate settings/help rather than dominant workspace UI.
+
+## Aspetto selezionabile approvato
+
+Mantieni la disposizione del quaderno. Stili: classico, neomorfismo, vetro, claymorphism, cybercore, neobrutalism, scrapbook, surrealism. Luminosità: chiaro, scuro, grigio, nero. Palette indipendenti: salvia, grafite, oceano, viola, rosa, ambra. Controlli sempre leggibili, decorazioni fuori dal testo, stampa A4 bianca. Icone Lucide locali con etichette visibili.

@@ -20,5 +20,37 @@
     "upstream_sha256": "e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb",
     "sha256": "f22d755c983dd17c4a1d246d3e733245eae59c735183efa37c50eecab4fdda72",
     "local_patch": "Clone pseudo-element reset uses external html2canvas-pseudo.css instead of inline style, compatible with existing CSP."
+  },
+  "lucide": {
+    "source": "https://github.com/lucide-icons/lucide",
+    "commit": "e8a2c60b75354c1648a6b6a547896b7a9cfde98e",
+    "icons": [
+      "router",
+      "network",
+      "monitor",
+      "server",
+      "laptop",
+      "wifi",
+      "shield",
+      "cloud",
+      "printer",
+      "notebook-pen",
+      "sigma",
+      "pencil-ruler",
+      "circuit-board",
+      "image",
+      "mouse-pointer-2",
+      "cable",
+      "trash",
+      "undo-2",
+      "copy",
+      "layout-grid",
+      "route",
+      "scan-search",
+      "palette"
+    ],
+    "license": "LUCIDE_LICENSE",
+    "bundle": "tramonto-icons.js",
+    "sha256": "5d0fc9a4d54bb7a85d5efce44f18251a1cf8385e57418c74978fc7b4795684eb"
   }
 }

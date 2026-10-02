@@ -104,3 +104,54 @@
  .rich-editor img{max-height:900px!important;break-inside:avoid}
  .sheet-title,.sheet-number{display:block!important;color:#555!important}
 }
+
+/* Appearance: luminosity, accent palette and surface style are independent. */
+:root[data-palette][data-theme]{--bg:var(--tone-bg);--surface:var(--tone-surface);--surface-alt:var(--tone-alt);--text:var(--tone-text);--muted:var(--tone-muted);--line:var(--tone-line);--accent:var(--palette-light);--accent-text:#fff;--shadow:0 8px 28px #0000000d;color-scheme:light}
+:root[data-theme=light]{--tone-bg:#f4f5ee;--tone-surface:#fffef9;--tone-alt:#edf1e7;--tone-text:#263c31;--tone-muted:#626d60;--tone-line:#d3dacb}
+:root[data-theme=gray]{--tone-bg:#dfe2e6;--tone-surface:#f3f4f6;--tone-alt:#e6e8ec;--tone-text:#242a33;--tone-muted:#586173;--tone-line:#bec4ce}
+:root[data-theme=dark]{--tone-bg:#12171b;--tone-surface:#1c2329;--tone-alt:#252e36;--tone-text:#e8edf2;--tone-muted:#b1bdc8;--tone-line:#48545f}
+:root[data-theme=black]{--tone-bg:#000;--tone-surface:#0a0a0a;--tone-alt:#181818;--tone-text:#f2f3f5;--tone-muted:#b3b6bf;--tone-line:#45454d}
+:root[data-palette=sage]{--palette-light:#456b43;--palette-dark:#b6d69d}
+:root[data-palette=graphite]{--palette-light:#4b5563;--palette-dark:#c8cdd5}
+:root[data-palette=ocean]{--palette-light:#075f97;--palette-dark:#8acdfa}
+:root[data-palette=violet]{--palette-light:#7141b7;--palette-dark:#c8aff9}
+:root[data-palette=rose]{--palette-light:#a52d55;--palette-dark:#f7a6c2}
+:root[data-palette=amber]{--palette-light:#94500d;--palette-dark:#f4c77b}
+:root[data-palette][data-theme=dark],:root[data-palette][data-theme=black]{--accent:var(--palette-dark);--accent-text:#101318;--shadow:0 8px 28px #0005;color-scheme:dark}
+.appearance-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.appearance-controls>span{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.appearance-controls label{display:grid;gap:4px;font-size:10px;color:var(--muted)}
+.notes-account .appearance-controls select{font-size:12px;color:var(--text);max-width:150px;padding:7px 9px}
+.ui-icon{width:18px;height:18px;flex-shrink:0;vertical-align:middle;display:inline-block}
+.note-tabs button,.component-palette button,.tool-actions button{display:inline-flex;align-items:center;gap:7px}
+#networkSvg,#circuitSvg{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;outline-offset:4px}
+.network-console:empty{display:none}
+.subnet-plan{overflow:auto;width:100%;margin-top:14px}
+.subnet-plan table{min-width:480px}
+:root[data-style=clay] :is(.panel,.editor-desk,.object-inspector,.appearance-controls){border-radius:26px;box-shadow:8px 8px 18px #00000012,inset 3px 3px 6px #ffffff30,inset -3px -3px 6px #00000010}
+:root[data-style=clay] :is(.secondary-button,.primary-button,.note-tabs button,.format-toolbar button,.insert-menu>summary){border-radius:15px;box-shadow:3px 3px 7px #00000016,inset 2px 2px 4px #ffffff26,inset -2px -2px 4px #00000012}
+:root[data-style=cyber] :is(.panel,.editor-desk,.object-inspector,.appearance-controls,.format-toolbar,.simulation-panel){border-radius:3px;border-color:var(--accent);box-shadow:0 0 0 1px var(--line),0 5px 20px #00000016}
+:root[data-style=cyber] :is(.secondary-button,.primary-button,.insert-menu>summary){border-radius:2px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+:root[data-style=cyber] .editor-desk{background-image:linear-gradient(#5482a013 1px,transparent 1px),linear-gradient(90deg,#5482a013 1px,transparent 1px);background-size:20px 20px}
+:root[data-style=cyber] :is(.eyebrow,.appearance-controls>span){color:var(--accent);letter-spacing:1.6px}
+:root[data-style=brutal] :is(.panel,.editor-desk,.object-inspector,.appearance-controls,.format-toolbar,.simulation-panel){border:2px solid var(--text);border-radius:2px;box-shadow:5px 5px 0 var(--text)}
+:root[data-style=brutal] :is(.secondary-button,.primary-button,.insert-menu>summary){border:2px solid var(--text);border-radius:2px;box-shadow:3px 3px 0 var(--text);font-weight:700;transform:none}
+:root[data-style=brutal] :is(.primary-button,.secondary-button):active{box-shadow:1px 1px 0 var(--text);transform:translate(2px,2px)}
+:root[data-style=scrap] :is(.panel,.object-inspector,.appearance-controls){border-radius:4px 13px 7px 4px;box-shadow:3px 5px 0 #0000000a}
+:root[data-style=scrap] .editor-desk{position:relative;border:1px dashed var(--muted);border-radius:7px;padding-top:32px}
+:root[data-style=scrap] .editor-desk::before,:root[data-style=scrap] .editor-desk::after{content:'';position:absolute;top:8px;width:58px;height:16px;background:#d6b99088;border:1px solid #b79e7930;pointer-events:none;transform:rotate(-7deg)}
+:root[data-style=scrap] .editor-desk::before{left:24px}
+:root[data-style=scrap] .editor-desk::after{right:24px;transform:rotate(6deg)}
+:root[data-style=scrap] .note-tabs button{border:1px solid var(--line);border-bottom-width:3px;border-radius:9px 9px 0 0;background:var(--surface-alt)}
+:root[data-style=surreal] body{background:radial-gradient(ellipse at 0 15%,#9585c820,transparent 45%),radial-gradient(ellipse at 100% 70%,#c99d8024,transparent 45%),var(--bg);background-attachment:fixed}
+:root[data-style=surreal] :is(.panel,.appearance-controls){border-radius:30px 13px 30px 16px}
+:root[data-style=surreal] .editor-desk{border-radius:38px 14px 22px 14px;background:radial-gradient(ellipse at 15% 0,#9485ca18,transparent 40%),var(--surface-alt)}
+:root[data-style=surreal] .object-inspector{border-radius:30px 10px 30px 10px;border-width:2px}
+/* Preserve the neutral A4 writing surface and visible focus in every skin. */
+.notes-app :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:760px){.appearance-controls{width:100%;gap:9px}.appearance-controls>span{width:100%}.appearance-controls label{flex:1;min-width:80px}.notes-account .appearance-controls select{width:100%;max-width:none}.notes-account{width:100%}:root[data-style=brutal] :is(.panel,.object-inspector){box-shadow:3px 3px 0 var(--text)}:root[data-style=clay] .notes-workspace{border-radius:18px}}
+@media print{
+ :root[data-palette][data-theme]{--bg:#fff;--surface:#fff;--surface-alt:#fff;--text:#000;--muted:#555;--line:#ccc;--accent:#333;--accent-text:#fff;--shadow:none;color-scheme:light}
+ .appearance-controls,.selection-marquee,.editor-desk::before,.editor-desk::after{display:none!important}
+ :root[data-style] :is(.panel,.editor-desk,.object-inspector){border:0!important;border-radius:0!important;box-shadow:none!important;background:white!important}
+}

@@ -25,4 +25,3 @@ Spacing is literal px rather than tokenized: 4/5/7/8/10/12/14/16/18/20/22/24/25/
 Responsive conditions in source are listed below. Print uses A4 210×297mm and @page margin 0; it hides chrome and shows only text pane. Motion honors prefers-reduced-motion.
 
 Media conditions: `(max-width:1050px)`, `(max-width:390px)`, `(max-width:500px)`, `(max-width:700px)`, `(max-width:740px)`, `(max-width:760px)`, `(max-width:850px)`, `(max-width:960px)`, `(prefers-reduced-motion:reduce)`, `print`
-
