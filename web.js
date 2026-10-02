@@ -19,9 +19,12 @@ $('iconAnimation').value = preference('animation','auto');
 if (!$('iconAnimation').value) $('iconAnimation').value = 'auto';
 function motionChanged() { document.documentElement.classList.toggle('motion-off',!motionAllowed); document.dispatchEvent(new Event('alba-motion-update')); }
 motionChanged();
-function setSurfaceStyle(value) { const style = ['classic','neo','glass'].includes(value) ? value : 'classic'; document.documentElement.dataset.style = style; $('surfaceStyle').value = style; savePreference('surfaceStyle',style); }
+function setSurfaceStyle(value) { const style = ['classic','neo','glass','clay','cyber','brutal','scrap','surreal'].includes(value) ? value : 'classic'; document.documentElement.dataset.style = style; $('surfaceStyle').value = style; savePreference('surfaceStyle',style); }
 setSurfaceStyle(preference('surfaceStyle','classic'));
 $('surfaceStyle').addEventListener('change',() => setSurfaceStyle($('surfaceStyle').value));
+function setPalette(value) { const palette = ['sage','graphite','ocean','violet','rose','amber'].includes(value) ? value : 'sage'; document.documentElement.dataset.palette = palette; $('appearancePalette').value = palette; savePreference('palette',palette); }
+setPalette(preference('palette','sage'));
+$('appearancePalette').addEventListener('change',() => setPalette($('appearancePalette').value));
 $('motionEnabled').addEventListener('change', () => { motionAllowed = $('motionEnabled').checked; savePreference('motion',motionAllowed ? 'on' : 'off'); motionChanged(); });
 $('iconAnimation').addEventListener('change', () => { savePreference('animation',$('iconAnimation').value); document.dispatchEvent(new Event('alba-icon-preview')); });
 $('mascotEnabled').checked = preference('mascot','on') !== 'off';
@@ -40,18 +43,25 @@ $('mascotButton').addEventListener('click', () => {
   const item = states[mascotTurn++ % states.length]; mascotState(item[0],item[1]);
 });
 $('mascotButton').addEventListener('mouseenter', () => { if (!currentJob) mascotState('hello','Ciao, sono Albi. Un’albicocca!'); });
-document.addEventListener('click', event => { if (!$('motionSettings').contains(event.target)) $('motionSettings').open = false; });
+document.addEventListener('click', event => { for (const id of ['motionSettings','appearanceSettings']) if (!$(id).contains(event.target)) $(id).open = false; });
+for (const id of ['motionSettings','appearanceSettings']) $(id).addEventListener('toggle',() => { if ($(id).open) $(id === 'motionSettings' ? 'appearanceSettings' : 'motionSettings').open = false; });
+document.addEventListener('keydown',event => { if (event.key === 'Escape') for (const id of ['motionSettings','appearanceSettings']) if ($(id).open) { $(id).open = false; $(id).querySelector('summary').focus(); } });
 let manualTheme = null;
 try { manualTheme = localStorage.getItem('alba.theme'); } catch (_) {}
 function setTheme(theme) {
+  theme = ['light','dark','gray','black'].includes(theme) ? theme : (osTheme.matches ? 'dark' : 'light');
   document.documentElement.dataset.theme = theme;
-  $('themeToggle').setAttribute('aria-pressed', String(theme === 'dark'));
-  $('themeToggle').setAttribute('aria-label', theme === 'dark' ? 'Attiva la modalità chiara' : 'Attiva la modalità scura');
-  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#111c18' : '#f4f5ee';
+  const dark = theme === 'dark' || theme === 'black';
+  $('appearanceTheme').value = theme;
+  $('themeToggle').setAttribute('aria-pressed', String(dark));
+  $('themeToggle').setAttribute('aria-label', dark ? 'Attiva la modalità chiara' : 'Attiva la modalità scura');
+  document.querySelector('meta[name="theme-color"]').content = {light:'#f4f5ee',dark:'#12171b',gray:'#dfe2e6',black:'#000000'}[theme];
 }
-setTheme(['light', 'dark'].includes(manualTheme) ? manualTheme : (osTheme.matches ? 'dark' : 'light'));
+if (!['light','dark','gray','black'].includes(manualTheme)) manualTheme = null;
+setTheme(manualTheme || (osTheme.matches ? 'dark' : 'light'));
+$('appearanceTheme').addEventListener('change',() => { manualTheme = $('appearanceTheme').value; setTheme(manualTheme); savePreference('theme',manualTheme); });
 $('themeToggle').addEventListener('click', () => {
-  manualTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  manualTheme = ['dark','black'].includes(document.documentElement.dataset.theme) ? 'light' : 'dark';
   setTheme(manualTheme); try { localStorage.setItem('alba.theme', manualTheme); } catch (_) {}
 });
 osTheme.addEventListener('change', () => { if (!manualTheme) setTheme(osTheme.matches ? 'dark' : 'light'); });

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/tramonto": {
+      "targetKind": "existing-ui",
+      "projectId": "9eca8a62-4590-400f-bf3b-81c88ac87e16",
+      "baselineDraftId": "b562c42e-8f4a-4b42-9425-a2b1d5f397d6",
+      "activeDraftId": "b562c42e-8f4a-4b42-9425-a2b1d5f397d6",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        "tramonto.html",
+        "tramonto.css",
+        ".superdesign/context/tramonto-tokens.md",
+        ".superdesign/design-system.md"
+      ],
+      "fingerprints": {
+        "tramonto.html": "0c8fdd7ffccb4944b8d6a4a4ff311045b3bb5d427727ca3a404c808d89082e81",
+        "tramonto.css": "266c52c06bfafff015ef67f5655d6aa0ed79614cc50edb07e15dbd56fc7ff804",
+        ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
+        ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf"
+      },
+      "components": [
+        {
+          "name": "PrivacyFooter",
+          "id": "2a267189-32cc-4b2d-81e9-2965f3638121",
+          "sourcePath": "tramonto.html"
+        }
+      ],
+      "drafts": {
+        "b562c42e-8f4a-4b42-9425-a2b1d5f397d6": {
+          "title": "Tramonto \u2014 stili e palette",
+          "visualDirection": "approved notebook with selectable skins, luminosity and accent palettes",
+          "currentVersion": 3
+        }
+      },
+      "updatedAt": "2026-10-02T08:47:44.958304+00:00"
+    }
+  }
+}
