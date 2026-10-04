@@ -163,7 +163,7 @@ class SSDRuntime:
         try:
             if action=='restore' and path.stat().st_size>512*1024**2:raise ValueError('Cache troppo grande.')
             async with self.core.engine.session.post('http://127.0.0.1:8092/slots/0?action='+action,
-                      headers=self.headers,json={'filename':filename},timeout=15) as response:
+                      headers={**self.headers,'Connection':'close'},json={'filename':filename},timeout=15) as response:
                 value=await response.json()
                 if response.status!=200:raise ValueError('Checkpoint KV HTTP '+str(response.status)+': '+str(value.get('error',''))[:160])
             if action=='save':
@@ -232,7 +232,9 @@ class SSDRuntime:
                     if len(line)>65536:raise ValueError('Frame SSD troppo lungo.')
                     if not line.startswith(b'data:'):continue
                     raw=line[5:].strip()
-                    if raw==b'[DONE]':done=True;break
+                    # Drain the HTTP body before saving KV: releasing an SSE
+                    # connection at [DONE] can leave a stale pooled socket.
+                    if raw==b'[DONE]':done=True;continue
                     part=json.loads(raw)
                     if part.get('error'):raise ValueError('Errore del modello SSD.')
                     usage=part.get('usage') or usage

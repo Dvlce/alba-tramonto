@@ -56,7 +56,7 @@ class InferenceLab:
             targets=[selected]
         else:
             candidates=['qwen2.5:1.5b','qwen2.5-coder:1.5b','qwen2.5-coder:3b','qwen2.5-coder:7b',
-                        'qwen3:4b-instruct-2507-q4_K_M','llama3.2:1b-instruct-q4_K_M','gemma3:1b',self.core.config['personal_model']]
+                        'qwen3:4b-instruct-2507-q4_K_M','llama3.2:1b-instruct-q4_K_M','gemma3:1b',self.core.config['personal_model'],self.core.config['advanced_code_model']]
             targets=list(dict.fromkeys(m for m in candidates if m and m in names))
         # Context, threads, mmap and cold/warm are independently changed.
         policies=[{'num_ctx':1024,'num_thread':2,'use_mmap':True},

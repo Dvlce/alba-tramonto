@@ -104,6 +104,33 @@ class PlannerTests(unittest.TestCase):
 
 
 class LifecycleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_sse_is_drained_before_checkpoint_save(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            ended=False
+            class Response:
+                status=200
+                async def __aenter__(self):return self
+                async def __aexit__(self,*args):pass
+                def __init__(self):self.content=self
+                def __aiter__(self):
+                    async def lines():
+                        nonlocal ended
+                        yield b'data: {"choices":[{"delta":{"content":"42"}}],"usage":{"prompt_tokens":47,"completion_tokens":3}}\n'
+                        yield b'data: [DONE]\n'
+                        ended=True
+                    return lines()
+            core=SimpleNamespace(settings=SimpleNamespace(data=Path(temporary)),config={'ssd_policy':'auto'},
+                 engine=SimpleNamespace(session=SimpleNamespace(post=lambda *args,**kwargs:Response())),
+                 event=lambda *args:None,tokens=lambda *args:None,partial='')
+            runtime=SSDRuntime(core);runtime.planning=lambda *args:{'policy':'mapped'}
+            runtime.catalog=lambda:{'large':{'sha256':'a'*64}}
+            runtime.start=AsyncMock();runtime.stop=AsyncMock()
+            async def checkpoint(model,policy,context,action):
+                if action=='save':self.assertTrue(ended)
+            runtime.checkpoint=AsyncMock(side_effect=checkpoint)
+            await runtime.chat('large',[{'role':'user','content':'17+25'}],12,1024)
+            self.assertEqual(core.partial,'42');runtime.stop.assert_awaited_once()
+
     async def test_stop_kills_process_group_and_cleans_key(self):
         with tempfile.TemporaryDirectory() as temporary:
             core=SimpleNamespace(settings=SimpleNamespace(data=Path(temporary)))
