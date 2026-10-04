@@ -18,7 +18,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT_FILES = {'app.py','service.py','telegram_bot.py','runtime_features.py','install.py',
-              'web.html','web.css','web.js','tramonto.html','tramonto.css','tramonto.js',
+              'web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js',
               'tramonto-lab.js','notte.html','notte.css','notte.js'}
 
 

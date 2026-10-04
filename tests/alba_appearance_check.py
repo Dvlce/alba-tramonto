@@ -17,7 +17,7 @@ async def main():
  (ROOT/'artifacts').mkdir(exist_ok=True)
  with tempfile.TemporaryDirectory() as folder:
   root=Path(folder)
-  for name in ('web.html','web.css','web.js'):shutil.copy2(ROOT/name,root/name)
+  for name in ('web.html','web.css','web.js','portal-motion.js'):shutil.copy2(ROOT/name,root/name)
   settings=Settings(root=root,admins=(1,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'));service=Service(store,settings,keys,Engine(store,settings,TestModel()),Backups(store,settings));store.register(1,'Admin');server=TestServer(web_app(service));await server.start_server();errors=[]
   try:
    async with async_playwright() as p:

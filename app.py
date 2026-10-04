@@ -86,7 +86,7 @@ def web_app(service):
         return web.FileResponse(service.settings.root/'web.html')
 
     async def asset(request):
-        names={'web.js','web.css'}
+        names={'web.js','web.css','portal-motion.js'}
         name=request.match_info['name']
         if name not in names:
             raise web.HTTPNotFound()
