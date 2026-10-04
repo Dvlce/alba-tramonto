@@ -81,7 +81,9 @@ def main():
             'losses':losses,'adapter_sha256':hashlib.sha256((adapter/'adapter_model.safetensors').read_bytes()).hexdigest()}
     if accepted:
         emit(stage='merging')
-        merged=model.merge_and_unload();merged.save_pretrained('/work/merged',safe_serialization=True,max_shard_size='2GB')
+        # Safetensors serializes each shard into a temporary buffer. A single
+        # 2 GB shard doubled live weight memory on the 8 GB Pi.
+        merged=model.merge_and_unload();merged.save_pretrained('/work/merged',safe_serialization=True,max_shard_size='512MB')
         tokenizer.save_pretrained('/work/merged')
     report['rss_mb']=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024
     Path('/work/report.json').write_text(json.dumps(report));emit(stage='complete',**report)

@@ -38,6 +38,9 @@ jobs:
             adb shell settings put system user_rotation 0
             adb shell settings put system screen_off_timeout 600000
             adb shell svc power stayon true
+            # First-boot Monet overlays replace resources and recreate activities.
+            # Let user-unlock/theme initialization settle before instrumenting.
+            sleep 20
             adb install -r dist/alba-albi.apk
             adb install -r android/build/smoke/native-smoke.apk
             adb shell am instrument -w local.alba.smoke/local.alba.NativeUiSmoke > native-ui-result.txt
