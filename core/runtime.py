@@ -176,7 +176,10 @@ class Core:
 
     async def chat(self, query, personal=False):
         resource = self.resources()
-        if resource['overloaded']: raise ValueError('Risorse alte: riprova quando il Raspberry si raffredda.')
+        # CPU samples include the previous background inference. Once that job
+        # is cancelled, its stale CPU peak must not reject a foreground reply.
+        if resource.get('ram',{}).get('percent',0)>85 or resource.get('temperature_c',0)>=78:
+            raise ValueError('Risorse alte: riprova quando il Raspberry si raffredda.')
         prompt=self.chat_prompt
         if self.config['profile']=='fast':
             from .inference import FAST_PROMPT

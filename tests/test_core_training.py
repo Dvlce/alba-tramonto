@@ -61,9 +61,11 @@ class SelfLearningTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(set(p for p,a in HOLDOUT)&set(r['prompt'] for r in examples([entry])))
 
     async def test_fast_chat_avoids_query_embedding_model_swap(self):
+        self.service.performance.snapshot={'ram':{'percent':20},'cpu_percent':99,'temperature_c':50}
         self.core.event('files','document','Telescopio osservatorio galassie.')
         await self.core.work('consolidation');self.model.calls.clear()
         await self.core.work('chat','Raccontami delle galassie.')
+        self.assertEqual(self.core.error,'')
         self.assertFalse(any(url.endswith('/api/embed') for url,body in self.model.calls))
         payload=next(body for url,body in self.model.calls if url.endswith('/api/chat'))
         self.assertEqual(payload['model'],'qwen2.5:1.5b');self.assertLessEqual(payload['options']['num_ctx'],1536)
