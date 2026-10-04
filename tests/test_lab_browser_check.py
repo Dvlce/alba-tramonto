@@ -10,7 +10,6 @@ import tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from aiohttp.test_utils import TestServer
-from playwright.async_api import async_playwright
 from app import web_app
 from backups import Backups
 from config import Settings
@@ -22,6 +21,7 @@ from test_core import Model
 
 
 async def main():
+    from playwright.async_api import async_playwright
     (ROOT/'artifacts').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder)
