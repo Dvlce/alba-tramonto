@@ -1,5 +1,6 @@
 """Admin-only Notte endpoints; existing session, origin and CSRF checks apply."""
 import asyncio
+import json
 from aiohttp import web
 from .runtime import Core, CONNECTORS
 
@@ -38,6 +39,49 @@ def setup_core(app, service):
         try:context=int(request.query.get('context','1024'))
         except ValueError:raise ValueError('Contesto non valido.')
         return web.json_response(core.ssd.planning(request.query.get('model',core.config['advanced_code_model']),context))
+
+    async def lab(request):
+        uid=admin(request)
+        if request.method=='GET':return web.json_response(core.test_lab.snapshot())
+        from .test_lab import validate
+        value=validate(await request.json())
+        core.start('test_lab',json.dumps(value))
+        core.store.audit(uid,'core_test_lab',uid)
+        return web.json_response({'ok':True},status=202)
+
+    async def lab_export(request):
+        admin(request)
+        try:ident=int(request.match_info['id'])
+        except ValueError:raise web.HTTPNotFound()
+        rows=core.store.rows('SELECT * FROM core_lab_runs WHERE id=?',(ident,))
+        if not rows:raise web.HTTPNotFound()
+        value={**rows[0],'config':json.loads(rows[0]['config']),'result':json.loads(rows[0]['result'])}
+        return web.json_response(value,headers={'Content-Disposition':'attachment; filename=notte-lab-'+str(ident)+'.json'})
+
+    async def optimization(request):
+        return web.FileResponse(service.settings.root/'optimization.html')
+
+    async def optimization_data(request):
+        from .optimization_project import project_data
+        return web.json_response(project_data(service.settings.root))
+
+    async def native_project(request):
+        admin(request)
+        return await optimization_data(request)
+
+    async def optimization_asset(request):
+        name=request.match_info['name']
+        if name not in ('optimization.js','optimization.css'):raise web.HTTPNotFound()
+        return web.FileResponse(service.settings.root/name)
+
+    async def optimization_report(request):
+        name=request.match_info['name']
+        if name not in ('SSD_RUNTIME.md','SSD_RUNTIME_RESULTS.md','SSD_RUNTIME_RESULTS.json','TEST_LAB.md','TESTING_REPORTS.md',
+                        '7b-decode.png','7b-decode.svg','checkpoint.png','checkpoint.svg','chat-latency.png','chat-latency.svg','14b-decode.png','14b-decode.svg'):
+            raise web.HTTPNotFound()
+        path=service.settings.root/'docs'/('ssd-results/'+name if name.endswith(('.png','.svg')) else name)
+        if not path.is_file():raise web.HTTPNotFound()
+        return web.FileResponse(path)
 
     async def events(request):
         admin(request)
@@ -140,6 +184,10 @@ def setup_core(app, service):
         return web.FileResponse(path,headers={'Content-Type':'application/json'})
 
     app.add_routes([web.get('/notte',page),web.get('/notte-assets/{name}',asset),
+        web.get('/optimization',optimization),web.get('/optimization/data',optimization_data),
+        web.get('/optimization/assets/{name}',optimization_asset),web.get('/optimization/reports/{name}',optimization_report),
+        web.get('/api/notte/lab',lab),web.post('/api/notte/lab',lab),web.get('/api/notte/lab/{id}/export',lab_export),
+        web.get('/api/notte/project',native_project),
         web.get('/api/notte/status',status),web.get('/api/notte/models',models),web.get('/api/notte/ssd-plan',ssd_plan),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),web.get('/api/notte/training/{id}',training_files),
         web.post('/api/notte/action',action),web.get('/api/notte/export',export),
         web.get('/api/notte/stream',stream),web.get('/.well-known/assetlinks.json',assetlinks)])

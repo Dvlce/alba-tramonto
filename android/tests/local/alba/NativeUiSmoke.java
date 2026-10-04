@@ -29,7 +29,11 @@ public final class NativeUiSmoke extends Instrumentation {
             ui(()->{check(((EditText)field("composer")).getText().toString().equals("Unsent draft"),"Chat draft survives menu");call("navigate",new Class[]{int.class},6);});settle();
             ui(()->{check(visible("Personal Qwen · CPU training"),"Native model panel");call("navigate",new Class[]{int.class},8);});settle();
             ui(()->{check(visible("Raspberry Pi"),"Native system panel");call("navigate",new Class[]{int.class},5);});settle();
-            ui(()->{check(visible("#1 · chat · assistant"),"All activity panel");call("navigate",new Class[]{int.class},2);call("openNote",new Class[]{int.class},1);});settle();
+            ui(()->{check(visible("#1 · chat · assistant"),"All activity panel");call("navigate",new Class[]{int.class},11);});settle();
+            ui(()->{check(visible("Same model and prompt"),"Native Test Lab panel");check(hasClass(activity.getWindow().getDecorView(),NativeBars.class),"Native measured bar charts");((EditText)field("labPrompt")).setText("Lab draft survives polling");call("poll",new Class[]{});});settle();
+            ui(()->{check(((EditText)field("labPrompt")).getText().toString().equals("Lab draft survives polling"),"Live lab polling preserves prompt input");call("runLab",new Class[]{});});settle();
+            ui(()->{check(fake.labSubmitted!=null&&fake.labSubmitted.optString("mode").equals("compare"),"Lab sends an explicit compare request");check(fake.labSubmitted.optString("model").equals("qwen2.5-coder:7b"),"Lab uses selected installed target");call("navigate",new Class[]{int.class},12);});settle();
+            ui(()->{check(visible("Local test bench"),"Native project evolution entries");call("navigate",new Class[]{int.class},2);call("openNote",new Class[]{int.class},1);});settle();
             ui(()->{((EditText)field("noteText")).append(" Edited.");JSONObject saved=(JSONObject)call("noteData",new Class[]{});JSONObject original=fixtures.getJSONObject("note").getJSONObject("content"),content=saved.getJSONObject("content");check(content.getJSONObject("graph").toString().equals(original.getJSONObject("graph").toString()),"Graph survives native text editing");check(content.getJSONArray("formulas").toString().equals(original.getJSONArray("formulas").toString()),"Formula survives native text editing");check(content.getJSONObject("network").toString().equals(original.getJSONObject("network").toString()),"Network survives native text editing");call("saveNote",new Class[]{});});settle();
             ui(()->{check(!((Boolean)field("noteChanged")),"Native save clears dirty state");check(fake.saved!=null&&fake.saved.optInt("version")==1,"Optimistic version is sent");set("english",false);call("navigate",new Class[]{int.class},9);check(visible("Lingua dell’app"),"Italian UI");set("note",null);set("noteChanged",false);call("navigate",new Class[]{int.class},0);call("menu",new Class[]{});});waitForIdleSync();
             ui(()->check(((String[])call("sections",new Class[]{}))[4].equals("Diario di apprendimento"),"Dropdown section names"));
@@ -50,10 +54,13 @@ public final class NativeUiSmoke extends Instrumentation {
     private boolean hasClass(View view,Class type){if(type.isInstance(view))return true;if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)if(hasClass(((ViewGroup)view).getChildAt(i),type))return true;return false;}
     private void assertNative(View view){check(!view.getClass().getName().startsWith("android.webkit."),"No browser views");if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)assertNative(((ViewGroup)view).getChildAt(i));}
     private final class FakeApi extends NativeApi {
-        JSONObject saved;
+        JSONObject saved,labSubmitted;
         FakeApi() throws Exception {super(getTargetContext(),"https://fixture.invalid");}
         @Override synchronized JSONObject request(String method,String path,JSONObject body) throws Exception {
             if(path.equals("/api/notte/status"))return fixtures.getJSONObject("status");
+            if(path.equals("/api/notte/models"))return fixtures.getJSONObject("models");
+            if(path.equals("/api/notte/project"))return fixtures.getJSONObject("project");
+            if(path.equals("/api/notte/lab")&&method.equals("POST")){labSubmitted=body;return new JSONObject("{\"ok\":true}");}
             if(path.startsWith("/api/notte/events"))return fixtures.getJSONObject("events");
             if(path.equals("/api/notte/diary"))return fixtures.getJSONObject("diary");
             if(path.equals("/api/tramonto/notebooks"))return new JSONObject("{\"notebooks\":[]}");

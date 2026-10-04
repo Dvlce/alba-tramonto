@@ -42,20 +42,24 @@
       "designSystemPath": ".superdesign/design-system.md",
       "contextFiles": [
         ".superdesign/design-system.md",
-        ".superdesign/context/tramonto-tokens.md"
+        ".superdesign/context/tramonto-tokens.md",
+        "notte.html",
+        "notte.css"
       ],
       "fingerprints": {
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
-        ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d"
+        ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
+        "notte.html": "cacefdef5ac44982310a2c674971053020ed4b7c3bf5deca3045d02bdf7acd48",
+        "notte.css": "0426bdcc94d6354e277b5d1b0506db2fb564cc89660ed740c17f917d0ddc3517"
       },
       "drafts": {
         "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
-          "title": "Notte \u00b7 ALBA-CORE",
-          "visualDirection": "Approved dark sage dashboard with fixed composer, topic diary, full activity and daily LoRA versions",
-          "currentVersion": 3
+          "title": "Notte \u00b7 Test Lab",
+          "visualDirection": "Approved dark sage Notte extended with private normal/SSD test lab and project evolution; real measurements and limits",
+          "currentVersion": 5
         }
       },
-      "updatedAt": "2026-10-04T13:35:17.144982+00:00"
+      "updatedAt": "2026-10-04T19:14:54.549757+00:00"
     }
   }
 }

@@ -1,5 +1,10 @@
 # Alba + Tramonto + Notte
 
+[Progetto di ottimizzazione](docs/TEST_LAB.md): sito IT/EN su `/optimization`
+con informazioni, news documentate, benchmark e storia delle evoluzioni. In
+Notte e nell’app Android nativa 1.4, la **Test Lab** confronta lo stesso modello
+e prompt attraverso Ollama normale e SSD, con risposte, grafici e report privati.
+
 AI conversazionale locale, Telegram e web, con memoria nel tempo. **Notte / ALBA-CORE** aggiunge una personalità autonoma con emozioni persistenti, memoria vettoriale locale, riflessione, riassunti, ricerca Wikipedia e messaggi Telegram a Matt. [Architettura, configurazione e limiti di ALBA-CORE](docs/ALBA_CORE.md). Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
 
 [ALBA SSD Runtime](docs/SSD_RUNTIME.md): esecuzione del GGUF scelto, kernel ARM nativi, mmap senza copie complete per i modelli grandi, confronto del decoding speculativo e controllo RAM/temperatura. Integrato nella chat avanzata di Notte, con identità del modello e benchmark verificabili. Non promette inferenza fluida oltre la RAM né implementa la cache esperti universale di Colibri.

@@ -1,0 +1,36 @@
+{
+  "name": "Notte · Local AI Optimization",
+  "repository": "https://github.com/Dvlce/alba-tramonto",
+  "entries": [
+    {
+      "date": "2026-10-04",
+      "version": "Test Lab",
+      "title_it": "Un banco di prova, due percorsi reali",
+      "title_en": "One test bench, two actual runtimes",
+      "body_it": "Prove private con lo stesso modello e prompt: Ollama normale, runtime SSD o confronto sequenziale. Identità dei pesi verificata, risposte visibili, grafici e report esportabili. Il profilo della chat resta indipendente.",
+      "body_en": "Private same-model, same-prompt tests: standard Ollama, SSD runtime or sequential comparison. Verified weight identity, visible outputs, charts and downloadable reports. Production chat settings remain separate.",
+      "status": "experimental",
+      "report": "TEST_LAB.md"
+    },
+    {
+      "date": "2026-10-04",
+      "version": "SSD runtime",
+      "title_it": "Misurare prima di promettere",
+      "title_en": "Measure before promising",
+      "body_it": "7B: +37% nel piccolo test Python con bozza verificata, -26% nel test inglese. 14B reale da 8,99 GB: 0,10 token/s e test funzione fallito. La chat lunga resta lenta. Pesi Q4 originali e cache f16; modalità sperimentale su Pi 5 da 8 GB.",
+      "body_en": "7B: +37% in the small verified-draft Python probe, -26% in English. Genuine 8.99 GB 14B: 0.10 token/s and failed function test. Long-history chat remains slow. Original Q4 weights and f16 cache; experimental on an 8 GB Pi 5.",
+      "status": "measured",
+      "report": "SSD_RUNTIME_RESULTS.md"
+    },
+    {
+      "date": "2026-10-04",
+      "version": "1.3.0",
+      "title_it": "Modelli piccoli, apprendimento locale e app nativa",
+      "title_en": "Small models, local learning and native app",
+      "body_it": "Profili rapidi e coder, diario con fonti e verifiche, studio GitHub/Reddit, training LoRA giornaliero sul modello 0.5B e app Android nativa IT/EN. L'apprendimento RAG e il training dei pesi sono processi distinti.",
+      "body_en": "Fast and coder profiles, a sourced learning diary, GitHub/Reddit study, daily 0.5B LoRA training and a native IT/EN Android app. RAG memory and weight training are separate processes.",
+      "status": "released",
+      "url": "https://github.com/Dvlce/alba-tramonto/releases/tag/v1.3.0"
+    }
+  ]
+}

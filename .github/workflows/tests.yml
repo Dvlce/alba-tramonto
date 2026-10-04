@@ -15,3 +15,4 @@ jobs:
       - run: python -m pip install playwright
       - run: python -m playwright install --with-deps chromium
       - run: python tests/notte_browser_check.py
+      - run: python tests/test_lab_browser_check.py
