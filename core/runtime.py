@@ -87,6 +87,8 @@ class Core:
         self.inference=InferenceLab(self)
         from .ssd_runtime import SSDRuntime
         self.ssd=SSDRuntime(self)
+        from .test_lab import TestLab
+        self.test_lab=TestLab(self)
         self.save()
 
     def save(self):
@@ -501,6 +503,10 @@ class Core:
             raise
 
     def start(self, mode, text=''):
+        if mode=='test_lab':
+            from .test_lab import validate
+            validate(json.loads(text))
+            if self.training.task and not self.training.task.done():raise ValueError('Ferma il training prima della Test Lab.')
         if self.task and not self.task.done() and self.task.get_name()=='core-chat-follow':raise ValueError('Una risposta è già in preparazione.')
         if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
         if mode in ('chat','personal_chat') and self.training.task and not self.training.task.done():
@@ -512,7 +518,8 @@ class Core:
                 if previous:await asyncio.gather(previous,return_exceptions=True)
                 await self.work(mode,text)
             self.task=asyncio.create_task(after_training(),name='core-chat-follow');return
-        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'):
+        if mode in ('chat','personal_chat','test_lab') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'):
+            if mode=='test_lab' and self.mode=='test_lab':raise ValueError('Una prova è già in corso.')
             self.task.cancel()
             # Schedule after cancellation has released the inference lock.
             previous=self.task
@@ -522,7 +529,7 @@ class Core:
             self.task=asyncio.create_task(follow_chat(),name='core-chat-follow');return
         if self.task and not self.task.done(): raise ValueError('Un ciclo è già in corso.')
         if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'): raise ValueError('Ciclo non valido.')
+        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'): raise ValueError('Ciclo non valido.')
         if mode=='personal_chat' and not self.config['personal_model']:raise ValueError('Modello personale non disponibile.')
         if mode=='repository':
             from .learning import repo_name
@@ -547,6 +554,7 @@ class Core:
                 elif mode=='benchmark':await self.inference.run(text)
                 elif mode=='ssd_benchmark':await self.ssd.benchmark(text or self.config['advanced_code_model'])
                 elif mode=='ssd_cache_probe':await self.ssd.cache_probe(text or self.config['advanced_code_model'])
+                elif mode=='test_lab':await self.test_lab.run(json.loads(text))
                 elif mode=='repository': await self.learning.repository(text)
                 elif mode=='tool': await self.learning.install_tool(text)
                 else:
@@ -608,7 +616,7 @@ class Core:
         legacy_lifetime = self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM token_usage')[0]['n']
         return {'name':'ALBA-CORE','mood':self.mood(),'emotions':self.emotions,'config':self.config,
                 'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),'training':self.training.snapshot(),'benchmarks':self.inference.snapshot(),'recommended':self.inference.recommended(),'ssd_runtime':self.ssd.snapshot(),
-                'error':self.error,'resources':self.resources(),'connectors':connectors,
+                'error':self.error,'resources':self.resources(),'connectors':connectors,'test_lab':self.test_lab.snapshot(),
                 'tokens':totals,'lifetime_tokens':self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM core_tokens')[0]['n']+legacy_lifetime,
                 'history':self.store.rows("SELECT strftime('%Y-%m-%d',created,'unixepoch') day,sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)) total FROM (SELECT created,input_tokens,output_tokens FROM core_tokens UNION ALL SELECT timestamp created,input_tokens,output_tokens FROM token_usage) WHERE created>=? GROUP BY day ORDER BY day DESC LIMIT 30",(max(since,time.time()-30*86400),)),
                 'cycles':self.store.rows('SELECT * FROM core_cycles ORDER BY id DESC LIMIT 20'),

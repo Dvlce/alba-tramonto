@@ -47,6 +47,12 @@ jobs:
             cat native-ui-result.txt
             adb logcat -d > native-ui-logcat.txt
             grep -q 'PASS:' native-ui-result.txt
+      - name: Compile public-origin release candidate
+        run: python android/build.py --sdk "$ANDROID_HOME" --server https://dvlce.tail3d18fa.ts.net --output dist/alba-candidate.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-release-candidate
+          path: dist/alba-candidate.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:

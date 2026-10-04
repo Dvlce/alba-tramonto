@@ -35,6 +35,10 @@ public final class MainActivity extends Activity {
     private ScrollView scroller;
     private TextView title,status,partial;
     private EditText composer,noteTitle,noteText;
+    private EditText labPrompt,labOutput;
+    private Spinner labModel,labMode,labPolicy,labContext;
+    private LinearLayout labResults;
+    private Button labRun,labStop;
     private NotebookCanvas canvas;
     private JSONObject snapshot,note,restoredNote;
     private SessionStore draftStore;
@@ -80,7 +84,7 @@ public final class MainActivity extends Activity {
         status=label(t("Connessione al Raspberry…","Connecting to Raspberry…"),12);status.setTextColor(SAGE);status.setPadding(dp(20),0,dp(20),dp(8));root.addView(status);
         body=column();root.addView(body,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);root.requestApplyInsets();
     }
-    private String[] sections(){return new String[]{t("Chat · Notte","Chat · Notte"),"Alba",t("Quaderni · Tramonto","Notebooks · Tramonto"),t("Memoria e connettori","Memory & connectors"),t("Diario di apprendimento","Learning diary"),t("Tutte le attività","All activity"),t("Modello personale","Personal model"),t("Token e statistiche","Tokens & statistics"),t("Emozioni e sistema","Emotions & system"),t("Impostazioni","Settings"),t("Chat · modello personale","Chat · personal model")};}
+    private String[] sections(){return new String[]{t("Chat · Notte","Chat · Notte"),"Alba",t("Quaderni · Tramonto","Notebooks · Tramonto"),t("Memoria e connettori","Memory & connectors"),t("Diario di apprendimento","Learning diary"),t("Tutte le attività","All activity"),t("Modello personale","Personal model"),t("Token e statistiche","Tokens & statistics"),t("Emozioni e sistema","Emotions & system"),t("Impostazioni","Settings"),t("Chat · modello personale","Chat · personal model"),"Test Lab",t("Progetto e evoluzione","Project & evolution")};}
     private void menu(){
         PopupMenu menu=new PopupMenu(this,title);String[] names=sections();
         for(int i=0;i<names.length;i++)if(admin||i==1||i==9)menu.getMenu().add(0,i,i,names[i]);
@@ -130,6 +134,8 @@ public final class MainActivity extends Activity {
         if(!authenticated){showLogin();return;}
         if(target==0||target==1||target==10){chatView();poll();return;}
         if(target==2){notebooks();return;}
+        if(target==11){labView();poll();return;}
+        if(target==12){projectView();return;}
         panel();poll();
     }
     private void panel(){body.removeAllViews();scroller=new ScrollView(this);feed=column();feed.setPadding(dp(12),dp(10),dp(12),dp(24));scroller.addView(feed);body.addView(scroller,new LinearLayout.LayoutParams(-1,-1));}
@@ -151,7 +157,7 @@ public final class MainActivity extends Activity {
         }catch(Exception e){runOnUiThread(()->{busy=false;error(e);});}});
     }
     private void poll(){
-        if(polling||!authenticated||!foreground||api==null||section==2||section==9)return;
+        if(polling||!authenticated||!foreground||api==null||section==2||section==9||section==12)return;
         polling=true;final int current=section,version=generation;
         io.execute(()->{try{
             JSONObject state=null,content=null;
@@ -165,7 +171,7 @@ public final class MainActivity extends Activity {
                 snapshot=result;
                 if(result!=null){JSONObject resources=result.getJSONObject("resources");status.setText(result.optString("mood")+" · "+(result.optBoolean("running")?result.optString("mode"):t("presente","present"))+" · CPU "+resources.optDouble("cpu_percent",0)+"%");}
                 if(current==0||current==1||current==10){messages=rows.getJSONArray(current==1?"messages":"events");renderChat(messages);if(partial!=null)partial.setText(current==1?(!job.isEmpty()?t("Alba sta pensando…","Alba is thinking…"):""):result.optString("partial"));}
-                else if(current==4)diary(rows.getJSONArray("entries"));else if(current==5)activity(rows.getJSONArray("events"));else renderPanel();
+                else if(current==4)diary(rows.getJSONArray("entries"));else if(current==5)activity(rows.getJSONArray("events"));else if(current==11)renderLab();else renderPanel();
             }catch(Exception e){error(e);}});
         }catch(Exception e){runOnUiThread(()->{polling=false;if(version==generation)error(e);});}});
     }
@@ -240,10 +246,52 @@ public final class MainActivity extends Activity {
             feed.addView(button(t("Seleziona un modello installato","Choose an installed model"),()->request(()->api.request("GET","/api/notte/models",null),r->{JSONArray models=r.getJSONArray("models");String[] names=new String[models.length()];for(int i=0;i<models.length();i++)names[i]=models.getJSONObject(i).getString("name");new AlertDialog.Builder(this).setTitle(t("Modello avanzato","Advanced model")).setItems(names,(d,w)->action("config",object("config",object("advanced_code_model",names[w])))).show();})));
             feed.addView(button(t("Aggiungi repository GitHub","Add GitHub repository"),()->prompt("owner/repo",value->action("repository",object("text",value)))));}
         if(authenticated)feed.addView(button(t("Esci dall’account","Sign out"),()->request(()->api.request("POST","/api/logout",new JSONObject()),r->{api.clear();clearDrafts();authenticated=false;showLogin();})));
-        feed.addView(label(t("Android nativo · v1.3.0\nIl modello gira sul Raspberry; non sul telefono.","Native Android · v1.3.0\nThe model runs on the Raspberry, not on your phone."),12));
+        feed.addView(label(t("Android nativo · v1.4.0\nIl modello gira sul Raspberry; non sul telefono.","Native Android · v1.4.0\nThe model runs on the Raspberry, not on your phone."),12));
     }
     private interface TextResult{void run(String value);}
     private void prompt(String heading,TextResult result){EditText input=input(heading,false);new AlertDialog.Builder(this).setTitle(heading).setView(input).setNegativeButton(t("Annulla","Cancel"),null).setPositiveButton(t("Conferma","Confirm"),(d,w)->result.run(input.getText().toString())).show();}
+    private Spinner choice(String heading,String[] values){feed.addView(label(heading,14));Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,values));feed.addView(spinner);return spinner;}
+    private void labView(){
+        panel();feed.addView(label(t("Stesso modello e prompt, due percorsi.","Same model and prompt, two runtimes."),23));feed.addView(label(t("Prove private, separate dalla chat. Avvio incluso; il secondo percorso può beneficiare della cache del sistema operativo. Nessun giudizio automatico sull’intelligenza.","Private tests, separate from chat. Startup included; the second runtime may benefit from OS file cache. No automatic intelligence verdict."),13));
+        labModel=choice(t("Modello installato","Installed model"),new String[]{t("Caricamento…","Loading…")});
+        labMode=choice(t("Percorso","Runtime"),new String[]{t("Confronta entrambi","Compare both"),t("Normale · Ollama","Normal · Ollama"),t("Ottimizzato · SSD","Optimized · SSD")});
+        labPolicy=choice(t("Strategia SSD","SSD policy"),new String[]{"mapped","speculative","native"});labContext=choice(t("Contesto","Context"),new String[]{"512","1024","2048"});labContext.setSelection(1);
+        labOutput=input(t("Token output: 8–256","Output tokens: 8–256"),false);labOutput.setInputType(InputType.TYPE_CLASS_NUMBER);labOutput.setText("96");feed.addView(labOutput);
+        labPrompt=input(t("Prompt condiviso","Shared prompt"),false);labPrompt.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);labPrompt.setMinLines(3);labPrompt.setMaxLines(4);labPrompt.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(2000)});feed.addView(labPrompt,new LinearLayout.LayoutParams(-1,dp(120)));
+        labRun=button(t("Avvia prova","Run test"),this::runLab);feed.addView(labRun);labStop=button(t("Interrompi prova","Stop test"),()->action("stop",new JSONObject()));labStop.setEnabled(false);feed.addView(labStop);
+        labResults=column();feed.addView(labResults);final int version=generation;
+        request(()->api.request("GET","/api/notte/models",null),r->{if(version!=generation)return;JSONArray values=r.optJSONArray("models");if(values==null||values.length()==0)return;String[] names=new String[values.length()];int selected=0;for(int i=0;i<names.length;i++){names[i]=values.getJSONObject(i).getString("name");if(names[i].equals("qwen2.5-coder:7b"))selected=i;}labModel.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));labModel.setSelection(selected);});
+    }
+    private void runLab(){
+        try{JSONObject value=object("model",labModel.getSelectedItem().toString());value.put("prompt",labPrompt.getText().toString());value.put("mode",new String[]{"compare","normal","optimized"}[labMode.getSelectedItemPosition()]);value.put("policy",labPolicy.getSelectedItem().toString());value.put("context",Integer.parseInt(labContext.getSelectedItem().toString()));value.put("output",Integer.parseInt(labOutput.getText().toString()));labRun.setEnabled(false);
+            request(()->api.request("POST","/api/notte/lab",value),r->{toast(t("Prova avviata sul Raspberry","Test started on Raspberry"));poll();});
+        }catch(Exception e){error(e);}
+    }
+    private void labSample(LinearLayout parent,JSONObject sample){
+        LinearLayout card=column();card.setPadding(dp(10),dp(10),dp(10),dp(10));card.setBackgroundColor(PANEL);boolean normal=sample.optString("backend").equals("normal");card.addView(label((normal?t("Normale · Ollama","Normal · Ollama"):t("Ottimizzato · SSD","Optimized · SSD"))+" · "+sample.optString("status"),18));NativeMarkdown.render(this,card,sample.optString("content",sample.optString("error",t("Attendo il primo token…","Waiting for first token…"))));card.addView(label(t("Primo token: ","First token: ")+sample.optString("first_token_ms","—")+" ms · "+sample.optString("tokens_per_second","—")+" token/s · "+sample.optString("wall_ms","—")+" ms",12));if(sample.has("error"))card.addView(label(sample.optString("error"),12));parent.addView(card);
+    }
+    private void renderLab() throws Exception {
+        if(snapshot==null||labResults==null)return;JSONObject lab=snapshot.optJSONObject("test_lab");if(lab==null)return;
+        boolean running=snapshot.optBoolean("running");labRun.setEnabled(!running);labStop.setEnabled("test_lab".equals(snapshot.optString("mode"))||lab.optJSONObject("active")!=null);
+        String hash=lab.toString();if(hash.equals(rendered))return;rendered=hash;int scroll=scroller.getScrollY();labResults.removeAllViews();JSONObject active=lab.optJSONObject("active");
+        if(active!=null){labResults.addView(label(t("In corso: ","Running: ")+active.optString("backend"),18));JSONArray samples=active.optJSONArray("samples");if(samples!=null)for(int i=0;i<samples.length();i++)labSample(labResults,samples.getJSONObject(i));}
+        labResults.addView(label(t("Storico e report","History & reports"),22));JSONArray runs=lab.optJSONArray("runs");if(runs!=null)for(int i=0;i<runs.length();i++){
+            JSONObject run=runs.getJSONObject(i),result=run.getJSONObject("result"),config=run.getJSONObject("config");JSONArray samples=result.getJSONArray("samples");labResults.addView(label("#"+run.optInt("id")+" · "+config.optString("model")+" · "+run.optString("status"),19));labResults.addView(label(config.optString("prompt"),14));for(int j=0;j<samples.length();j++)labSample(labResults,samples.getJSONObject(j));
+            labResults.addView(new NativeBars(this,samples,"tokens_per_second",t("Token/s · più alto è più veloce","Tokens/s · higher is faster"),"token/s",english),new LinearLayout.LayoutParams(-1,dp(130)));
+            labResults.addView(new NativeBars(this,samples,"first_token_ms",t("Primo token · più basso è più veloce","First token · lower is faster"),"ms",english),new LinearLayout.LayoutParams(-1,dp(130)));
+            labResults.addView(label(t("Testo uguale: ","Same text: ")+result.optString("same_text","—")+t(". Identità dei token non disponibile tra Ollama e SSD.",". Token identity unavailable between Ollama and SSD."),12));
+            labResults.addView(button(t("Esporta JSON","Export JSON"),()->export(run,"notte-lab-"+run.optInt("id")+".json")));labResults.addView(button(t("Report con grafici","Report with charts"),()->labReport(run)));
+        }scroller.post(()->scroller.scrollTo(0,scroll));
+    }
+    private void labReport(JSONObject run){try{
+        JSONObject result=run.getJSONObject("result");JSONArray samples=result.getJSONArray("samples");StringBuilder html=new StringBuilder("<!doctype html><html><meta charset=\"utf-8\"><title>Notte Test Lab</title><style>body{font:15px/1.6 sans-serif;max-width:900px;margin:30px auto;padding:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}svg{max-width:100%}</style><h1>Notte Test Lab #"+run.optInt("id")+"</h1><p>"+NativeBars.escape(result.optString("conditions"))+"</p><pre>"+NativeBars.escape(run.getJSONObject("config").toString(2))+"</pre>");
+        html.append(new NativeBars(this,samples,"tokens_per_second",t("Generazione · più alto è più veloce","Decode · higher is faster"),"token/s",english).svg());html.append(new NativeBars(this,samples,"first_token_ms",t("Primo token · più basso è più veloce","First token · lower is faster"),"ms",english).svg());
+        for(int i=0;i<samples.length();i++){JSONObject s=samples.getJSONObject(i);html.append("<h2>").append(NativeBars.escape(s.optString("backend"))).append("</h2><pre>").append(NativeBars.escape(s.toString(2))).append("</pre>");}html.append("<p>No automatic intelligence verdict. Token identity unavailable between Ollama and SSD.</p></html>");
+        exportBytes=html.toString().getBytes("UTF-8");Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("text/html");intent.putExtra(Intent.EXTRA_TITLE,"notte-lab-"+run.optInt("id")+".html");startActivityForResult(intent,20);
+    }catch(Exception e){error(e);}}
+    private void projectView(){panel();feed.addView(label(t("Ottimizzazione · informazioni e benchmark","Optimization · information & benchmarks"),24));feed.addView(label(t("Pesi originali, runtime sperimentale. Il 14B gira a 0,10 token/s; la chat lunga resta lenta. I risultati sono documentati, incluse le regressioni.","Original weights, experimental runtime. 14B runs at 0.10 tokens/s; long-history chat remains slow. Results include documented regressions."),14));feed.addView(button(t("Apri sito informazioni","Open information site"),()->external(api.origin+"/optimization")));final int version=generation;
+        request(()->api.request("GET","/api/notte/project",null),r->{if(version!=generation)return;JSONArray entries=r.getJSONObject("history").getJSONArray("entries");for(int i=0;i<entries.length();i++){JSONObject entry=entries.getJSONObject(i);card(entry.optString("date")+" · "+entry.optString("version"),entry.optString(english?"title_en":"title_it")+"\n\n"+entry.optString(english?"body_en":"body_it"));}feed.addView(button(t("Esporta risultati pubblici","Export public results"),()->export(r,"notte-optimization-public.json")));});
+    }
     private void notebooks(){panel();final int version=generation;request(()->api.request("GET","/api/tramonto/notebooks",null),r->{if(version!=generation)return;feed.removeAllViews();feed.addView(button(t("Nuovo quaderno","New notebook"),()->prompt(t("Titolo","Title"),value->request(()->api.request("POST","/api/tramonto/notebooks",object("title",value)),created->notebooks()))));JSONArray books=r.getJSONArray("notebooks");for(int i=0;i<books.length();i++){JSONObject book=books.getJSONObject(i);int id=book.getInt("id");feed.addView(button(book.optString("title")+" · "+book.optInt("note_count"),()->pages(id)));}});}
     private void pages(int book){panel();request(()->api.request("GET","/api/tramonto/notes?notebook="+book,null),r->{feed.removeAllViews();feed.addView(button(t("Nuova pagina","New page"),()->prompt(t("Titolo","Title"),value->{JSONObject data=object("notebook_id",book);try{data.put("title",value);data.put("subject","generale");}catch(Exception ignored){}request(()->api.request("POST","/api/tramonto/notes",data),created->openNote(created.getInt("id")));})));JSONArray notes=r.getJSONArray("notes");for(int i=0;i<notes.length();i++){JSONObject page=notes.getJSONObject(i);int id=page.getInt("id");feed.addView(button(page.optString("title"),()->openNote(id)));}});}
     private void openNote(int id){request(()->api.request("GET","/api/tramonto/notes/"+id,null),r->{note=r;noteChanged=false;editor();});}
@@ -276,7 +324,7 @@ public final class MainActivity extends Activity {
         if(!"https".equals(uri.getScheme())||!TextUtils.equals(base.getHost(),uri.getHost())||base.getPort()!=uri.getPort()||uri.getUserInfo()!=null){toast(t("Il link non appartiene al tuo server","The link does not belong to your server"));return;}
         String path=uri.getPath();if(!"/".equals(path)&&!"/notte".equals(path)&&!"/tramonto".equals(path))return;
         section="/tramonto".equals(path)?2:"/notte".equals(path)?0:1;
-        if(uri.getFragment()!=null){Uri fragment=Uri.parse("https://local/?"+uri.getFragment());pendingKey=fragment.getQueryParameter("web_key");if(pendingKey==null)pendingKey="";if(pendingKey.length()>100)pendingKey="";}
+        if(uri.getFragment()!=null){if("/notte".equals(path)){if("lab".equals(uri.getFragment()))section=11;if("project".equals(uri.getFragment()))section=12;}Uri fragment=Uri.parse("https://local/?"+uri.getFragment());pendingKey=fragment.getQueryParameter("web_key");if(pendingKey==null)pendingKey="";if(pendingKey.length()>100)pendingKey="";}
     }
     @Override protected void onNewIntent(Intent incoming){super.onNewIntent(incoming);setIntent(incoming);if(noteChanged){new AlertDialog.Builder(this).setMessage(t("Salva la pagina prima di aprire un altro link.","Save your page before opening another link.")).setPositiveButton("OK",null).show();incoming.setData(null);return;}rememberDraft();int previous=section;intent(incoming);int target=section;section=previous;if(!pendingKey.isEmpty()){section=target;composer=null;loginKey();}else if(authenticated)navigate(target);else{section=target;identity();}}
     @Override protected void onResume(){super.onResume();foreground=true;handler.removeCallbacks(tick);handler.post(tick);}

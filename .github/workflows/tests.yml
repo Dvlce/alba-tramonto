@@ -16,3 +16,4 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: python tests/portal_motion_browser_check.py
       - run: python tests/notte_browser_check.py
+      - run: python tests/test_lab_browser_check.py

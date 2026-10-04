@@ -1,5 +1,7 @@
 # Alba + Tramonto + Notte
 
+[Progetto di ottimizzazione](docs/TEST_LAB.md): sito IT/EN con informazioni, news, benchmark e storia su `/optimization`. La **Test Lab** di Notte e Android nativo 1.4 confronta lo stesso modello tramite Ollama normale e SSD, con risposte, istogrammi e report esportabili. [Risultati e limiti misurati](docs/TEST_LAB_RESULTS.md).
+
 AI conversazionale locale, Telegram e web, con memoria nel tempo. **Notte / ALBA-CORE** aggiunge una personalità autonoma con emozioni persistenti, memoria vettoriale locale, riflessione, riassunti, ricerca Wikipedia e messaggi Telegram a Matt. [Architettura, configurazione e limiti di ALBA-CORE](docs/ALBA_CORE.md). Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
 
 Menu Alba / Tramonto / Notte uniforme nei tre siti, con icone esistenti, spazio attivo, navigazione da tastiera e supporto mobile. Animazioni brevi d’ingresso e transizione coerenti con tema e palette; rispettano il movimento ridotto. Tramonto salva gli appunti prima del cambio di spazio e mantiene aperto l’editor se il salvataggio fallisce.
