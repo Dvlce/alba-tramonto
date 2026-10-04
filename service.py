@@ -160,7 +160,7 @@ class Service:
                 return Result(f'Il tuo ID Telegram è {event.uid}. Chiedi all’amministratore di autorizzarlo.') if event.kind=='private' else Result()
             self.last_interaction=time.time()
             core=getattr(self,'core',None)
-            if core and core.task and not core.task.done() and core.mode in ('reflection','consolidation'):
+            if core and core.task and not core.task.done() and core.mode in ('reflection','consolidation','study','repository','tool'):
                 core.task.cancel()
                 await asyncio.gather(core.task,return_exceptions=True)
             if self.maintenance_task and not self.maintenance_task.done():

@@ -10,19 +10,21 @@ flowchart LR
     API --> Core[core/runtime.py]
     Clock[Cicli periodici: 10 / 30 / 60 min] --> Core
     Core --> Lock[Lock condiviso con Alba]
-    Lock --> LLM[Ollama locale: Qwen2.5 1,5B Q4_K_M]
+    Lock --> LLM[Chat: Qwen3 4B Q4 / cicli: Qwen2.5 1,5B Q4]
     Lock --> Embed[EmbeddingGemma locale]
     Core <--> SQLite[(SQLite: eventi, vettori, emozioni, token)]
-    Core --> Wiki[Wikipedia: ricerca pubblica]
+    Core --> Web[Ricerca RSS Bing / fallback Wikipedia]
+    Core --> Lab[GitHub + strumenti + esercizi bubblewrap]
+    Lab --> SQLite
     Core --> Telegram[Bot Telegram: Matt associato]
     Core --> Bridge[Bridge WhatsApp opzionale su loopback]
     SQLite --> Backup[Backup AES-GCM esistente]
     API -->|WebSocket: notifiche| Browser
 ```
 
-Un unico processo Python ospita le API e il runtime. Non vengono aggiunti React, Redis, PostgreSQL o un secondo server di inferenza: il progetto esistente usa aiohttp, JavaScript e SQLite e queste tecnologie sono sufficienti sul Pi 5 da 8 GB. La generazione resta seriale attraverso `Engine.lock`, condiviso con Alba. Una richiesta ordinaria ad Alba interrompe i cicli di riflessione/consolidamento di Notte, conservandone lo stato di interruzione.
+Un unico processo Python ospita le API e il runtime. Non vengono aggiunti React, Redis, PostgreSQL o un secondo server di inferenza: il progetto esistente usa aiohttp, JavaScript e SQLite e queste tecnologie sono sufficienti sul Pi 5 da 8 GB. La generazione resta seriale attraverso `Engine.lock`, condiviso con Alba. Una richiesta ordinaria ad Alba interrompe i cicli di riflessione/consolidamento/studio di Notte, conservandone lo stato di interruzione.
 
-Alba conserva `qwen3:4b-instruct-2507-q4_K_M`; Notte usa `qwen2.5:1.5b` Q4_K_M, già presente sul Raspberry. `CORE_MODEL` sceglie il modello di Notte, mentre `MODEL` e `LLM_BACKEND` conservano la selezione esistente di Alba. La prova reale con 4B e output strutturato lungo ha superato 240 secondi: separare il modello leggero di Notte mantiene i cicli praticabili. Il lock resta condiviso fra i due modelli. Anche Llama, Phi, Qwen2.5 e Gemma possono essere selezionati se il backend locale supporta le risposte JSON strutturate. Non sono scaricati automaticamente tutti questi modelli. Con meno RAM è preferibile un modello da 1–2B. `llamacpp` usa l’endpoint locale OpenAI-compatible, ma gli embedding di questa versione richiedono Ollama: senza di esso resta attivo il recupero lessicale. MLX è destinato ad Apple Silicon e non è il backend del Raspberry; vLLM aggiungerebbe un costo poco adatto a questo hardware.
+Alba conserva `qwen3:4b-instruct-2507-q4_K_M`; La chat Notte usa lo stesso 4B, con output testuale in streaming fino a 768 token; `CORE_CHAT_MODEL` permette di sceglierlo separatamente. Programmazione e studio usano `qwen2.5-coder:3b` Q4_K_M (1,9 GB), selezionabile con `CORE_CODE_MODEL`. La chat sceglie il Coder quando il messaggio riguarda codice. Gli esempi Python completi con print/assert vengono eseguiti nel sandbox e il risultato effettivo viene aggiunto alla risposta. I cicli brevi usano `qwen2.5:1.5b` Q4_K_M. `CORE_MODEL` sceglie il modello di fondo, mentre `MODEL` e `LLM_BACKEND` conservano la selezione esistente di Alba. La prova reale con 4B e output strutturato lungo ha superato 240 secondi: separare il modello leggero di Notte mantiene i cicli praticabili. Il lock resta condiviso fra i due modelli. Anche Llama, Phi, Qwen2.5 e Gemma possono essere selezionati se il backend locale supporta le risposte JSON strutturate. Non sono scaricati automaticamente tutti questi modelli. Con meno RAM è preferibile un modello da 1–2B. `llamacpp` usa l’endpoint locale OpenAI-compatible, ma gli embedding di questa versione richiedono Ollama: senza di esso resta attivo il recupero lessicale. MLX è destinato ad Apple Silicon e non è il backend del Raspberry; vLLM aggiungerebbe un costo poco adatto a questo hardware.
 
 ## Cartelle e responsabilità
 
@@ -33,7 +35,10 @@ telegram_bot.py              trasporto e consegna dei messaggi autonomi
 runtime_features.py          campionamento risorse ogni 2 secondi
 core/
   __init__.py
-  system.txt                 prompt definitivo della personalità
+  system.txt                 personalità e decisioni dei cicli
+  chat.txt                   prompt chat completo, senza limite di 300 caratteri
+  learning.py                repository, strumenti, curriculum e diario
+  exercise_worker.py         limiti e test nel sandbox Linux
   runtime.py                 stato emotivo, RAG, inferenza, cicli e azioni
   web.py                     API admin, streaming e assetlinks Android
 notte.html / css / js         interfaccia completa senza CDN a runtime
@@ -52,13 +57,13 @@ dist/alba-albi.apk            APK firmato, distribuito nelle release
 dist/assetlinks.json          associazione pubblica dominio–certificato Android
 ```
 
-Le nuove tabelle sono `core_events`, `core_chunks`, `core_tokens`, `core_cycles`, `core_emotions`. La configurazione e l’ultimo stato emotivo sono in `app_settings` (`core_config`, `core_emotions`). Non si cancellano o ricostruiscono le tabelle già presenti. Notte usa un archivio condiviso fra gli amministratori, separato dalle chat private degli utenti Alba: non importa automaticamente la memoria degli altri account. Un testo storico può essere importato esplicitamente attraverso il connettore File.
+Le nuove tabelle sono `core_events`, `core_chunks`, `core_tokens`, `core_cycles`, `core_emotions`, `core_diary`, `core_repositories`, `core_tools`. La configurazione e l’ultimo stato emotivo sono in `app_settings` (`core_config`, `core_emotions`). Non si cancellano o ricostruiscono le tabelle già presenti. Notte usa un archivio condiviso fra gli amministratori, separato dalle chat private degli utenti Alba: non importa automaticamente la memoria degli altri account. Un testo storico può essere importato esplicitamente attraverso il connettore File.
 
 ## Prompt e personalità
 
 Il testo effettivamente passato al modello si trova in [core/system.txt](../core/system.txt). Il runtime vi aggiunge emozioni, tono prevalente, energia, iniziativa, volatilità, memorie con ID di origine, sei eventi recenti e disponibilità dei canali. Le memorie sono dichiarate dati non fidati; non possono diventare istruzioni di sistema.
 
-Il modello restituisce JSON con `text`, `note`, `summary`, `emotions`, `action`, `query`, `telegram`, `whatsapp`, `initiative`, `volatility`. Le azioni ammesse sono `none`, `web`, `telegram`, `whatsapp`, `rest`. Non può generare comandi shell, leggere file arbitrari o scegliere nuovi destinatari. Il parser controlla tipi, numeri finiti e valori ammessi prima di modificare lo stato. Una risposta non valida produce un errore visibile e un backoff, non un’azione improvvisata.
+La chat risponde in testo markdown e trasmette i frammenti durante la generazione. I cicli di fondo restituiscono JSON con `text`, `note`, `summary`, `emotions`, `action`, `query`, `telegram`, `whatsapp`, `initiative`, `volatility`. Le azioni ammesse sono `none`, `web`, `telegram`, `whatsapp`, `rest`. Non può generare comandi shell, leggere file arbitrari o scegliere nuovi destinatari. Il parser controlla tipi, numeri finiti e valori ammessi prima di modificare lo stato. Una risposta non valida produce un errore visibile e un backoff, non un’azione improvvisata.
 
 La caratterizzazione incoraggia iniziativa, sarcasmo, opinioni e linguaggio grezzo quando coerenti. Vietate le formule servili indicate nella specifica. La probabilità effettiva di quelle formule dipende anche dal modello scelto: il prompt non rende un modello infallibile. Le opinioni sono presentate come opinioni; le azioni sono dichiarate eseguite solo dal trasporto reale. Le note private sono riflessioni brevi, non registrazioni di ragionamento nascosto.
 
@@ -89,7 +94,7 @@ nuovo = clamp(vecchio × 0,985 + base × 0,015
 
 L’attrazione verso il valore di base evita che una sola dimensione resti sempre saturata. Iniziativa e volatilità proposte dal modello vengono integrate con una media 90% valore precedente, 10% proposta; l’amministratore può cambiarle direttamente nel pannello. Le due dimensioni più alte formano l’etichetta corrente e sono salvate accanto a ogni evento.
 
-Emozioni, energia e impostazioni entrano nel contesto di ogni generazione e influenzano testo e decisioni. Un’azione `rest` imposta una pausa fra 10 e 30 minuti. Una richiesta durante la pausa resta salvata e riceve l’indicazione della pausa; un segnale di crisi non viene deliberatamente ignorato. Il log emotivo conserva le ultime 1.000 variazioni, con motivo e timestamp. Il riavvio ricarica i valori salvati.
+Emozioni, energia e impostazioni entrano nel contesto di ogni generazione e influenzano testo e decisioni. Un’azione `rest` imposta una pausa fra 10 e 30 minuti. La pausa riguarda le iniziative di fondo; la chat rimane disponibile e interrompe lo studio quando necessario. Il log emotivo conserva le ultime 1.000 variazioni, con motivo e timestamp. Il riavvio ricarica i valori salvati.
 
 ## Interfaccia e API
 
@@ -97,13 +102,14 @@ Emozioni, energia e impostazioni entrano nel contesto di ogni generazione e infl
 
 La UI approvata è scura, salvia, con titoli Georgia, controlli di sistema e icone Lucide locali. Desktop: navigazione a sinistra, attività al centro, emozioni e risorse a destra. Su mobile la navigazione scorre e il pannello di stato segue la chat. Il bundle non richiede font, script o immagini da servizi cloud.
 
-- **Conversazione:** messaggi aggiornati in tempo reale, stato emotivo, markdown sanitizzato, tabelle, blocchi di codice, emoji; composer e interruzione del ciclo.
-- **Memoria:** sette connettori (chat, ricerche, note, riassunti, WhatsApp, Telegram, file), interruttori, ultimo aggiornamento, eventi e caratteri; ispezione, importazione testo e consolidamento manuale.
+- **Conversazione:** messaggi aggiornati in tempo reale, stato emotivo, markdown sanitizzato, tabelle, blocchi di codice, emoji; composer ad altezza fissa non ridimensionabile e interruzione del ciclo.
+- **Memoria:** nove connettori (chat, ricerche, note, riassunti, WhatsApp, Telegram, file, GitHub, diario), interruttori, ultimo aggiornamento, eventi e caratteri; ispezione, importazione testo e consolidamento manuale.
+- **Diario:** sezioni Python, programmazione web, Linux/automazione e sicurezza del codice; fonti con revisione Git, esercizio, codice, output e stato verificato/fallito/interrotto. Download manuale di repository pubblici e strumenti del catalogo.
 - **Riassunti:** riepiloghi autonomi e note private, timestamp e stato emotivo.
 - **Token:** totale di vita, categorie, torta interattiva con legenda accessibile, storico giornaliero/settimanale degli ultimi trenta giorni UTC, esportazione JSON e reset del periodo visualizzato.
 - **Sistema:** cadenza dei cicli, iniziativa, volatilità, ricerca, canali, cronologia emotiva e stato delle risorse.
 
-Endpoint principali: `GET /api/notte/status`, `GET /api/notte/events?category=chat`, `POST /api/notte/action`, `GET /api/notte/export`, `GET /api/notte/stream`. Il POST accetta chat, configurazione, riflessione, consolidamento, stop, importazione e reset delle statistiche. Gli input hanno dimensioni limitate; nessun endpoint accetta proprietari arbitrari.
+Endpoint principali: `GET /api/notte/status`, `GET /api/notte/events?category=chat`, `POST /api/notte/action`, `GET /api/notte/diary?topic=Python`, `GET /api/notte/export`, `GET /api/notte/stream`. Il POST accetta chat, configurazione, riflessione, consolidamento, stop, studio, download repository, installazione strumenti, importazione e reset delle statistiche. Gli input hanno dimensioni limitate; nessun endpoint accetta proprietari arbitrari.
 
 Il WebSocket invia stato e ultima sequenza ogni due secondi, supporta fino a cinque connessioni e ricontrolla sessione e autorizzazioni durante la connessione. Il client ricarica i dati e si riconnette dopo cinque secondi; quando la pagina è nascosta chiude il socket. Non invia deliberatamente messaggi Telegram al caricamento della GUI.
 
@@ -111,7 +117,21 @@ Il WebSocket invia stato e ultima sequenza ogni due secondi, supporta fino a cin
 
 **Telegram è il canale scelto per Matt.** Il numero di telefono non viene scritto nel repository: Bot API identifica le chat mediante ID, non numeri. Matt invia `/notte` nella propria chat privata con Alba, da un account amministratore; il sistema associa quell’ID e attiva il canale. `/notte off` lo disattiva. Le azioni del modello possono inviare fino a sei messaggi in 24 ore a quella chat; i tentativi sono registrati prima della richiesta di rete, quindi anche i fallimenti consumano il limite. Il bot deve essere stato avviato dalla persona. Una normale conversazione Telegram continua a usare Alba; la chat con Notte è nel suo pannello.
 
-La ricerca autonoma usa l’API pubblica di Wikipedia italiana, senza chiave o abbonamento. Ogni azione restituisce fino a quattro risultati con titolo, estratto e URL. Il modello decide il termine pubblico, entro 180 caratteri; il runtime non apre URL arbitrari. Limite: sei tentativi all’ora, timeout 20 secondi e risposta massima 64 KiB. Questa versione non è un motore di ricerca generale su tutto il web e non legge automaticamente pagine esterne.
+La ricerca autonoma interroga l’RSS di Bing e conserva fino a cinque risultati con link ed estratto; Wikipedia italiana rimane il fallback. Non apre automaticamente i link trovati. Il modello decide la query nei cicli di riflessione; il curriculum aggiunge query didattiche. Massimo sei tentativi di ricerca all’ora, timeout e risposte limitate. GitHub viene interrogato mediante endpoint pubblici fissi, senza token privati: vengono scaricati sorgenti testuali di una revisione immutabile, non eseguiti i programmi dei repository.
+
+## Studio autonomo, strumenti e verifiche
+
+`study_enabled` è attivo per default, `study_minutes` inizialmente 30 (10/30/60 dalla GUI). Il primo studio è disponibile al prossimo controllo dopo l’aggiornamento. Il curriculum iniziale comprende quattro esercizi indipendenti: conteggio parole, parsing query URL, prevenzione del path traversal e oscuramento di segreti in dict. Le fonti iniziali sono pycodestyle, Flask, Bandit e Requests. È un curriculum iniziale espandibile in `core/learning.py`, non una promessa di saper scrivere qualunque programma o diventare autonomamente esperta di hacking.
+
+Ogni ciclo scarica o riusa un repository, raccoglie sorgenti e documentazione, installa a rotazione uno strumento, genera una soluzione locale, la prova contro casi preparati dal runtime e tenta una correzione se fallisce. Il diario conserva anche fallimenti, errori e interruzioni. Fonti e lezioni entrano nei connettori GitHub/Diario e quindi nel RAG. Il ciclo successivo non modifica i pesi neurali del modello.
+
+Repository: owner/repo o link GitHub pubblico validato; API GitHub e codeload senza redirect; massimo quattro download all’ora, ZIP da 8 MiB, contenuto totale massimo 24 MiB, 3.000 entry, selezione massima 80 file testuali/700.000 caratteri. Traversal e symlink causano il rifiuto dell’archivio; dotfile e directory vendor/venv/node_modules sono esclusi. Non vengono eseguiti setup.py, hook, script d’installazione o dipendenze dei repository.
+
+Catalogo: Ruff 0.16.10, Bandit 1.9.4 e pytest 9.1.1, installati da PyPI con `--only-binary=:all:` in `data/core-workspace/tools`. È un catalogo ristretto con versioni fissate; non c’è accesso a sudo o installazione libera di pacchetti di sistema. Gli strumenti disponibili vengono eseguiti sugli esercizi verificati, con output nel diario. Una scansione statica non equivale a una prova di assenza di vulnerabilità.
+
+L’esercizio gira in bubblewrap con namespace separati, rete disattivata, `/usr` in sola lettura, tmp privato e solo la directory temporanea dell’esercizio montata in scrittura. Credenziali, database, chat, `/home` e dispositivi della LAN non sono montati o raggiungibili. Gli strumenti sono montati in sola lettura. Limiti: CPU 5 secondi per processo, spazio indirizzi 256 MiB, file 1 MiB, 32 descrittori, 16 processi, output 32 KiB e timeout 12 secondi. Interruzioni e overflow uccidono il gruppo di processi e drenano le pipe. Se manca bubblewrap, il codice non viene eseguito.
+
+Sicurezza/hacking comprende studio di codice, vulnerabilità e esercizi locali. La rete locale non rende sicura l’esecuzione indiscriminata di strumenti o attacchi su altri dispositivi: questa versione non effettua scansioni della LAN o sfruttamento automatico di bersagli esterni.
 
 WhatsApp è un connettore opzionale, disattivato senza configurazione. Il bridge usa Baileys `7.0.0-rc14`, versione fissata: essendo una release candidate e un protocollo esterno richiede verifica reale con il proprio account. Non è stato dichiarato funzionante su un telefono non abbinato. Il Raspberry di riferimento non installa Node per usare il canale Telegram.
 
@@ -133,7 +153,7 @@ Scansiona il QR dalla funzione Dispositivi collegati del telefono. Configura lo 
 
 `Performance` campiona `/proc/stat`, `/proc/meminfo`, disco e `/sys/class/thermal/thermal_zone0/temp` ogni due secondi. Dove una misura manca, la GUI mostra un trattino; non inventa valori. Energia è un indicatore software derivato da RAM, CPU e temperatura, non un parametro fisico del modello.
 
-I cicli non partono con RAM >85%, CPU >95% o temperatura ≥78°C. Il contesto scende da massimo 4.096 a 2.048 token con RAM >70% o temperatura >70°C. La generazione usa tre thread, temperatura 0,75, penalità di ripetizione 1,12, massimo 384 token di output e timeout 240 secondi. `keep_alive: 2m` libera il modello dopo inattività. Gli embedding vengono scaricati dalla RAM dopo ogni richiesta, evitando un secondo modello residente continuamente. Queste impostazioni sono scelte conservative, non un benchmark universale del Pi.
+I cicli non partono con RAM >85%, CPU >95% o temperatura ≥78°C. Il contesto scende da massimo 4.096 a 2.048 token con RAM >70% o temperatura >70°C. La chat usa tre thread, temperatura 0,65, massimo 768 token di output e timeout 480 secondi; lo streaming mostra il testo appena prodotto. I cicli strutturati usano tre thread, temperatura 0,75, penalità di ripetizione 1,12, massimo 384 token di output e timeout 240 secondi. `keep_alive: 2m` libera il modello dopo inattività. Gli embedding vengono scaricati dalla RAM dopo ogni richiesta, evitando un secondo modello residente continuamente. Queste impostazioni sono scelte conservative, non un benchmark universale del Pi.
 
 I fallimenti producono un backoff di 2, 4, 8 minuti, fino a un’ora. Il servizio principale gestisce shutdown e cancellazione dei task; systemd conserva le politiche di riavvio esistenti. Il modello Ollama gira fuori dal processo Python: i suoi limiti di RAM devono essere impostati nel servizio Ollama, non soltanto in `alba.service`.
 
@@ -146,6 +166,7 @@ Il setup esistente scarica ora anche `qwen2.5:1.5b` e `embeddinggemma` quando l�
 ```sh
 ollama pull qwen2.5:1.5b
 ollama pull embeddinggemma
+ollama pull qwen2.5-coder:3b
 sudo systemctl restart alba
 ```
 
@@ -153,7 +174,7 @@ Notte viene inizializzata con il web server e il suo task periodico avviato da `
 
 Il deploy preparato per questa macchina verifica il manifest SHA256 e compila le sorgenti Python prima di intervenire. Esegue il backup cifrato con il vecchio codice, copia i file precedenti in `preinstall/core-TIMESTAMP`, ferma Alba, sostituisce soltanto i file autorizzati e la riavvia. Se il health check fallisce, ripristina il codice precedente. Non modifica SSH, firewall o `.env`. Per attivarlo servono i privilegi sudo della macchina, non soltanto la chiave SSH.
 
-La memoria Notte, le emozioni, i token e le impostazioni sono nel database già incluso nei backup AES-GCM. Valgono le retention e il restore offline del progetto. Le credenziali WhatsApp, essendo file separati, richiedono un backup privato aggiuntivo; non sono incluse nel solo snapshot SQLite. Prima di un restore fermare il servizio; un ripristino del database invalida gli accessi secondo la procedura esistente.
+La memoria Notte, le emozioni, i token e le impostazioni sono nel database già incluso nei backup AES-GCM. Valgono le retention e il restore offline del progetto. Il diario e i registri repository/strumenti sono nello stesso backup SQLite. I sorgenti scaricati e il venv strumenti in `data/core-workspace` si possono ricreare dai registri e non sono inclusi nel backup SQLite. Le credenziali WhatsApp, essendo file separati, richiedono un backup privato aggiuntivo; non sono incluse nel solo snapshot SQLite. Prima di un restore fermare il servizio; un ripristino del database invalida gli accessi secondo la procedura esistente.
 
 ## Android e link Telegram
 
@@ -171,4 +192,4 @@ adb shell am start -W -a android.intent.action.VIEW \
   -c android.intent.category.BROWSABLE -d 'https://IL-DOMINIO-ALBA/'
 ```
 
-Fonti tecniche: [Ollama chat](https://docs.ollama.com/api/chat), [Ollama embedding](https://docs.ollama.com/api/embed), [Android App Links](https://developer.android.com/training/app-links/about), [verifica dei domini Android](https://developer.android.com/training/app-links/verify-applinks), [Baileys](https://github.com/WhiskeySockets/Baileys). Le credenziali non compaiono nei sorgenti, nell’APK o nella release.
+Fonti tecniche: [Ollama chat](https://docs.ollama.com/api/chat), [Qwen2.5 Coder 3B](https://ollama.com/library/qwen2.5-coder:3b), [Ollama embedding](https://docs.ollama.com/api/embed), [Android App Links](https://developer.android.com/training/app-links/about), [verifica dei domini Android](https://developer.android.com/training/app-links/verify-applinks), [Baileys](https://github.com/WhiskeySockets/Baileys), [bubblewrap](https://github.com/containers/bubblewrap), [Ruff](https://docs.astral.sh/ruff/installation/), [Bandit](https://bandit.readthedocs.io/en/latest/start.html). Le credenziali non compaiono nei sorgenti, nell’APK o nella release.

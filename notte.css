@@ -6,3 +6,7 @@
 .night-nav nav button{display:flex;align-items:center;gap:10px}.night-nav nav button svg{width:17px;height:17px;flex-shrink:0}
 
 .night-main form{display:block;margin:0;padding:0;border:0;background:none}.night-main #chatForm{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.night-main #chatForm textarea{display:block;min-height:90px}.night-main #settingsForm{display:block}#historyPeriod{width:auto;margin-bottom:10px}
+
+#chatText{resize:none;height:100px;min-height:100px;max-height:100px;overflow-y:auto}
+#chatPreview{max-height:200px;overflow:auto;border-left:2px solid var(--night-accent,#aed087)}
+.diary-entry pre{overflow:auto;max-height:340px}.diary-entry .sources{overflow-wrap:anywhere}.diary-status{color:#aed087}.diary-status.failed,.diary-status.error{color:#e69b85}

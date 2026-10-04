@@ -26,10 +26,15 @@ def output(text='Una scoperta, finalmente. **Interessante.**'):
 
 class Response:
     status=200
-    def __init__(self, body): self.body=body
+    def __init__(self, body): self.body=body;self.content=self
     async def __aenter__(self): return self
     async def __aexit__(self,*args): pass
     async def json(self): return self.body
+    def __aiter__(self):
+        async def lines():
+            for part in ({'message':{'content':output()['text']}}, {'done':True,'prompt_eval_count':80,'eval_count':40}):
+                yield (json.dumps(part)+'\n').encode()
+        return lines()
 
 
 class Model:
@@ -64,7 +69,7 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         return await self.client.request(method,path,headers=self.headers[uid],json=data)
 
     async def test_admin_access_csrf_and_untrusted_config(self):
-        for path in ('/api/notte/status','/api/notte/events','/api/notte/export','/api/notte/stream'):
+        for path in ('/api/notte/status','/api/notte/events','/api/notte/export','/api/notte/stream','/api/notte/diary'):
             response=await self.req(path,uid=2);self.assertEqual(response.status,403)
         response=await self.client.post('/api/notte/action',json={'action':'reflection'},headers={'Cookie':self.headers[1]['Cookie']})
         self.assertEqual(response.status,403)
@@ -113,6 +118,10 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         old=self.core.snapshot()['lifetime_tokens'];self.store.set_setting('core_stats_since',time.time()+1)
         self.assertEqual(self.core.snapshot()['lifetime_tokens'],old)
         self.assertEqual(self.core.snapshot()['tokens'],[])
+        chat_call=next(payload for url,payload in self.model.calls if url.endswith('/api/chat'))
+        self.assertTrue(chat_call['stream']);self.assertNotIn('format',chat_call)
+        self.assertEqual(chat_call['model'],self.settings.model)
+        self.assertEqual(chat_call['options']['num_predict'],768)
 
     async def test_telegram_private_pairing_target_and_rate_limit(self):
         event=Incoming(1,'Matt',1,'private','/notte')

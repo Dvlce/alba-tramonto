@@ -47,7 +47,7 @@ async def main():
                 await page.locator('#chatEvents .night-event.assistant').wait_for()
                 assert await page.locator('#chatEvents strong').inner_text()=='Interessante.'
                 await page.locator('#tab-memory').click()
-                assert await page.locator('.connector').count()==7
+                assert await page.locator('.connector').count()==9
                 await page.locator('.connector').filter(has_text='Note interne').get_by_text('Ispeziona').click()
                 await page.locator('#inspection .night-event').first.wait_for()
                 assert await page.locator('#inspection script').count()==0
@@ -68,6 +68,15 @@ async def main():
                 assert service.core.config['interval']==30
                 await page.locator('#toggleAutonomy').click()
                 await page.locator('#toggleAutonomy').filter(has_text='Risveglia').wait_for()
+                await page.locator('#tab-chat').click()
+                assert await page.locator('#chatText').evaluate('(el) => getComputedStyle(el).resize')=='none'
+                service.core.store.execute('INSERT INTO core_diary(topic,title,summary,sources,code,result,status,created) VALUES(?,?,?,?,?,?,?,?)',
+                    ('Python','count_words','Conteggio delle parole.','["https://github.com/PyCQA/pycodestyle"]','def count_words(text): return {}','PASS: 3 casi indipendenti','verified',1))
+                await page.locator('#tab-diary').click()
+                await page.locator('#diaryEntries').filter(has_text='Test superati').wait_for()
+                await page.locator('#diaryTopic').select_option('Python')
+                assert await page.locator('#diaryEntries .diary-entry').count()==1
+                await page.screenshot(path=str(ROOT/'artifacts/notte-diary.png'),full_page=True)
                 await page.locator('#tab-chat').click()
                 artifacts=ROOT/'artifacts';artifacts.mkdir(exist_ok=True)
                 await page.screenshot(path=str(artifacts/'notte-desktop.png'),full_page=True)

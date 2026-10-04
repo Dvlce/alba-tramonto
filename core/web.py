@@ -48,7 +48,7 @@ def setup_core(app, service):
         if not isinstance(value,dict): raise ValueError('Azione non valida.')
         name = value.get('action')
         if name=='config': core.configure(value.get('config'))
-        elif name in ('chat','reflection','consolidation'): core.start(name,value.get('text',''))
+        elif name in ('chat','reflection','consolidation','study','repository','tool'): core.start(name,value.get('text',''))
         elif name=='stop':
             if core.task and not core.task.done(): core.task.cancel(); await asyncio.gather(core.task,return_exceptions=True)
         elif name=='reset_stats':
@@ -60,7 +60,11 @@ def setup_core(app, service):
             core.event('files','document',text)
         else: raise ValueError('Azione non valida.')
         core.store.audit(uid,'core_'+name,uid)
-        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation') else 200)
+        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool') else 200)
+
+    async def diary(request):
+        admin(request)
+        return web.json_response({'entries':core.learning.diary(request.query.get('topic',''))})
 
     async def export(request):
         admin(request)
@@ -78,7 +82,7 @@ def setup_core(app, service):
                 # Recheck access and revocations throughout the connection.
                 identity = service.keys.identify(request.cookies.get('session',''))
                 if not service.is_admin(identity['user_id']): break
-                await socket.send_json({'running':core.running,'mood':core.mood(),
+                await socket.send_json({'running':core.running,'mood':core.mood(),'partial':core.partial,
                     'last_id':core.store.rows('SELECT coalesce(max(id),0) n FROM core_events')[0]['n']})
                 try:
                     message = await asyncio.wait_for(socket.receive(),timeout=2)
@@ -103,6 +107,6 @@ def setup_core(app, service):
         return web.FileResponse(path,headers={'Content-Type':'application/json'})
 
     app.add_routes([web.get('/notte',page),web.get('/notte-assets/{name}',asset),
-        web.get('/api/notte/status',status),web.get('/api/notte/events',events),
+        web.get('/api/notte/status',status),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),
         web.post('/api/notte/action',action),web.get('/api/notte/export',export),
         web.get('/api/notte/stream',stream),web.get('/.well-known/assetlinks.json',assetlinks)])

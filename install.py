@@ -29,6 +29,7 @@ else:
 if not args.no_model:
  subprocess.run(['ollama','pull',model],check=True)
  subprocess.run(['ollama','pull',os.environ.get('CORE_MODEL','qwen2.5:1.5b')],check=True)
+ subprocess.run(['ollama','pull',os.environ.get('CORE_CODE_MODEL','qwen2.5-coder:3b')],check=True)
  subprocess.run(['ollama','pull','embeddinggemma'],check=True)
 if not args.no_service:
  user=getpass.getuser();unit=(root/'deploy/alba.service').read_text().replace('/home/dvlce/supporto-ai',str(root)).replace('User=alba','User='+user).replace('Group=alba','Group='+str(subprocess.check_output(['id','-gn'],text=True).strip()));unit=unit.replace('ProtectHome=tmpfs\nBindReadOnlyPaths='+str(root),'ProtectHome=read-only')

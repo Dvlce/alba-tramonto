@@ -51,11 +51,11 @@
       "drafts": {
         "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
           "title": "Notte \u00b7 ALBA-CORE",
-          "visualDirection": "Approved dark sage dashboard, conversation center, emotion and resource sidebar",
-          "currentVersion": 1
+          "visualDirection": "Approved dark sage dashboard with fixed composer and topic learning diary",
+          "currentVersion": 2
         }
       },
-      "updatedAt": "2026-10-04T10:19:44.510556+00:00"
+      "updatedAt": "2026-10-04T12:09:22.489297+00:00"
     }
   }
 }
