@@ -129,3 +129,31 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(await runtime.checkpoint('large','mapped',1024,'restore'))
             with self.assertRaises(ValueError):runtime.cache_name('large','../../auth',1024)
             with self.assertRaises(ValueError):await runtime.checkpoint('large','mapped',1024,'delete')
+
+    async def test_checkpoint_is_atomic_and_corruption_is_recoverable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            events=[]
+            core=SimpleNamespace(settings=SimpleNamespace(data=Path(temporary)),event=lambda *args:events.append(args))
+            runtime=SSDRuntime(core);runtime.root.mkdir();runtime.cache_dir.mkdir()
+            (runtime.root/'models.json').write_text(json.dumps({'large':{'sha256':'a'*64}}))
+            class Response:
+                status=200
+                async def __aenter__(self):return self
+                async def __aexit__(self,*args):pass
+                async def json(self):return {'n_saved':17}
+            def post(url,headers,json,timeout):
+                (runtime.cache_dir/json['filename']).write_bytes(b'valid-checkpoint')
+                return Response()
+            core.engine=SimpleNamespace(session=SimpleNamespace(post=post))
+            self.assertTrue(await runtime.checkpoint('large','mapped',1024,'save'))
+            saved=runtime.cache_dir/runtime.cache_name('large','mapped',1024)
+            self.assertEqual(saved.read_bytes(),b'valid-checkpoint')
+            self.assertEqual(saved.stat().st_mode&0o777,0o600)
+            self.assertFalse(list(runtime.cache_dir.glob('*.tmp')))
+            class ErrorResponse(Response):
+                status=400
+                async def json(self):return {'error':{'message':'invalid slot state'}}
+            core.engine.session.post=lambda *args,**kwargs:ErrorResponse()
+            self.assertFalse(await runtime.checkpoint('large','mapped',1024,'restore'))
+            self.assertFalse(saved.exists())
+            self.assertIn('invalid slot state',events[-1][-1])

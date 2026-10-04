@@ -149,13 +149,14 @@ class SSDRuntime:
     @property
     def headers(self):return {'Authorization':'Bearer '+self.key}
 
-    def cache_name(self,model,policy,context):
+    def cache_name(self,model,policy,context,purpose='chat'):
         if policy not in POLICIES or type(context) is not int or not 512<=context<=4096:raise ValueError('Cache non valida.')
-        return self.catalog()[model]['sha256']+'-'+LLAMA_REVISION[:12]+'-'+policy+'-'+str(context)+'.bin'
+        if purpose not in ('chat','probe'):raise ValueError('Namespace cache non valido.')
+        return self.catalog()[model]['sha256']+'-'+LLAMA_REVISION[:12]+'-'+purpose+'-'+policy+'-'+str(context)+'.bin'
 
-    async def checkpoint(self,model,policy,context,action):
+    async def checkpoint(self,model,policy,context,action,purpose='chat'):
         if action not in ('save','restore'):raise ValueError('Azione cache non valida.')
-        name=self.cache_name(model,policy,context);path=self.cache_dir/name
+        name=self.cache_name(model,policy,context,purpose);path=self.cache_dir/name
         if action=='restore' and (not path.is_file() or path.is_symlink()):return False
         filename=name+'.tmp' if action=='save' else name
         temporary=self.cache_dir/filename
@@ -163,8 +164,8 @@ class SSDRuntime:
             if action=='restore' and path.stat().st_size>512*1024**2:raise ValueError('Cache troppo grande.')
             async with self.core.engine.session.post('http://127.0.0.1:8092/slots/0?action='+action,
                       headers=self.headers,json={'filename':filename},timeout=15) as response:
-                if response.status!=200:raise ValueError('Checkpoint KV non disponibile.')
                 value=await response.json()
+                if response.status!=200:raise ValueError('Checkpoint KV HTTP '+str(response.status)+': '+str(value.get('error',''))[:160])
             if action=='save':
                 if not temporary.is_file() or temporary.is_symlink() or not 0<temporary.stat().st_size<=512*1024**2:
                     raise ValueError('Dimensione checkpoint KV non valida.')
@@ -177,10 +178,10 @@ class SSDRuntime:
             self.core.event('activity','ssd_cache',json.dumps({'action':action,'model':model,'context':context,
                 'tokens':value.get('n_saved') if action=='save' else value.get('n_restored')}))
             return True
-        except (ClientError,OSError,ValueError,asyncio.TimeoutError):
+        except (ClientError,OSError,ValueError,asyncio.TimeoutError) as exc:
             if action=='save':temporary.unlink(missing_ok=True)
             else:path.unlink(missing_ok=True)
-            self.core.event('activity','ssd_cache','Cache '+action+' non disponibile; archivio e modello conservati.')
+            self.core.event('activity','ssd_cache','Cache '+action+' non disponibile; archivio e modello conservati. '+str(exc)[:240])
             return False
 
     async def stop(self):
@@ -225,7 +226,7 @@ class SSDRuntime:
             self.core.event('activity','ssd_model',json.dumps({'model':model,'policy':policy,'plan':placement}))
             async with self.core.engine.session.post('http://127.0.0.1:8092/v1/chat/completions',headers=self.headers,
                       json={'model':model,'messages':messages,'max_tokens':maximum,'temperature':.65,
-                            'stream':True,'stream_options':{'include_usage':True}},timeout=480) as response:
+                            'stream':True,'cache_prompt':True,'stream_options':{'include_usage':True}},timeout=480) as response:
                 if response.status!=200:raise ValueError('Chat SSD fallita: HTTP '+str(response.status))
                 async for line in response.content:
                     if len(line)>65536:raise ValueError('Frame SSD troppo lungo.')
@@ -250,6 +251,29 @@ class SSDRuntime:
         finally:
             if not recorded:self.core.tokens('chat')
             await self.stop()
+
+    async def cache_probe(self,model):
+        metrics={'cache':'persistent-context','backend':'llama.cpp','samples':[]};status='error'
+        try:
+            await self.start(model,'mapped',1024)
+            prompt=await self.template([{'role':'user','content':'Quanto fa 17+25? Rispondi solo con il numero.'}])
+            first=await self.completion(prompt,12)
+            if not await self.checkpoint(model,'mapped',1024,'save','probe'):raise ValueError('Checkpoint non salvato: consulta attività.')
+            await self.stop();await self.start(model,'mapped',1024)
+            if not await self.checkpoint(model,'mapped',1024,'restore','probe'):raise ValueError('Checkpoint non ripristinato: consulta attività.')
+            second=await self.completion(prompt,12)
+            metrics.update({'samples':[first,second],'same_tokens':bool(first.get('tokens')) and first['tokens']==second.get('tokens'),
+                            'same_text':first['content']==second['content'],'peak':dict(self.peak)})
+            if not metrics['same_tokens'] or second.get('timings',{}).get('cache_n',0)==0:
+                raise ValueError('Cache non riutilizzata o token diversi.')
+            status='ok'
+        except asyncio.CancelledError:status='interrupted';raise
+        except Exception as exc:metrics['error']=str(exc)[:500]
+        finally:
+            await self.stop()
+            self.core.store.execute('INSERT INTO core_benchmarks(model,options,status,metrics,created) VALUES(?,?,?,?,?)',
+                (model,json.dumps({'ssd_policy':'cache_probe','ctx':1024,'kv':'f16'}),status,json.dumps(metrics),time.time()))
+            self.core.event('activity','ssd_cache_probe',json.dumps({'model':model,'status':status,'metrics':metrics}))
 
     async def benchmark(self,model):
         await self.unload_ollama()

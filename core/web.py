@@ -64,7 +64,7 @@ def setup_core(app, service):
         if not isinstance(value,dict): raise ValueError('Azione non valida.')
         name = value.get('action')
         if name=='config': core.configure(value.get('config'))
-        elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark'): core.start(name,value.get('text',''))
+        elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'): core.start(name,value.get('text',''))
         elif name=='train': core.training.start()
         elif name=='stop_training': await core.training.stop()
         elif name=='personal_chat': core.start(name,value.get('text',''))
@@ -87,7 +87,7 @@ def setup_core(app, service):
             core.event('files','document',text)
         else: raise ValueError('Azione non valida.')
         core.store.audit(uid,'core_'+name,uid)
-        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark') else 200)
+        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe') else 200)
 
     async def diary(request):
         admin(request)

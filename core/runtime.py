@@ -505,7 +505,7 @@ class Core:
                 if previous:await asyncio.gather(previous,return_exceptions=True)
                 await self.work(mode,text)
             self.task=asyncio.create_task(after_training(),name='core-chat-follow');return
-        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark'):
+        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'):
             self.task.cancel()
             # Schedule after cancellation has released the inference lock.
             previous=self.task
@@ -515,7 +515,7 @@ class Core:
             self.task=asyncio.create_task(follow_chat(),name='core-chat-follow');return
         if self.task and not self.task.done(): raise ValueError('Un ciclo è già in corso.')
         if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark'): raise ValueError('Ciclo non valido.')
+        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'): raise ValueError('Ciclo non valido.')
         if mode=='personal_chat' and not self.config['personal_model']:raise ValueError('Modello personale non disponibile.')
         if mode=='repository':
             from .learning import repo_name
@@ -539,6 +539,7 @@ class Core:
                 elif mode=='reddit': await self.learning.reddit()
                 elif mode=='benchmark':await self.inference.run(text)
                 elif mode=='ssd_benchmark':await self.ssd.benchmark(text or self.config['advanced_code_model'])
+                elif mode=='ssd_cache_probe':await self.ssd.cache_probe(text or self.config['advanced_code_model'])
                 elif mode=='repository': await self.learning.repository(text)
                 elif mode=='tool': await self.learning.install_tool(text)
                 else:
