@@ -36,11 +36,13 @@ jobs:
           script: |
             adb shell settings put system accelerometer_rotation 0
             adb shell settings put system user_rotation 0
+            adb shell settings put system screen_off_timeout 600000
+            adb shell svc power stayon true
             adb install -r dist/alba-albi.apk
             adb install -r android/build/smoke/native-smoke.apk
             adb shell am instrument -w local.alba.smoke/local.alba.NativeUiSmoke > native-ui-result.txt
             cat native-ui-result.txt
-            adb logcat -d -s AndroidRuntime ActivityTaskManager > native-ui-logcat.txt
+            adb logcat -d > native-ui-logcat.txt
             grep -q 'PASS:' native-ui-result.txt
       - uses: actions/upload-artifact@v4
         if: always()
