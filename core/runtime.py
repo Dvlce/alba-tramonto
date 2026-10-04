@@ -203,7 +203,9 @@ class Core:
         recorded=False
         coding=bool(re.search(r'\bcode\b|\bfunction\b|python|programm|codice|script|javascript|typescript|\bsql\b|hacking|vulnerab|debug|algoritm|linux',query,re.I))
         fast=self.config['profile']=='fast'
-        model=self.config['personal_model'] if personal else ('qwen2.5-coder:1.5b' if coding else self.config['model']) if fast else (self.config['code_model'] if coding else self.config['chat_model'])
+        # The Pi benchmark found 1.5B unable to preserve order in a basic coding
+        # task, while 3B passed. Keep the small general model, but route code to 3B.
+        model=self.config['personal_model'] if personal else (self.config['code_model'] if coding else self.config['model']) if fast else (self.config['code_model'] if coding else self.config['chat_model'])
         if not personal and self.config['profile']=='advanced':model=self.config['advanced_code_model']
         maximum=384 if fast and coding else 256 if fast else 768
         from .inference import context_size
@@ -546,6 +548,7 @@ class Core:
                 await asyncio.sleep(15)
                 if self.config['enabled'] and self.store.setting('bot_paused')!='1' and self.training.due() and not (self.training.task and not self.training.task.done()):
                     self.training.start()
+                if self.training.task and not self.training.task.done(): continue
                 if time.time()<self.retry_after or not self.config['enabled'] or self.running or (self.task and not self.task.done()) or self.engine.lock.locked() or self.engine.waiting: continue
                 if self.resources()['overloaded']: continue
                 if self.store.setting('bot_paused')=='1': continue

@@ -138,6 +138,17 @@ class Training:
         work=self.root/'runs'/str(row);work.mkdir(mode=0o700,parents=True,exist_ok=True)
         self.core.event('training','start','Fine-tuning CPU locale: '+str(row))
         try:
+            # A stopped CPU worker still occupies RAM. Release cached inference
+            # weights before loading Torch, instead of waiting forever under load.
+            async with self.core.engine.lock:
+                async with self.core.engine.session.get(self.core.settings.llm_url+'/api/ps',timeout=15) as response:
+                    if response.status!=200:raise ValueError('Inventario modelli residenti non disponibile.')
+                    resident=(await response.json()).get('models',[])
+                for model in resident:
+                    async with self.core.engine.session.post(self.core.settings.llm_url+'/api/generate',json={'model':model['name'],'keep_alive':0},timeout=30) as response:
+                        if response.status!=200:raise ValueError('Impossibile liberare la memoria del modello.')
+                        await response.read()
+                self.core.event('training','memory','Cache di inferenza scaricata prima del worker CPU')
             verified=self.core.store.rows("SELECT * FROM core_diary WHERE status='verified' ORDER BY id DESC LIMIT 100")
             train=examples(verified)
             import hashlib
