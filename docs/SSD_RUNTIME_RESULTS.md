@@ -36,6 +36,8 @@ rates were 2.53 and 2.81 token/s. Peak RSS was 4.82 and 5.28 GB; neither final
 policy swapped. Load times were 8.501 and 2.637 seconds with different file-cache
 conditions and should not be treated as a controlled load-speed improvement.
 
+![7B measured decode comparison](ssd-results/7b-decode.png)
+
 Rows 65–67 retain earlier exploratory runs with CPU repacking, which produced
 different token sequences and up to 1.89 GB of process swap. The final admission
 rule rejects repacking unless its transient duplicate fits; final speculation
@@ -51,6 +53,8 @@ Output text and token IDs match. The request takes 7,424 ms initially and
 one newly processed token. These durations exclude startup and checkpoint I/O.
 The checkpoint is private, atomically written, capped with other checkpoints
 at 512 MiB and separate from the conversation archive.
+
+![Short persistent checkpoint probe](ssd-results/checkpoint.png)
 
 ## Actual long-history Notte chat
 
@@ -74,6 +78,8 @@ and uses a separate checkpoint connection, resolving the observed save failure.
 Even with restoration, the final real chat still takes over four minutes.
 The default Ollama path and the user's selected profile remain available.
 
+![Actual long-history chat first-token latency](ssd-results/chat-latency.png)
+
 ## Genuine 14B above RAM
 
 Row 71 runs Qwen2.5-Coder 14B Q4_K_M: **8,988,110,784 bytes**, unchanged,
@@ -88,6 +94,8 @@ The code probe **fails**: it returns
 and the independent test raises `NameError`. Arithmetic returns `42`; the short
 English answer is `RAM is faster than SSD.` A larger model did not pass this
 specific code task and is not promoted as a faster or better default.
+
+![14B measured decode and failed code test](ssd-results/14b-decode.png)
 
 Mapping a model larger than RAM lets it execute but cannot supply RAM bandwidth
 from an SSD. This integration does not implement Colibri's expert LRU, learned
@@ -106,3 +114,7 @@ The backend is installed on the Pi. Benchmark rows appear in the existing
 native Android app's System section; this backend change requires no new APK.
 The runtime can be enabled explicitly through the documented local admin CLI
 or authenticated API and disabled without deleting weights or memory.
+
+Figures are reproducible from the recorded JSON with `plot_ssd_results.py`;
+PNG files are embedded here and matching SVG files are available for export.
+See the [reporting convention for subsequent test campaigns](TESTING_REPORTS.md).
