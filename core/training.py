@@ -93,7 +93,7 @@ class Training:
                         match=re.search(r'VmRSS:\s+(\d+)',(p/'status').read_text())
                         if match:rss+=int(match[1])
                     except (OSError,ValueError,IndexError):pass
-                if rss>3500*1024:raise ValueError('Training fermato: limite RAM 3,5 GB.')
+                if rss>4500*1024:raise ValueError('Training fermato: limite RAM 4,5 GB.')
                 r=self.core.resources();pause=self.core.running or self.core.engine.lock.locked() or r['overloaded'] or not self.core.config['enabled'] or self.core.store.setting('bot_paused')=='1'
                 if pause!=self.paused:
                     os.killpg(process.pid,signal.SIGSTOP if pause else signal.SIGCONT);self.paused=pause

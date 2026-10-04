@@ -31,7 +31,7 @@ CapabilityBoundingSet=
 AmbientCapabilities=
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
 TasksMax=256
-MemoryMax=4G
+MemoryMax=5G
 # CPU training uses large virtual mappings; the worker monitors resident memory.
 LimitAS=infinity
 CPUWeight=80
