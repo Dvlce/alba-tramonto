@@ -209,7 +209,7 @@ I file GGUF di questa installazione sono già sul filesystem NVMe. `mmap` lascia
 
 Feed RSS pubblici di r/learnpython, r/programming, r/netsec e r/raspberry_pi, a rotazione ogni ora, massimo dodici elementi per lettura e 256 KiB di download. URL Reddit HTTPS validati, HTML convertito a testo e deduplica persistente per URL. Le fonti alimentano il RAG e il diario per argomento con stato `read`; non vengono presentate come competenze verificate. Un errore HTTP rinvia la lettura, senza martellare l’endpoint. I post sono dati non fidati e non diventano automaticamente target di fine-tuning.
 
-La riflessione può scegliere ricerca, lettura Reddit, studio, repository GitHub pubblico, installazione dei tre strumenti del catalogo, messaggio a Matt o pausa. Non esiste più il tetto giornaliero Telegram. Restano l’associazione verificata a Matt, gli errori/retry del trasporto Telegram e i limiti fisici del Pi. Avvii, errori, esiti, interruzioni, latenza, letture, fonti, esercizi e training sono consultabili nel registro completo. Le note sintetiche non sono una trascrizione di ragionamento nascosto.
+La riflessione può scegliere ricerca, lettura Reddit, studio, repository GitHub pubblico, installazione dei tre strumenti del catalogo, messaggio a Matt o pausa. Non esiste più il tetto giornaliero Telegram. Restano l’associazione verificata a Matt, gli errori/retry del trasporto Telegram e i limiti fisici del Pi. Avvii, errori, esiti, interruzioni, latenza, letture, fonti, esercizi e training sono consultabili nel registro completo, con paginazione delle attività precedenti. Le note sintetiche non sono una trascrizione di ragionamento nascosto.
 
 ## Training locale 1.3
 
@@ -217,7 +217,7 @@ La riflessione può scegliere ricerca, lettura Reddit, studio, repository GitHub
 
 - Ambiente Python 3.13 ARM64 separato: PyTorch 2.12.1 CPU con SHA256 della wheel ufficiale, Transformers 4.57.1, PEFT 0.17.1, Accelerate 1.10.1, Safetensors 0.6.2.
 - Dataset: dodici esercizi originali di richiamo più soluzioni del curriculum con stato sandbox `verified`; massimo 48 coppie uniche. Chat, credenziali e post internet grezzi non sono target. ID fonte e SHA256 del dataset restano nel ciclo.
-- LoRA: r=4, alpha=8, dropout=.05, proiezioni q/v degli ultimi due layer, 22.528 parametri trainabili; AdamW 0.0007, batch 1, massimo 128 token, fino a 24 step, loss solo sui token di risposta, seed 42. Due thread CPU, priorità nice 15, limite RSS del gruppo 4500 MiB, timeout tre ore.
+- LoRA: r=4, alpha=8, dropout=.05, proiezioni q/v degli ultimi due layer, 22.528 parametri trainabili; AdamW 0.0007, batch 1, massimo 128 token, fino a 24 step, loss solo sui token di risposta, seed 42. Due thread CPU, priorità nice 15, limite RSS del gruppo 4500 MiB, timeout tre ore; salvataggio con shard da 512 MB per contenere i buffer temporanei.
 - Quattro target separati misurano la loss prima/dopo; niente pubblicazione se peggiora o se i pesi non cambiano. Adapter Safetensors, SHA256, loss, RSS e log restano privati e ispezionabili dall’admin.
 - Merge del LoRA e conversione GGUF F16→Q4_K_M con llama.cpp alla revisione `dd266785c2595775001c1c714bd9d92b3ef34cde`. Questo evita incompatibilità fra le importazioni Safetensors delle versioni Ollama. L’import locale crea `notte-personal:AAAAMMGG-ID`.
 - Quattro funzioni holdout generate dal candidato sono eseguite con test indipendenti. Solo 4/4 abilita il nuovo checkpoint personale; altrimenti la versione è `rejected` e il precedente resta attivo. Superare quattro esercizi non dimostra capacità generali superiori: la chat principale conserva il profilo scelto e una sezione permette di provare esplicitamente il modello personale.
@@ -234,3 +234,5 @@ La preparazione scarica il modello pubblico fissato e compila il quantizzatore C
 SQLite contiene configurazione, stato, dataset hash e metriche. Gli adapter sono in `data/core-training/runs/ID/adapter`; per il disaster recovery occorre conservare privatamente anche questa directory, `base/ready.json` e i modelli Ollama oltre ai backup SQLite cifrati. I backup SQLite esistenti includono diario, fonti Reddit, versioni e benchmark, ma non file di pesi esterni. Una versione con adapter rimosso dalla retention non è più ripristinabile. `rollback` seleziona solo checkpoint accettati ancora presenti, mai un percorso fornito dal client.
 
 Prova reale CPU iniziale su Pi 5 8 GB: 12 step, loss holdout 0,5925→0,3877, delta L1 dei pesi 117,52, RSS massimo circa 3.161 MiB. L’adapter è stato convertito in Q4_K_M e importato in Ollama. Il log di ogni ciclo produttivo costituisce la verifica effettiva della promozione giornaliera.
+
+Misure reali della release: [64 prove, chat produttiva e LoRA](PI_INFERENCE_RESULTS.md).
