@@ -10,6 +10,7 @@ import secrets
 import signal
 import time
 from pathlib import Path
+from aiohttp import ClientError
 from .gguf_plan import GIB, inspect_gguf, plan
 from .prepare_conversion import LLAMA_REVISION
 
@@ -21,7 +22,7 @@ def memory():
     return fields['MemTotal'],fields['MemAvailable']
 
 
-def command(binary,model,policy,context,key,port=8092,draft=None):
+def command(binary,model,policy,context,key,port=8092,draft=None,slots=None):
     if policy not in POLICIES or type(context) is not int or not 512<=context<=4096:raise ValueError('Policy SSD non valida.')
     args=[str(binary),'--model',str(model),'--host','127.0.0.1','--port',str(port),
           '--api-key-file',str(key),'--threads','4','--threads-batch','4','--poll','0',
@@ -30,6 +31,7 @@ def command(binary,model,policy,context,key,port=8092,draft=None):
           '--cache-ram','0','--no-context-shift','--no-warmup','--jinja','--metrics',
           '--flash-attn','on']
     if policy in ('mapped','speculative'):args+=['--no-repack']
+    if slots:args+=['--slots','--slot-save-path',str(slots)+'/' ]
     if policy=='speculative':
         if not draft:raise ValueError('Modello draft non preparato.')
         args+=['--spec-type','draft-simple','--model-draft',str(draft),
@@ -42,6 +44,7 @@ class SSDRuntime:
         self.core=core;self.root=core.settings.data/'core-inference'
         self.binary=self.root/'build/bin/llama-server';self.process=None;self.watch=None
         self.peak={};self.failure='';self.key='';self.info_cache={}
+        self.cache_dir=self.root/'kv-cache'
 
     def catalog(self):
         path=self.root/'models.json'
@@ -125,9 +128,10 @@ class SSDRuntime:
         self.root.mkdir(mode=0o700,parents=True,exist_ok=True)
         key_file=self.root/'server.key';key_file.touch(mode=0o600,exist_ok=True);key_file.write_text(self.key+'\n');key_file.chmod(0o600)
         log_path=self.root/'server.log';log_path.touch(mode=0o600,exist_ok=True)
+        self.cache_dir.mkdir(mode=0o700,parents=True,exist_ok=True)
         with log_path.open('wb') as output:
-            self.process=await asyncio.create_subprocess_exec(*command(self.binary,target,policy,context,key_file,draft=draft),
-                stdout=output,stderr=output,start_new_session=True,
+            self.process=await asyncio.create_subprocess_exec(*command(self.binary,target,policy,context,key_file,draft=draft,slots=self.cache_dir),
+                stdout=output,stderr=output,start_new_session=True,umask=0o077,
                 env={'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':str(self.root),'USER':'alba','LC_ALL':'C.UTF-8'})
         self.watch=asyncio.create_task(self.monitor())
         started=time.monotonic()
@@ -144,6 +148,40 @@ class SSDRuntime:
 
     @property
     def headers(self):return {'Authorization':'Bearer '+self.key}
+
+    def cache_name(self,model,policy,context):
+        if policy not in POLICIES or type(context) is not int or not 512<=context<=4096:raise ValueError('Cache non valida.')
+        return self.catalog()[model]['sha256']+'-'+LLAMA_REVISION[:12]+'-'+policy+'-'+str(context)+'.bin'
+
+    async def checkpoint(self,model,policy,context,action):
+        if action not in ('save','restore'):raise ValueError('Azione cache non valida.')
+        name=self.cache_name(model,policy,context);path=self.cache_dir/name
+        if action=='restore' and (not path.is_file() or path.is_symlink()):return False
+        filename=name+'.tmp' if action=='save' else name
+        temporary=self.cache_dir/filename
+        try:
+            if action=='restore' and path.stat().st_size>512*1024**2:raise ValueError('Cache troppo grande.')
+            async with self.core.engine.session.post('http://127.0.0.1:8092/slots/0?action='+action,
+                      headers=self.headers,json={'filename':filename},timeout=15) as response:
+                if response.status!=200:raise ValueError('Checkpoint KV non disponibile.')
+                value=await response.json()
+            if action=='save':
+                if not temporary.is_file() or temporary.is_symlink() or not 0<temporary.stat().st_size<=512*1024**2:
+                    raise ValueError('Dimensione checkpoint KV non valida.')
+                temporary.chmod(0o600);temporary.replace(path)
+                cached=sorted(self.cache_dir.glob('*.bin'),key=lambda p:p.stat().st_mtime,reverse=True)
+                size=0
+                for saved in cached:
+                    size+=saved.stat().st_size
+                    if size>512*1024**2:saved.unlink()
+            self.core.event('activity','ssd_cache',json.dumps({'action':action,'model':model,'context':context,
+                'tokens':value.get('n_saved') if action=='save' else value.get('n_restored')}))
+            return True
+        except (ClientError,OSError,ValueError,asyncio.TimeoutError):
+            if action=='save':temporary.unlink(missing_ok=True)
+            else:path.unlink(missing_ok=True)
+            self.core.event('activity','ssd_cache','Cache '+action+' non disponibile; archivio e modello conservati.')
+            return False
 
     async def stop(self):
         if self.watch:
@@ -183,6 +221,7 @@ class SSDRuntime:
             policy=self.core.config.get('ssd_policy','auto')
             if policy=='auto':policy=placement['policy']
             await self.start(model,policy,context)
+            await self.checkpoint(model,policy,context,'restore')
             self.core.event('activity','ssd_model',json.dumps({'model':model,'policy':policy,'plan':placement}))
             async with self.core.engine.session.post('http://127.0.0.1:8092/v1/chat/completions',headers=self.headers,
                       json={'model':model,'messages':messages,'max_tokens':maximum,'temperature':.65,
@@ -204,6 +243,7 @@ class SSDRuntime:
             if self.failure or not done or not self.core.partial.strip():raise ValueError(self.failure or 'Risposta SSD incompleta.')
             self.core.tokens('chat',usage.get('prompt_tokens'),usage.get('completion_tokens'))
             recorded=True
+            await self.checkpoint(model,policy,context,'save')
             self.core.event('activity','latency',json.dumps({'model':model,'backend':'llama.cpp-ssd','policy':policy,
                 'first_token_ms':round((first-started)*1000) if first else None,
                 'total_ms':round((time.monotonic()-started)*1000),'peak':self.peak,'sha256':self.catalog()[model]['sha256']}))

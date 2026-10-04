@@ -43,6 +43,7 @@ prompts are evidence for those prompts, not a universal intelligence guarantee.
 * `data/core-inference/models.json`: model name, immutable GGUF digest and size.
   `models/` holds links/copies; `build/` holds native binaries; private
   `server.log` records the latest server. `server.key` exists only during a run.
+  Private `kv-cache/` holds at most 512 MiB of derived f16 context checkpoints.
 
 The native runtime uses one slot, four Cortex-A76 CPU threads, batch/ubatch 128,
 polling disabled, mmap and f16 K/V. `native` enables CPU weight repacking only when
@@ -89,8 +90,13 @@ sudo -u alba .venv/bin/python -m core.ssd_cli enable \
 
 `enable` selects Notte's advanced profile and that exact target. Subsequent chat
 in the existing native Android app or portal streams from the local CPU server.
-Each request unloads other Ollama weights, starts the native server, then releases
-it on completion, cancellation or failure. This avoids a second persistent model
+Each request unloads other Ollama weights, starts the native server, restores a
+compatible context checkpoint, then releases it on completion, cancellation or
+failure. Checkpoints are keyed by target SHA, llama.cpp revision, policy and
+context size; the server reuses only the exact matching prompt prefix. A corrupt
+cache is discarded and the original model computes the context again. Completed
+chat saves atomically with 0600 permissions. These caches are reconstructable,
+not substitutes for the persistent conversation archive. This avoids a second persistent model
 competing with autonomous study/daily training; each chat includes a load cost.
 Fast/quality chat, Alba and autonomous learning retain their existing Ollama path.
 The selected model and runtime policy appear in activity/latency logs; benchmark
@@ -121,7 +127,9 @@ transient duplicate would exceed the budget. For disk-bound targets, run only th
 mapped policy. Three fixed
 public prompts cover code, Italian arithmetic and an English hardware question;
 repeat each to expose prompt-cache reuse. All use temperature 0, seed 42, at most
-96 output tokens and the target GGUF's own template. A cold prompt means a new
+96 output tokens and the target GGUF's own template. Oversized dense models use
+three shorter public probes and a 32-token limit; their results are not the same
+task as the resident-model speed comparison. A cold prompt means a new
 prompt, not a globally evicted SSD cache. No global drop_caches or swap changes.
 
 Results retain target SHA, architecture, byte size, quantization provenance, load

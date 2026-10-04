@@ -117,3 +117,15 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
             runtime=SSDRuntime(SimpleNamespace(settings=SimpleNamespace(data=Path(temporary))))
             runtime.root.mkdir();(runtime.root/'models.json').write_text(json.dumps({'bad':{'file':'../../auth.key','sha256':'a'*64,'size':4}}))
             with self.assertRaises(ValueError):runtime.model_path('bad')
+
+    async def test_cache_is_bound_to_target_revision_context_and_policy(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            core=SimpleNamespace(settings=SimpleNamespace(data=Path(temporary)),event=lambda *args:None)
+            runtime=SSDRuntime(core);runtime.root.mkdir()
+            (runtime.root/'models.json').write_text(json.dumps({'large':{'sha256':'a'*64},'other':{'sha256':'b'*64}}))
+            self.assertNotEqual(runtime.cache_name('large','mapped',1024),runtime.cache_name('other','mapped',1024))
+            self.assertNotEqual(runtime.cache_name('large','mapped',1024),runtime.cache_name('large','mapped',2048))
+            self.assertNotEqual(runtime.cache_name('large','mapped',1024),runtime.cache_name('large','speculative',1024))
+            self.assertFalse(await runtime.checkpoint('large','mapped',1024,'restore'))
+            with self.assertRaises(ValueError):runtime.cache_name('large','../../auth',1024)
+            with self.assertRaises(ValueError):await runtime.checkpoint('large','mapped',1024,'delete')
