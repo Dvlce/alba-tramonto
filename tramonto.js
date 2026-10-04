@@ -240,6 +240,12 @@ $('exportNote').addEventListener('click',async()=>{if(!doc)return;try{doc.conten
 }catch(failure){error(failure.message);}});
 $('printNote').addEventListener('click',async()=>{if(!doc)return;const images=Array.from($('richEditor').querySelectorAll('img'));await Promise.all(images.map(image=>image.decode().catch(()=>{})));window.print();});
 window.addEventListener('beforeunload',event=>{if(dirty||uploading){event.preventDefault();event.returnValue='';}});
+document.addEventListener('alba-before-space-change',event=>{
+  event.detail.waitUntil((async()=>{
+    if(uploading){error('Attendi il completamento dell’importazione prima di cambiare spazio.');return false;}
+    clearTimeout(saveTimer);return await saveDoc();
+  })());
+});
 window.addEventListener('online',()=>{if(doc&&dirty&&!saving&&!opening&&!uploading)saveDoc();});
 window.addEventListener('focus',async()=>{if(doc&&!dirty&&!saving&&!opening&&!uploading)try{const id=doc.id,updated=await api('/api/tramonto/notes/'+id);if(doc?.id===id&&!dirty&&!saving&&!opening&&!uploading&&updated.version!==doc.version)await openNote(id,true);}catch(failure){error(failure.message);}});
 window.TramontoTools={expressionFunction,estimateLimit,plot,saveDoc,redrawDrawing,renderCircuit};

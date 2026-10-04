@@ -1,30 +1,35 @@
 # Alba + Tramonto + Notte
 
-[Progetto di ottimizzazione](docs/TEST_LAB.md): sito IT/EN su `/optimization`
-con informazioni, news documentate, benchmark e storia delle evoluzioni. In
-Notte e nell’app Android nativa 1.4, la **Test Lab** confronta lo stesso modello
-e prompt attraverso Ollama normale e SSD, con risposte, grafici e report privati.
+[Italian documentation](README.it.md)
 
-AI conversazionale locale, Telegram e web, con memoria nel tempo. **Notte / ALBA-CORE** aggiunge una personalità autonoma con emozioni persistenti, memoria vettoriale locale, riflessione, riassunti, ricerca Wikipedia e messaggi Telegram a Matt. [Architettura, configurazione e limiti di ALBA-CORE](docs/ALBA_CORE.md). Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
+Local conversational AI for Telegram and the web, with persistent memory. **Alba** provides conversation and account management. **Tramonto** is an administrator-only notebook with A4 pages, inline images, mathematics, drawing, isolated ngspice circuits, and educational network tools. **Notte / ALBA-CORE** adds an autonomous personality with persistent emotions, local vector memory, reflection, summaries, Wikipedia research, and Telegram messages to its paired administrator.
+
+All three web spaces share the same dropdown navigation: existing brand icons, consistent labels and sizing, a current-space indicator, keyboard navigation, and mobile support. Short entrance and navigation animations follow the selected theme and palette. Tramonto uses abstract warm horizon light with its existing ◒ mark, Alba uses its intertwined symbol, and Notte uses its crescent. Reduced motion and the animation preference are respected. Leaving Tramonto waits for notebook changes to save; a failed save keeps the editor open.
+
+[Optimization project](docs/TEST_LAB.md): the IT/EN site at `/optimization` publishes information, sourced news, benchmarks and evolution history. Notte and native Android 1.4 include a private **Test Lab** comparing the same model and prompt through normal Ollama and SSD, with actual outputs, charts and exported reports. [Measured comparison and limitations](docs/TEST_LAB_RESULTS.md).
 
 [ALBA SSD Runtime](docs/SSD_RUNTIME.md): esecuzione del GGUF scelto, kernel ARM nativi, mmap senza copie complete per i modelli grandi, confronto del decoding speculativo e controllo RAM/temperatura. Integrato nella chat avanzata di Notte, con identità del modello e benchmark verificabili. Non promette inferenza fluida oltre la RAM né implementa la cache esperti universale di Colibri.
 
 ![Tramonto](docs/tramonto.png)
 
-- Memorie private e di gruppo separate; fatti dichiarati, inferenze e informazioni incerte con fonti e stato. SQLite FTS5, contesto limitato, profili persistenti e feedback per utente. Non effettua fine-tuning dei pesi del modello.
-- Telegram privato/gruppi: menzioni, reply, comandi e modalità automatica configurabile. Sito con lo stesso archivio Telegram dopo un’associazione verificata.
-- Chiavi web monouso e password personali, browser ricordati e revocabili. Accessi opzionali Google/GitHub/Discord/Twilio Verify configurabili con segreti cifrati. Nessuna fusione automatica per email.
-- 20 utenti autorizzati, 5 persone attive, coda, Stop, limiti mensili di token, calendario di utilizzo, CPU/RAM/disco ogni 2 secondi, audit e backup cifrati con retention.
-- Tema chiaro/scuro, classico/neomorfismo/vetro, logo animato e Albi, mascotte albicocca originale.
-- Tramonto: raccolta quaderni, otto stili di carta, quattro font, tabelle e modelli. Pagine A4 numerate, continuazione del testo lungo e ripristino della pagina/posizione. Immagini incollate/caricate, trascinabili e ridimensionabili, con testo a fianco. Formule, grafici e laboratori inseribili nella pagina come immagini PNG, con selezione, maniglia di ridimensionamento, larghezza, allineamento e spostamento nel testo. Comandi raggruppati, impostazioni dell’oggetto accanto al foglio e stampa della sola pagina A4.
-- Aspetto di Alba e Tramonto: Classico, Neomorfismo, Vetro, Claymorphism, Cybercore, Neobrutalism, Scrapbook e Surrealism. Luminosità chiara/scura/grigia/nera e sei palette indipendenti, conservate sul dispositivo. Menu Aspetto su Alba, anche prima del login; stampa A4 di Tramonto bianca senza decorazioni. Icone Lucide locali con licenza inclusa.
-- Matematica: LaTeX/KaTeX, tre curve, funzioni trigonometriche/iperboliche, limiti numerici, derivate simboliche, integrali e zeri numerici. Le stime numeriche non sostituiscono dimostrazioni.
-- Elettronica: 28 dispositivi, generatore di funzioni, strumenti, fili, rotazione/undo; ngspice locale isolato per DC, transitorio, sweep AC e DC, grafici/CSV/netlist. Modelli generici didattici, non una replica di Multisim.
-- Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato e traceroute didattici, controllo IP/gateway/collegamenti, duplicazione e disposizione a griglia. CIDR con intervallo host/wildcard, suddivisione uniforme e VLSM, rapporti e tabelle inseribili nel quaderno. Selezione multipla con Maiusc/clic, pressione prolungata o area, spostamento del gruppo, Canc/Delete e Annulla nei circuiti e nelle topologie. Console show/diagnose/traceroute. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
+## Features
 
-## Installazione Linux / Raspberry Pi
+- Separate private and group memories, with sources and status for declared facts, inferences, and uncertain information. SQLite FTS5, bounded context, persistent profiles, and per-user feedback. Alba's conversational memory does not fine-tune model weights.
+- Private and group Telegram conversations: mentions, replies, commands, and configurable automatic replies. The web interface uses the same Telegram archive after verified account linking.
+- Single-use web keys, personal passwords, and remembered browsers that users can revoke. Optional Google, GitHub, Discord, and Twilio Verify sign-in, with encrypted provider secrets. Accounts are not automatically merged by email.
+- Up to 20 authorized users and 5 active chat slots, a queue, Stop controls, monthly token limits, a usage calendar, CPU/RAM/disk readings every 2 seconds, auditing, and encrypted backups with retention.
+- An animated Alba logo and Albi, the original apricot mascot.
+- Tramonto notebook collections, eight paper styles, four fonts, tables, and templates. Numbered A4 pages, continuation of long text, and restoration of the current page and position. Pasted or uploaded images can be moved and resized with text alongside them. Formulas, graphs, and lab results can be inserted as PNG notebook objects, with selection, resize handles, width, alignment, and movement controls. Grouped editing commands, an object inspector beside the page, and printing of the A4 page alone.
+- Alba and Tramonto appearance settings: Classic, Neomorphism, Glass, Claymorphism, Cybercore, Neobrutalism, Scrapbook, and Surrealism. Light, dark, gray, and black modes, plus six independent palettes remembered on the device. Alba's appearance menu is available before login. Tramonto prints clean white A4 pages without decorative effects. Lucide icons are served locally with their license included.
+- Mathematics: LaTeX/KaTeX, three plotted curves, trigonometric and hyperbolic functions, numerical limits, symbolic derivatives, integrals, and numerical roots. Numerical estimates are not mathematical proofs.
+- Electronics: 28 devices, a function generator, instruments, wires, rotation, and undo. Isolated local ngspice supports DC, transient analysis, AC/DC sweeps, plots, CSV, and netlists. Device models are educational rather than a Multisim replica.
+- Networks: nine devices, cables, VLANs, gateways, interfaces, animated educational ping/traceroute, IP/gateway/link checks, duplication, and grid layout. CIDR host ranges and wildcard masks, equal-size subnetting and VLSM, and reports/tables that can be inserted into a notebook. Multi-selection through Shift-click, long press, or area selection; group movement, Delete, and Undo in circuits and topologies. A show/diagnose/traceroute console. It does not run Cisco IOS or send real packets; routing through multiple routers is not implemented.
 
-Requisiti consigliati: Raspberry Pi 5, 8 GB, Linux 64 bit, almeno 10 GB liberi per modelli e dati. Il setup analizza RAM/CPU/disco e sceglie il modello iniziale. I 750 GB non sono necessari: la retention si configura in `.env`.
+See [ALBA-CORE architecture, configuration, and limitations](docs/ALBA_CORE.md) and [Raspberry Pi measurements: eight models, 64 trials, and personal training](docs/PI_INFERENCE_RESULTS.md). These detailed guides are currently in Italian.
+
+## Install on Linux / Raspberry Pi
+
+Recommended hardware: Raspberry Pi 5, 8 GB RAM, 64-bit Linux, and at least 10 GB free for models and data. Setup inspects RAM, CPU, and disk space and selects an initial model. A 750 GB disk is not required; retention is configured in `.env`.
 
 ```sh
 git clone https://github.com/Dvlce/alba-tramonto.git
@@ -32,13 +37,13 @@ cd alba-tramonto
 python3 install.py
 ```
 
-Il setup installa dipendenze Linux, ambiente Python, Ollama se assente, modello e servizio. Chiede in modo protetto il token BotFather e l’ID admin; puoi omettere Telegram e creare un amministratore locale da terminale. Conserva una `.env` esistente. I download richiedono internet durante il setup; le risposte del modello girano localmente. `--skip-system`, `--no-model`, `--no-service` permettono installazioni personalizzate.
+Setup installs Linux dependencies, a Python environment, Ollama if it is missing, the model, and the service. It securely prompts for the BotFather token and administrator ID. You can omit Telegram and create a local administrator from the terminal. Existing `.env` files are preserved. Downloads need internet access during setup; model inference runs locally. Use `--skip-system`, `--no-model`, or `--no-service` for a customized installation.
 
-Credenziali iniziali in `data/first-access.txt`, permessi 0600: leggile dal terminale, conservale e rimuovi il file. Il server ascolta **solo su 127.0.0.1:8088**. Pubblicalo con un reverse proxy HTTPS; configura `PUBLIC_URL` e riavvia. Tailscale Funnel è una possibilità: gli utenti del sito e Telegram non devono installare Tailscale. Non pubblicare la porta Ollama o il database.
+Initial credentials are written to `data/first-access.txt` with mode `0600`. Read them from the terminal, store them safely, and remove that file. The server listens **only on 127.0.0.1:8088**. Publish it through an HTTPS reverse proxy, set `PUBLIC_URL`, and restart. Tailscale Funnel is one option; web and Telegram users do not need to install Tailscale. Do not expose the Ollama port or the database.
 
-Il servizio generato dal setup gira come l’utente installatore. Per un’installazione più protetta usa un utente di servizio dedicato e adatta `deploy/alba.service`; [SICUREZZA.md](SICUREZZA.md) descrive le misure applicate sull’installazione di riferimento. `deploy/harden_pi.py` è specifico di quella macchina: leggerlo e adattare utenti/chiavi prima di usarlo altrove. Non cambia SSH/firewall automaticamente durante il setup generale.
+The generated service runs as the installing user. To use a dedicated service account, adapt `deploy/alba.service`. [Security measures](SICUREZZA.md) describes the reference installation in Italian. `deploy/harden_pi.py` is specific to that machine: review and adapt its users and keys before using it elsewhere. General setup does not automatically change SSH or firewall configuration.
 
-Backend e modello sono sostituibili:
+The model and backend can be replaced:
 
 ```ini
 MODEL=qwen3:4b-instruct-2507-q4_K_M
@@ -48,19 +53,19 @@ MAX_USERS=20
 MAX_ONLINE=5
 ```
 
-Con 8 GB, il modello quantizzato 4B e SQLite sono una scelta leggera; viene eseguita una generazione alla volta. I cinque posti non significano cinque modelli caricati. Con meno RAM il setup propone `qwen3:1.7b`. Per llama.cpp usa `LLM_BACKEND=llamacpp` e il suo endpoint OpenAI-compatible locale. Valuta qualità e latenza sul tuo hardware prima di cambiare modello.
+With 8 GB RAM, a quantized 4B model and SQLite provide a lightweight configuration. Only one generation runs at a time; five chat slots do not mean five loaded models. With less RAM, setup suggests `qwen3:1.7b`. For llama.cpp, use `LLM_BACKEND=llamacpp` and its local OpenAI-compatible endpoint. Measure quality and latency on your hardware before switching models.
 
-## Telegram, sito e accessi esterni
+## Telegram, web access, and external sign-in
 
-Crea il bot con BotFather; imposta il token nel setup o in `.env`. Per i gruppi abilita i messaggi necessari nelle impostazioni BotFather e aggiungi il bot. `/start`, `/help`, `/profile`, `/memory`, `/timeline`, `/search`, `/stats`, `/export`, `/export_key`, `/export_personality`, `/export_prompt`, `/forget`, `/backup`, `/web_key`, `/web_password`, `/feedback`, `/memory_key`, `/stop`. Comandi admin separati; le operazioni sono registrate. Per configurare un gruppo l’amministratore Alba deve essere anche amministratore Telegram del gruppo.
+Create a bot with BotFather and provide its token during setup or in `.env`. For groups, enable the required messages in BotFather and add the bot. Supported commands include `/start`, `/help`, `/profile`, `/memory`, `/timeline`, `/search`, `/stats`, `/export`, `/export_key`, `/export_personality`, `/export_prompt`, `/forget`, `/backup`, `/web_key`, `/web_password`, `/feedback`, `/memory_key`, and `/stop`. Administrator commands are separate and operations are audited. An Alba administrator must also be a Telegram administrator of a group to configure it.
 
-`/web_key` in privato genera un pulsante di login personale: la chiave è nel frammento URL, rimossa subito dal browser e consumata una volta. Con accesso automatico attivo si autorizza fino al limite di 20. `/web_password` crea o rinnova le proprie credenziali. Esportazioni solo con verifica privata e chiave monouso; l’admin non recupera password o chiavi originali. I file separano dati originali, riassunti, inferenze e incertezze, senza includere dati privati di gruppi/altri utenti.
+In a private chat, `/web_key` creates a personal login button. Its key is carried in the URL fragment, immediately removed from the browser URL, and consumed once. With automatic admission enabled, users can be authorized up to the configured limit of 20. `/web_password` creates or renews personal credentials. Exports require private verification and a single-use key; an administrator cannot recover original passwords or keys. Export files distinguish original data, summaries, inferences, and uncertainty without including other users' private data or unrelated group data.
 
-L’amministratore può richiedere dal pannello il consenso per consultare le memorie di un utente. La persona genera `/memory_key` nella propria chat privata e consegna volontariamente il codice: monouso e valido 15 minuti, apre una consultazione di 15 minuti per quell’amministratore. `/memory_key revoke` revoca codici e accessi. Il permesso non consente esportazioni; chiavi e dati non vengono registrati nei log.
+The administrator can request permission through the panel to inspect a user's memories. That user generates `/memory_key` in their private chat and voluntarily shares the code. The code is single-use, expires after 15 minutes, and grants that administrator a 15-minute inspection window. `/memory_key revoke` revokes codes and access. This permission does not allow exports. Keys and private data are not written to logs.
 
-Google/GitHub/Discord/SMS sono **predisposti, disabilitati senza credenziali**. [Istruzioni complete](ACCESSI_ESTERNI.md). Google usa identità/email/profilo, non legge Gmail. Per mantenere l’identità Telegram, accedi prima con Telegram e collega il provider dalla sezione Dispositivi.
+Google, GitHub, Discord, and SMS sign-in are **available for configuration but disabled without credentials**. See [external sign-in instructions](ACCESSI_ESTERNI.md), currently in Italian. Google uses identity, email, and profile information; it does not read Gmail. To preserve a Telegram identity, sign in with Telegram first and link the provider in Devices.
 
-Da terminale, con permessi del gestore:
+Terminal commands for the installation operator:
 
 ```sh
 .venv/bin/python cli.py users
@@ -70,24 +75,37 @@ Da terminale, con permessi del gestore:
 .venv/bin/python maintenance.py backup
 ```
 
-Restore: ferma il servizio, poi `maintenance.py restore FILE --service-stopped`; richiede le chiavi locali e invalida gli accessi precedenti. I backup sono cifrati, il database live è protetto dai permessi. `/forget all confermo` cancella anche i backup precedenti dell’installazione; le copie già scaricate e i messaggi Telegram vanno rimossi separatamente.
+To restore a backup, stop the service first and run `maintenance.py restore FILE --service-stopped`. Restoration requires the local keys and invalidates previous access. Backups are encrypted and the live database is protected by filesystem permissions. `/forget all confermo` also deletes previous backups on the installation; downloaded copies and Telegram messages must be removed separately.
 
-## Android e integrazione
+## Android and integration
 
-APK in [Releases](https://github.com/Dvlce/alba-tramonto/releases), oppure `/download/alba-albi.apk` se il gestore lo ha installato sul server. La versione 1.3.0 ha interfaccia Android nativa, senza WebView, chat principale e menu a tendina, in italiano e inglese. Include Android App Links verificati per i link personali Telegram. Invia `/notte` nella chat privata admin di Alba per associare Matt ai messaggi autonomi. L’editor nativo salva testo, disegno e JSON e conserva gli oggetti avanzati; i laboratori completi, le immagini e il PDF A4 restano nel portale web; non incorpora dati personali o un LLM e richiede connessione al server. Il server HTTPS si può cambiare dall’app. [Sorgenti e build Android](android/README.md).
+Get the APK from [Releases](https://github.com/Dvlce/alba-tramonto/releases), or `/download/alba-albi.apk` when it has been installed on the server. Version 1.3.0 uses a native Android interface without a WebView, with a main chat and dropdown navigation in Italian and English. It includes verified Android App Links for personal Telegram login links. Send `/notte` in Alba's private administrator chat to pair the administrator with autonomous messages.
 
-Per integrare il motore in un sistema esistente: [alba-local-kit](https://github.com/Dvlce/alba-local-kit), package Python con adapter, Telegram e chiavi web/CLI.
+The native editor saves text, drawing, and JSON while preserving advanced objects. Full labs, images, and A4 PDF remain available in the web portal. The app contains neither personal data nor a bundled LLM and requires a server connection. Its HTTPS server address can be changed in the app. See [Android source and build instructions](android/README.md).
 
-## Verifica
+To integrate the engine into an existing system, see [alba-local-kit](https://github.com/Dvlce/alba-local-kit), a Python package with adapters, Telegram integration, and web/CLI keys.
+
+## Validation
 
 ```sh
 .venv/bin/python -m unittest discover -s tests
 ```
 
-341 scenari/test automatici sul Raspberry e in Linux CI, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py`, `tests/alba_appearance_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
+The automated suite runs on Raspberry Pi and in Linux CI, including four circuits executed in isolated ngspice. Simulator tests require Linux, ngspice, bubblewrap, and available user namespaces.
 
-Alba è un supporto alla riflessione e ai problemi quotidiani, non un servizio clinico o di emergenza. I controlli di provenienza riducono gli errori, ma un modello può ancora produrre risposte inesatte. Il gestore configura privacy, contatti, accessi e manutenzione.
+Browser checks use Playwright and Chromium:
 
-MIT per il codice originale. Le librerie in `vendor/` includono le proprie licenze; i modelli hanno licenze separate. Nessuna telemetria applicativa, nessun archivio personale, token o chiave incluso nel repository.
+```sh
+.venv/bin/python -m pip install playwright
+.venv/bin/python -m playwright install chromium
+.venv/bin/python tests/portal_motion_browser_check.py
+.venv/bin/python tests/notte_browser_check.py
+```
 
-[Misure sul Raspberry: otto modelli, 64 prove e training personale](docs/PI_INFERENCE_RESULTS.md).
+Additional checks are available in `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py`, and `tests/alba_appearance_check.py`. They use temporary databases and do not require LLM calls. Coverage includes identical portal menus and keyboard focus, theme-aware motion, save-before-navigation and failed-save recovery, private/group isolation, denied exports of another user's data, images, A4 printing, reloads, simulations, accounts, CSRF, revocation, and backup/restore.
+
+## Scope and licenses
+
+Alba supports reflection and everyday problem-solving; it is not a clinical or emergency service. Source tracking reduces errors, but a model can still produce inaccurate responses. The installation operator configures privacy information, contact details, access, and maintenance.
+
+Original code is MIT-licensed. Libraries in `vendor/` include their own licenses, and models have separate licenses. The repository contains no application telemetry, personal archives, tokens, or keys.

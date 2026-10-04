@@ -49,7 +49,7 @@ class Model:
 class CoreTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.tmp=tempfile.TemporaryDirectory(); self.root=Path(self.tmp.name)
-        for name in ('notte.html','notte.css','notte.js','web.html','web.css','web.js'):
+        for name in ('notte.html','notte.css','notte.js','web.html','web.css','web.js','portal-motion.js'):
             shutil.copy2(ROOT/name,self.root/name)
         self.settings=Settings(root=self.root,admins=(1,),allowed=(2,))
         self.store=Store(self.settings.data/'alba.sqlite3')
