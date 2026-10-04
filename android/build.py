@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the signed standalone WebView Android client using SDK 36 and JDK 17."""
+"""Build the signed native Android client using SDK 36 and JDK 17."""
 import argparse,hashlib,os,secrets,shutil,subprocess,zipfile,json,re
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -12,12 +12,12 @@ if server.scheme!='https' or not server.hostname or server.username or server.pa
 manifest=work/'AndroidManifest.xml'
 manifest.write_text((root/'AndroidManifest.xml').read_text().replace('android:host="alba.example.org"','android:host="'+escape(server.hostname)+'"'))
 resources=work/'res';shutil.copytree(root/'res',resources,dirs_exist_ok=True)
-(resources/'values/strings.xml').write_text('<resources><string name="default_server">'+escape(args.server)+'</string></resources>')
+(resources/'values/strings.xml').write_text((root/'res/values/strings.xml').read_text().replace('https://alba.example.org',escape(args.server)))
 for stale in (work/'classes').rglob('*.class'): stale.unlink()
 def run(values):subprocess.run([str(x) for x in values],check=True,stdout=subprocess.DEVNULL)
 (work/'generated').mkdir(exist_ok=True)
 run([tools/'aapt','package','-f','-m','-J',work/'generated','-M',manifest,'-S',resources,'-I',jar,'-F',work/'unsigned.apk'])
-run(['javac','--release','8','-classpath',jar,'-d',work/'classes',root/'src/local/alba/MainActivity.java',*sorted((work/'generated').rglob('*.java'))])
+run(['javac','--release','8','-classpath',jar,'-d',work/'classes',*sorted((root/'src').rglob('*.java')),*sorted((work/'generated').rglob('*.java'))])
 run([tools/'d8','--min-api','23','--lib',jar,'--output',work/'dex',*sorted((work/'classes').rglob('*.class'))])
 
 with zipfile.ZipFile(work/'unsigned.apk','a',zipfile.ZIP_DEFLATED) as output:output.write(work/'dex/classes.dex','classes.dex')

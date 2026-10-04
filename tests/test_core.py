@@ -120,17 +120,17 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.core.snapshot()['tokens'],[])
         chat_call=next(payload for url,payload in self.model.calls if url.endswith('/api/chat'))
         self.assertTrue(chat_call['stream']);self.assertNotIn('format',chat_call)
-        self.assertEqual(chat_call['model'],self.settings.model)
-        self.assertEqual(chat_call['options']['num_predict'],768)
+        self.assertEqual(chat_call['model'],self.core.config['model'])
+        self.assertEqual(chat_call['options']['num_predict'],256)
 
-    async def test_telegram_private_pairing_target_and_rate_limit(self):
+    async def test_telegram_private_pairing_target_without_daily_cap(self):
         event=Incoming(1,'Matt',1,'private','/notte')
         result=await self.service.handle(event)
         self.assertIn('associato',result.text)
         self.assertEqual(self.core.config['telegram_matt_id'],1)
         sent=AsyncMock();self.core.telegram_send=sent
         for _ in range(8): await self.core.send_telegram('Un pensiero autonomo.')
-        self.assertEqual(sent.await_count,6)
+        self.assertEqual(sent.await_count,8)
         self.assertTrue(all(call.args[0]==1 for call in sent.await_args_list))
         result=await self.service.handle(Incoming(2,'Altro',2,'private','/notte'))
         self.assertIn('riservata',result.text)

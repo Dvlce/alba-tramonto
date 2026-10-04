@@ -13,14 +13,14 @@ from aiohttp import ClientError
 log = logging.getLogger('alba.core')
 EMOTIONS = {'rabbia': .12, 'curiosità': .7, 'affetto': .35, 'noia': .15,
             'frustrazione': .1, 'euforia': .2, 'disprezzo': .05, 'tenerezza': .25}
-CONNECTORS = ('chat', 'web', 'notes', 'summaries', 'whatsapp', 'telegram', 'files', 'github', 'diary')
+CONNECTORS = ('chat', 'web', 'notes', 'summaries', 'whatsapp', 'telegram', 'files', 'github', 'diary', 'reddit', 'training', 'activity')
 CATEGORIES = ('chat', 'web', 'summaries', 'consolidation', 'whatsapp', 'telegram', 'system', 'study')
 SCHEMA = {'type': 'object', 'properties': {
     **{k: {'type': 'string'} for k in ('text', 'note', 'summary', 'query', 'whatsapp', 'telegram')},
-    'action': {'type': 'string', 'enum': ['none', 'web', 'whatsapp', 'telegram', 'rest']},
+    'action': {'type': 'string', 'enum': ['none', 'web', 'whatsapp', 'telegram', 'rest', 'reddit', 'study', 'github', 'tool']},
     'emotions': {'type': 'object', 'properties': {k: {'type': 'number'} for k in EMOTIONS},
                  'additionalProperties': False},
-    'initiative': {'type': 'number'}, 'volatility': {'type': 'number'}},
+    'initiative': {'type': 'number'}, 'volatility': {'type': 'number'}, 'wake_minutes': {'type':'integer','minimum':1,'maximum':60}},
     'required': ['text', 'note', 'summary', 'action', 'query', 'whatsapp', 'telegram', 'emotions', 'initiative', 'volatility'],
     'additionalProperties': False}
 
@@ -62,12 +62,13 @@ class Core:
           CREATE INDEX IF NOT EXISTS core_event_category ON core_events(category,id DESC);
         ''')
         defaults = {'model': os.getenv('CORE_MODEL','qwen2.5:1.5b'), 'chat_model': os.getenv('CORE_CHAT_MODEL',self.settings.model),
-                    'code_model': os.getenv('CORE_CODE_MODEL','qwen2.5-coder:3b'),
-                    'study_enabled': True, 'study_minutes': 30, 'last_study': 0,
+                    'code_model': os.getenv('CORE_CODE_MODEL','qwen2.5-coder:3b'), 'profile': 'fast', 'advanced_code_model': 'qwen2.5-coder:7b',
+                    'training_enabled': True, 'training_hour': 3, 'personal_model': '', 'personal_adapter': '',
+                    'reddit_enabled': True, 'last_reddit': 0, 'language': 'auto', 'study_enabled': True, 'study_minutes': 30, 'last_study': 0,
                     'output_tokens':384, 'enabled': True, 'interval': 10, 'reflection_minutes': 10,
                     'initiative': .55, 'volatility': .45, 'web_enabled': True,
                     'whatsapp_enabled': False, 'telegram_enabled': False, 'telegram_matt_id': 0, 'matt_number': '', 'rest_until': 0,
-                    'last_reflection': time.time(), 'last_consolidation': time.time(),
+                    'next_reflection': time.time()+600, 'last_reflection': time.time(), 'last_consolidation': time.time(),
                     'embedding_model': 'embeddinggemma', 'embedding_error': '',
                     'connectors': {k: True for k in CONNECTORS}}
         self.config = {**defaults, **json.loads(self.store.setting('core_config', '{}'))}
@@ -79,6 +80,10 @@ class Core:
         self.chat_prompt = (Path(__file__).parent/'chat.txt').read_text()
         from .learning import Learning
         self.learning = Learning(self)
+        from .training import Training
+        self.training = Training(self)
+        from .inference import InferenceLab
+        self.inference=InferenceLab(self)
         self.save()
 
     def save(self):
@@ -116,18 +121,18 @@ class Core:
         cpu = sample.get('cpu_percent') or 0
         temp = sample.get('temperature_c') or 0
         overloaded = ram > 85 or temp >= 78 or cpu > 95
-        context = 2048 if ram > 70 or temp > 70 else min(4096, self.settings.context_tokens)
+        context = 1536 if self.config['profile']=='fast' else 2048 if ram > 70 or temp > 70 else min(4096, self.settings.context_tokens)
         return {**sample, 'overloaded': overloaded, 'context_tokens': context,
                 'energy': round(max(0, 100-max(ram, cpu*.65, max(0, temp-45)*2))),
-                'model_busy': self.engine.lock.locked(), 'model': self.config['chat_model'],
+                'model_busy': self.engine.lock.locked(), 'model': self.config['model'] if self.config['profile']=='fast' else self.config['advanced_code_model'] if self.config['profile']=='advanced' else self.config['chat_model'],
                 'background_model': self.config['model'], 'code_model':self.config['code_model']}
 
     def configure(self, value):
         allowed = {'enabled', 'interval', 'reflection_minutes', 'initiative', 'volatility',
-                   'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'matt_number', 'connectors', 'study_enabled', 'study_minutes'}
+                   'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'matt_number', 'connectors', 'study_enabled', 'study_minutes', 'reddit_enabled', 'training_enabled', 'training_hour', 'language', 'profile', 'advanced_code_model'}
         if not isinstance(value, dict) or set(value)-allowed: raise ValueError('Impostazioni non valide.')
         updated = dict(self.config)
-        for key in ('enabled', 'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'study_enabled'):
+        for key in ('enabled', 'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'study_enabled', 'reddit_enabled', 'training_enabled'):
             if key in value:
                 if type(value[key]) is not bool: raise ValueError('Interruttore non valido.')
                 updated[key] = value[key]
@@ -135,6 +140,19 @@ class Core:
             if key in value:
                 if type(value[key]) is not int or value[key] not in (10, 30, 60): raise ValueError('Intervallo: 10, 30 o 60 minuti.')
                 updated[key] = value[key]
+        if 'advanced_code_model' in value:
+            model=value['advanced_code_model']
+            if not isinstance(model,str) or not re.fullmatch(r'[A-Za-z0-9_./:-]{1,100}',model) or '..' in model:raise ValueError('Nome modello non valido.')
+            updated['advanced_code_model']=model
+        if 'training_hour' in value:
+            if type(value['training_hour']) is not int or not 0<=value['training_hour']<=23: raise ValueError('Ora non valida.')
+            updated['training_hour']=value['training_hour']
+        if 'profile' in value:
+            if value['profile'] not in ('fast','quality','advanced'):raise ValueError('Profilo non valido.')
+            updated['profile']=value['profile']
+        if 'language' in value:
+            if value['language'] not in ('auto','it','en'): raise ValueError('Lingua non valida.')
+            updated['language']=value['language']
         for key in ('initiative', 'volatility'):
             if key in value: updated[key] = bounded(value[key], 0, 1)
         if 'matt_number' in value:
@@ -156,34 +174,45 @@ class Core:
                 (not updated['study_enabled'] and self.mode=='study')):
             self.task.cancel()
 
-    async def chat(self, query):
+    async def chat(self, query, personal=False):
         resource = self.resources()
         if resource['overloaded']: raise ValueError('Risorse alte: riprova quando il Raspberry si raffredda.')
-        memories = await self.retrieve(query)
+        prompt=self.chat_prompt
+        if self.config['profile']=='fast':
+            from .inference import FAST_PROMPT
+            prompt=FAST_PROMPT
+        memories = await self.retrieve(query,prefer_lexical=self.config['profile']=='fast')
+        if self.config['profile']=='fast':memories=[{**r,'content':r['content'][:450]} for r in memories[:3]]
         context = json.dumps({'emotions':self.emotions,'mood':self.mood(),'memories':memories},ensure_ascii=False)
         recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT 8") if self.config['connectors']['chat'] else []
-        messages = [{'role':'system','content':self.chat_prompt+'\nSTATO E MEMORIA:\n'+context[:6500]}]
+        messages = [{'role':'system','content':prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context[:6500]}]
         # The current user event is already in the log; include it exactly once.
         history = list(reversed(recent))
         if history and history[-1]['role']=='user' and history[-1]['content']==query: history.pop()
-        budget=max(1000,(resource['context_tokens']-900)*2-len(self.chat_prompt)-len(query))
+        budget=max(1000,(resource['context_tokens']-900)*2-len(prompt)-len(query))
         while len(context)+sum(len(r['content']) for r in history)>budget and history: history.pop(0)
         while len(context)>budget and memories:
             memories.pop()
             context=json.dumps({'emotions':self.emotions,'mood':self.mood(),'memories':memories},ensure_ascii=False)
-        messages[0]['content']=self.chat_prompt+'\nSTATO E MEMORIA:\n'+context
+        messages[0]['content']=prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context
         messages.extend({'role':r['role'],'content':r['content']} for r in history)
         messages.append({'role':'user','content':query})
         if self.settings.backend!='ollama':
             # Existing llama.cpp remains usable through its structured generator.
             await self.accept(await self.generate(query,'chat'),'chat');return
         recorded=False
-        coding=bool(re.search(r'python|programm|codice|script|javascript|typescript|\bsql\b|hacking|vulnerab|debug|algoritm|linux',query,re.I))
-        model=self.config['code_model'] if coding else self.config['chat_model']
+        coding=bool(re.search(r'\bcode\b|\bfunction\b|python|programm|codice|script|javascript|typescript|\bsql\b|hacking|vulnerab|debug|algoritm|linux',query,re.I))
+        fast=self.config['profile']=='fast'
+        model=self.config['personal_model'] if personal else ('qwen2.5-coder:1.5b' if coding else self.config['model']) if fast else (self.config['code_model'] if coding else self.config['chat_model'])
+        if not personal and self.config['profile']=='advanced':model=self.config['advanced_code_model']
+        maximum=384 if fast and coding else 256 if fast else 768
+        from .inference import context_size
+        resource['context_tokens']=context_size(messages,maximum,resource['context_tokens'])
+        started=time.monotonic();first_token=None;final_usage={}
         try:
             async with self.engine.session.post(self.settings.llm_url+'/api/chat',json={
-                 'model':model,'messages':messages,'stream':True,'think':False,'keep_alive':'2m',
-                 'options':{'num_ctx':resource['context_tokens'],'num_predict':768,'num_thread':3,'temperature':.65,'repeat_penalty':1.1}},timeout=480) as response:
+                 'model':model,'messages':messages,'stream':True,'think':False,'keep_alive':'10m' if fast else '2m',
+                 'options':{'num_ctx':resource['context_tokens'],'num_predict':maximum,'num_thread':4 if fast else 3,'use_mmap':True,'temperature':.65,'repeat_penalty':1.1}},timeout=480) as response:
                 if response.status!=200: raise ValueError('Modello chat locale non disponibile.')
                 done=False
                 async for line in response.content:
@@ -191,11 +220,14 @@ class Core:
                     if not line.strip(): continue
                     part=json.loads(line)
                     if part.get('error'): raise ValueError('Errore del modello locale.')
+                    if first_token is None and part.get('message',{}).get('content'):first_token=time.monotonic()
                     self.partial+=part.get('message',{}).get('content','')
                     if len(self.partial)>16000: raise ValueError('Risposta oltre il limite del contesto.')
                     if part.get('done'):
-                        self.tokens('chat',part.get('prompt_eval_count'),part.get('eval_count'));recorded=True;done=True
+                        self.tokens('chat',part.get('prompt_eval_count'),part.get('eval_count'));recorded=True;done=True;final_usage=part
                 if not done or not self.partial.strip(): raise ValueError('Risposta interrotta prima del completamento.')
+            duration=final_usage.get('eval_duration',0)/1e9
+            self.event('activity','latency',json.dumps({'model':model,'profile':self.config['profile'],'first_token_ms':round((first_token-started)*1000) if first_token else None,'total_ms':round((time.monotonic()-started)*1000),'tokens_per_second':round(final_usage.get('eval_count',0)/duration,2) if duration else None,'mmap':True}))
             blocks=re.findall(r'```(?:python|py)\s*\n(.*?)```',self.partial,re.S)
             for code in blocks[:1]:
                 if len(code)>6000 or not re.search(r'\b(print|assert)\s*\(',code) or not self.learning.snapshot()['sandbox_available']: continue
@@ -245,7 +277,7 @@ class Core:
         self.tokens('consolidation', result.get('prompt_eval_count'), 0)
         return vectors
 
-    async def retrieve(self, query):
+    async def retrieve(self, query, prefer_lexical=False):
         active = [k for k,v in self.config['connectors'].items() if v]
         if not active: return []
         rows = self.store.rows('SELECT c.content,c.embedding,c.model,e.category,e.id FROM core_chunks c '
@@ -253,7 +285,7 @@ class Core:
                                ','.join('?' for _ in active)+') ORDER BY c.id DESC LIMIT 1500', active)
         words = Counter(re.findall(r'\w+', query.casefold()))
         vector = None
-        if rows and any(r['embedding'] and r['model']==self.config['embedding_model'] for r in rows):
+        if not prefer_lexical and rows and any(r['embedding'] and r['model']==self.config['embedding_model'] for r in rows):
             cache_key = (self.config['embedding_model'], query[:1200])
             cached = self.embedding_cache.pop(cache_key,None)
             if cached and time.time()-cached[0]<300:
@@ -297,7 +329,7 @@ class Core:
         if self.settings.backend == 'ollama':
             endpoint = '/api/chat'
             payload = {'model':self.config['model'],'messages':messages,'stream':False,'think':False,
-                       'format':SCHEMA,'keep_alive':'2m','options':{'num_ctx':resource['context_tokens'],
+                       'format':SCHEMA,'keep_alive':'10m','options':{'num_ctx':resource['context_tokens'],
                        'num_predict':self.config['output_tokens'],'num_thread':3,'temperature':.75,'repeat_penalty':1.12}}
         elif self.settings.backend == 'llamacpp':
             endpoint = '/v1/chat/completions'
@@ -319,7 +351,7 @@ class Core:
             for key in ('text','note','summary','query','whatsapp','telegram'):
                 if not isinstance(output.get(key), str): raise ValueError('Risposta incompleta.')
                 output[key] = output[key][:4000]
-            if output.get('action') not in ('none','web','whatsapp','telegram','rest'): raise ValueError('Azione non valida.')
+            if output.get('action') not in ('none','web','whatsapp','telegram','rest','reddit','study','github','tool'): raise ValueError('Azione non valida.')
             if not isinstance(output.get('emotions'),dict): raise ValueError('Emozioni non valide.')
             for v in output['emotions'].values(): bounded(v,-.15,.15)
             for key in ('initiative','volatility'): output[key]=bounded(output.get(key),0,1)
@@ -336,6 +368,8 @@ class Core:
         if output['text']: self.event('chat', 'assistant', output['text'])
         if output['note']: self.event('notes', 'note', output['note'])
         if output['summary']: self.event('summaries', 'summary', output['summary'])
+        wake=output.get('wake_minutes',self.config['reflection_minutes'])
+        if type(wake) is int and 1<=wake<=60:self.config['next_reflection']=time.time()+wake*60;self.save()
         action = output['action']
         if action == 'rest':
             self.config['rest_until'] = time.time()+min(1800,600+1200*self.emotions['noia'])
@@ -344,6 +378,12 @@ class Core:
             await self.search(output['query'])
         elif action == 'telegram' and self.config['telegram_enabled'] and output['telegram']:
             await self.send_telegram(output['telegram'])
+        elif action=='reddit' and self.config['reddit_enabled'] and self.config['web_enabled']:await self.learning.reddit()
+        elif action=='study' and self.config['study_enabled']:await self.learning.study()
+        elif action=='github' and self.config['web_enabled'] and output['query']:await self.learning.repository(output['query'])
+        elif action=='tool' and self.config['study_enabled']:
+            from .learning import TOOLS
+            if output['query'] in TOOLS:await self.learning.install_tool(output['query'])
         elif action == 'whatsapp' and self.config['whatsapp_enabled'] and output['whatsapp']:
             await self.send_whatsapp(output['whatsapp'])
 
@@ -376,8 +416,11 @@ class Core:
         uid = self.config['telegram_matt_id']
         if not uid or not self.telegram_send or not self.service.store.allowed(uid):
             raise ValueError('Matt non associato o Telegram non disponibile.')
-        if not self.action_slot('telegram',6,86400): return
-        await self.telegram_send(uid, text[:3500])
+        self.event('telegram','attempt','Invio autonomo a Matt')
+        try: await self.telegram_send(uid, text[:3500])
+        except Exception:
+            self.event('telegram','error','Invio non riuscito; nessun messaggio registrato come consegnato')
+            raise
         self.event('telegram','assistant',text)
 
     async def send_whatsapp(self, text):
@@ -430,18 +473,29 @@ class Core:
             raise
 
     def start(self, mode, text=''):
-        if mode=='chat' and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode=='chat' and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool'):
+        if self.task and not self.task.done() and self.task.get_name()=='core-chat-follow':raise ValueError('Una risposta è già in preparazione.')
+        if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
+        if mode in ('chat','personal_chat') and self.training.task and not self.training.task.done():
+            previous=self.task
+            if previous and not previous.done() and self.mode in ('chat','personal_chat'):raise ValueError('Una risposta è già in corso.')
+            if previous and not previous.done():previous.cancel()
+            async def after_training():
+                await self.training.stop()
+                if previous:await asyncio.gather(previous,return_exceptions=True)
+                await self.work(mode,text)
+            self.task=asyncio.create_task(after_training(),name='core-chat-follow');return
+        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark'):
             self.task.cancel()
             # Schedule after cancellation has released the inference lock.
             previous=self.task
             async def follow_chat():
                 await asyncio.gather(previous,return_exceptions=True)
-                await self.work('chat',text)
+                await self.work(mode,text)
             self.task=asyncio.create_task(follow_chat(),name='core-chat-follow');return
         if self.task and not self.task.done(): raise ValueError('Un ciclo è già in corso.')
-        if mode=='chat' and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode not in ('chat','reflection','consolidation','study','repository','tool'): raise ValueError('Ciclo non valido.')
+        if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
+        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark'): raise ValueError('Ciclo non valido.')
+        if mode=='personal_chat' and not self.config['personal_model']:raise ValueError('Modello personale non disponibile.')
         if mode=='repository':
             from .learning import repo_name
             text=repo_name(text)
@@ -456,26 +510,31 @@ class Core:
         self.mode = mode
         self.error = ''
         self.partial = ''
+        self.event('activity','start',mode)
         try:
             async with self.engine.lock:
                 if mode=='consolidation': await self.consolidate()
                 elif mode=='study': await self.learning.study()
+                elif mode=='reddit': await self.learning.reddit()
+                elif mode=='benchmark':await self.inference.run(text)
                 elif mode=='repository': await self.learning.repository(text)
                 elif mode=='tool': await self.learning.install_tool(text)
                 else:
-                    if mode=='chat': self.event('chat','user',text)
+                    if mode in ('chat','personal_chat'): self.event('chat','user',text)
                     else: text='Rifletti brevemente su ciò che è cambiato. Decidi liberamente se parlare, annotare, riassumere, cercare o riposare.'
-                    if mode=='chat': await self.chat(text)
+                    if mode in ('chat','personal_chat'): await self.chat(text,personal=mode=='personal_chat')
                     else: await self.accept(await self.generate(text,'system'),mode)
                     if mode=='reflection': self.config['last_reflection']=time.time(); self.save()
             self.failures = 0
-        except asyncio.CancelledError: raise
+        except asyncio.CancelledError:
+            self.event('activity','interrupted',mode);raise
         except Exception as exc:
             self.error = str(exc)[:180] if isinstance(exc,ValueError) else type(exc).__name__
             self.failures += 1
             self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
             log.warning('Ciclo core fallito (%s)',type(exc).__name__)
         finally:
+            self.event('activity','error' if self.error else 'finished',mode+(': '+self.error if self.error else ''))
             self.running = False
             self.mode = None
             self.partial = ''
@@ -485,16 +544,21 @@ class Core:
         try:
             while True:
                 await asyncio.sleep(15)
+                if self.config['enabled'] and self.store.setting('bot_paused')!='1' and self.training.due() and not (self.training.task and not self.training.task.done()):
+                    self.training.start()
                 if time.time()<self.retry_after or not self.config['enabled'] or self.running or (self.task and not self.task.done()) or self.engine.lock.locked() or self.engine.waiting: continue
                 if self.resources()['overloaded']: continue
                 if self.store.setting('bot_paused')=='1': continue
-                if self.config['study_enabled'] and time.time()-self.config['last_study']>=self.config['study_minutes']*60:
+                if self.config['reddit_enabled'] and self.config['web_enabled'] and time.time()-self.config['last_reddit']>=3600:
+                    self.start('reddit')
+                elif self.config['study_enabled'] and time.time()-self.config['last_study']>=self.config['study_minutes']*60:
                     self.start('study')
                 elif time.time()-self.config['last_consolidation']>=self.config['interval']*60:
                     self.start('consolidation')
-                elif time.time()>=self.config['rest_until'] and time.time()-self.config['last_reflection']>=self.config['reflection_minutes']*60:
+                elif time.time()>=self.config['rest_until'] and time.time()>=self.config['next_reflection']:
                     self.start('reflection')
         finally:
+            await self.training.stop()
             if self.task and not self.task.done():
                 self.task.cancel()
                 await asyncio.gather(self.task,return_exceptions=True)
@@ -512,7 +576,7 @@ class Core:
         if legacy['total'] is not None: totals.append({'category':'alba','total':legacy['total'],'unknown':legacy['unknown']})
         legacy_lifetime = self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM token_usage')[0]['n']
         return {'name':'ALBA-CORE','mood':self.mood(),'emotions':self.emotions,'config':self.config,
-                'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),
+                'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),'training':self.training.snapshot(),'benchmarks':self.inference.snapshot(),'recommended':self.inference.recommended(),
                 'error':self.error,'resources':self.resources(),'connectors':connectors,
                 'tokens':totals,'lifetime_tokens':self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM core_tokens')[0]['n']+legacy_lifetime,
                 'history':self.store.rows("SELECT strftime('%Y-%m-%d',created,'unixepoch') day,sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)) total FROM (SELECT created,input_tokens,output_tokens FROM core_tokens UNION ALL SELECT timestamp created,input_tokens,output_tokens FROM token_usage) WHERE created>=? GROUP BY day ORDER BY day DESC LIMIT 30",(max(since,time.time()-30*86400),)),

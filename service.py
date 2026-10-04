@@ -237,7 +237,7 @@ class Service:
             core.config['telegram_enabled']=True
             core.save()
             self.store.audit(e.uid,'core_telegram_pair',e.uid)
-            return Result('Matt associato a questa chat. Notte può scriverti autonomamente, fino a 6 messaggi al giorno. /notte off per fermarli. Pannello: '+self.settings.public_url+'/notte')
+            return Result('Matt associato a questa chat. Notte può scriverti autonomamente, senza limite giornaliero. /notte off per fermarli. Pannello: '+self.settings.public_url+'/notte')
         if command in ('/start','/help'):
             return Result(HELP)
         if command in ('/privacy','/cookies','/policy'):

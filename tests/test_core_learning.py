@@ -39,7 +39,7 @@ class LearningTests(unittest.IsolatedAsyncioTestCase):
         await self.core.work('chat','Scrivi una funzione Python.')
         self.assertEqual(self.core.error,'')
         payload=next(p for url,p in self.model.calls if url.endswith('/api/chat'))
-        self.assertEqual(payload['model'],'qwen2.5-coder:3b')
+        self.assertEqual(payload['model'],'qwen2.5-coder:1.5b')
 
     async def test_incomplete_stream_is_not_saved_as_answer(self):
         class Broken(test_core.Response):

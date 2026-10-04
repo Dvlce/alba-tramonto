@@ -29,14 +29,20 @@ def setup_core(app, service):
         admin(request)
         return web.json_response(core.snapshot())
 
+    async def models(request):
+        admin(request)
+        return web.json_response({'models':await core.inference.models()})
+
     async def events(request):
         admin(request)
         category = request.query.get('category','chat')
-        if category not in CONNECTORS: raise ValueError('Connettore non valido.')
+        if category not in (*CONNECTORS,'all'): raise ValueError('Connettore non valido.')
         try: after = int(request.query.get('after','0'))
         except ValueError: raise ValueError('Cursore non valido.')
         if after < 0: raise ValueError('Cursore non valido.')
-        if after:
+        if category=='all':
+            rows=core.store.rows('SELECT * FROM core_events WHERE id>? ORDER BY id LIMIT 100',(after,)) if after else list(reversed(core.store.rows('SELECT * FROM core_events ORDER BY id DESC LIMIT 100')))
+        elif after:
             rows = core.store.rows('SELECT * FROM core_events WHERE category=? AND id>? ORDER BY id LIMIT 100',(category,after))
         else:
             rows = list(reversed(core.store.rows('SELECT * FROM core_events WHERE category=? ORDER BY id DESC LIMIT 100',(category,))))
@@ -48,7 +54,18 @@ def setup_core(app, service):
         if not isinstance(value,dict): raise ValueError('Azione non valida.')
         name = value.get('action')
         if name=='config': core.configure(value.get('config'))
-        elif name in ('chat','reflection','consolidation','study','repository','tool'): core.start(name,value.get('text',''))
+        elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark'): core.start(name,value.get('text',''))
+        elif name=='train': core.training.start()
+        elif name=='stop_training': await core.training.stop()
+        elif name=='personal_chat': core.start(name,value.get('text',''))
+        elif name=='rollback':
+            ident=value.get('id')
+            if type(ident) is not int:raise ValueError('Versione non valida.')
+            rows=core.store.rows("SELECT * FROM core_training WHERE id=? AND status='ready'",(ident,))
+            if not rows or not (core.training.root/'runs'/str(ident)/'adapter').is_dir():raise ValueError('Checkpoint non disponibile.')
+            if core.training.task and not core.training.task.done():raise ValueError('Ferma prima il training.')
+            core.config['personal_model']=rows[0]['model'];core.config['personal_adapter']=str(ident);core.save()
+            core.event('training','rollback','Ripristinata versione '+str(ident))
         elif name=='stop':
             if core.task and not core.task.done(): core.task.cancel(); await asyncio.gather(core.task,return_exceptions=True)
         elif name=='reset_stats':
@@ -60,7 +77,7 @@ def setup_core(app, service):
             core.event('files','document',text)
         else: raise ValueError('Azione non valida.')
         core.store.audit(uid,'core_'+name,uid)
-        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool') else 200)
+        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark') else 200)
 
     async def diary(request):
         admin(request)
@@ -69,6 +86,10 @@ def setup_core(app, service):
     async def export(request):
         admin(request)
         return web.json_response(core.snapshot(),headers={'Content-Disposition':'attachment; filename=alba-core-statistiche.json'})
+
+    async def training_files(request):
+        admin(request)
+        return web.json_response(core.training.files(request.match_info['id']))
 
     sockets = set()
     async def stream(request):
@@ -95,6 +116,7 @@ def setup_core(app, service):
         return socket
 
     async def cleanup(app):
+        await core.training.stop()
         await asyncio.gather(*(s.close() for s in list(sockets)),return_exceptions=True)
         if core.task and not core.task.done():
             core.task.cancel()
@@ -107,6 +129,6 @@ def setup_core(app, service):
         return web.FileResponse(path,headers={'Content-Type':'application/json'})
 
     app.add_routes([web.get('/notte',page),web.get('/notte-assets/{name}',asset),
-        web.get('/api/notte/status',status),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),
+        web.get('/api/notte/status',status),web.get('/api/notte/models',models),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),web.get('/api/notte/training/{id}',training_files),
         web.post('/api/notte/action',action),web.get('/api/notte/export',export),
         web.get('/api/notte/stream',stream),web.get('/.well-known/assetlinks.json',assetlinks)])

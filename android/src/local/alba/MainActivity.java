@@ -4,125 +4,279 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
-import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
-import android.print.PrintManager;
-import android.util.Base64;
+import android.os.Handler;
+import android.text.Html;
+import android.text.InputType;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.Editable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
-import android.webkit.*;
 import android.widget.*;
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import org.json.*;
+import java.io.OutputStream;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Alba and Tramonto run inside the app; explicitly selected external links use their own apps. */
+/** Android Views and a same-origin API client. The AI lives on the Raspberry. */
 public final class MainActivity extends Activity {
- private static final int PICK_IMAGE=10, SAVE_FILE=11, MAX_DOWNLOAD=32*1024*1024;
- private SharedPreferences preferences;
- private WebView web;
- private ProgressBar progress;
- private TextView connection;
- private ValueCallback<Uri[]> fileChooser;
- private byte[] pendingDownload;
- private Runnable nextNavigation;
- private final ExecutorService io=Executors.newSingleThreadExecutor();
+    private static final int BG=0xff0e1713,PANEL=0xff18251c,INK=0xffe3eade,SAGE=0xffa1bb94;
+    private final ExecutorService io=Executors.newSingleThreadExecutor();
+    private final Handler handler=new Handler();
+    private SharedPreferences preferences;
+    private NativeApi api;
+    private LinearLayout root,body,feed;
+    private ScrollView scroller;
+    private TextView title,status,partial;
+    private EditText composer,noteTitle,noteText;
+    private NotebookCanvas canvas;
+    private JSONObject snapshot,note,restoredNote;
+    private SessionStore draftStore;
+    private JSONArray messages=new JSONArray();
+    private boolean english,authenticated,admin,foreground,busy,polling,noteChanged;
+    private int section=0,generation=0;
+    private final String[] drafts={"","",""};
+    private String rendered="",job="",pendingKey="";
+    private byte[] exportBytes;
+    private final Runnable tick=new Runnable(){public void run(){if(foreground&&authenticated){poll();handler.postDelayed(this,2500);}}};
+    private interface Work {JSONObject run() throws Exception;}
+    private interface Done {void run(JSONObject value) throws Exception;}
 
- @Override public void onCreate(Bundle state){
-  super.onCreate(state);preferences=getSharedPreferences("alba",MODE_PRIVATE);
-  LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(245,243,232));
-  root.setOnApplyWindowInsetsListener((v,insets)->{
-   if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}
-   else v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;
-  });
-  LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(8),0,dp(8),0);
-  add(nav,"☀ Alba",()->navigate("/"));add(nav,"◒ Tramonto",()->navigate("/tramonto"));add(nav,"☾ Notte",()->navigate("/notte"));add(nav,"⋯",this::menu);root.addView(nav,new LinearLayout.LayoutParams(-1,dp(48)));
-  progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);root.addView(progress,new LinearLayout.LayoutParams(-1,dp(3)));
-  connection=new TextView(this);connection.setTextColor(Color.rgb(112,59,31));connection.setPadding(dp(16),dp(8),dp(16),dp(8));connection.setVisibility(View.GONE);connection.setOnClickListener(v->web.reload());root.addView(connection);
-  web=new WebView(this);web.setBackgroundColor(Color.rgb(244,245,238));root.addView(web,new LinearLayout.LayoutParams(-1,0,1));
-  WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setUseWideViewPort(true);settings.setBuiltInZoomControls(true);settings.setDisplayZoomControls(false);settings.setUserAgentString(settings.getUserAgentString()+" AlbaAndroid/1.2.0");
-  CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);web.addJavascriptInterface(new NativeActions(),"AlbaNative");
-  web.setWebViewClient(new WebViewClient(){
-   @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){return handleLink(request.getUrl(),request.isForMainFrame());}
-   @Override public boolean shouldOverrideUrlLoading(WebView view,String url){return handleLink(Uri.parse(url),true);}
-   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){Uri uri=request.getUrl();String scheme=uri.getScheme();if(("https".equals(scheme)||"http".equals(scheme))&&!sameServer(uri))return new WebResourceResponse("text/plain","UTF-8",403,"Forbidden",java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));return null;}
-   @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){connection.setVisibility(View.GONE);progress.setVisibility(View.VISIBLE);}
-   @Override public void onPageFinished(WebView view,String url){
-    CookieManager.getInstance().flush();progress.setVisibility(View.GONE);if(!sameServer(Uri.parse(url)))return;
-    view.evaluateJavascript("(()=>{window.print=()=>AlbaNative.printPage();if(window.__albaDownloads)return;window.__albaDownloads=true;document.addEventListener('click',async e=>{const a=e.target.closest('a');if(!a||!a.download||!a.href.startsWith('blob:'))return;e.preventDefault();try{const r=await fetch(a.href),b=await r.blob();if(b.size>33554432)throw Error('Esportazione troppo grande (massimo 32 MB)');const f=new FileReader();f.onload=()=>AlbaNative.saveFile(a.download,b.type||'application/octet-stream',f.result.split(',')[1]);f.readAsDataURL(b);}catch(x){alert(x.message);}},true);})()",null);
-   }
-   @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){if(request.isForMainFrame())showConnection("Server non raggiungibile. Controlla la connessione e tocca qui per riprovare.");}
-   @Override public void onReceivedSslError(WebView view,SslErrorHandler handler,SslError error){handler.cancel();showConnection("Certificato HTTPS non valido. Controlla l’indirizzo del server.");}
-   @Override public void onReceivedHttpError(WebView view,WebResourceRequest request,WebResourceResponse response){if(request.isForMainFrame()&&response.getStatusCode()>=500)showConnection("Il server non è disponibile. Tocca qui per riprovare.");}
-  });
-  web.setWebChromeClient(new WebChromeClient(){
-   @Override public void onProgressChanged(WebView view,int value){progress.setProgress(value);}
-   @Override public boolean onJsAlert(WebView view,String url,String message,JsResult result){new AlertDialog.Builder(MainActivity.this).setMessage(message).setPositiveButton("OK",(d,w)->result.confirm()).setOnCancelListener(d->result.cancel()).show();return true;}
-   @Override public boolean onJsConfirm(WebView view,String url,String message,JsResult result){new AlertDialog.Builder(MainActivity.this).setMessage(message).setNegativeButton("Annulla",(d,w)->result.cancel()).setPositiveButton("Conferma",(d,w)->result.confirm()).setOnCancelListener(d->result.cancel()).show();return true;}
-   @Override public boolean onJsPrompt(WebView view,String url,String message,String defaultValue,JsPromptResult result){EditText input=new EditText(MainActivity.this);input.setText(defaultValue);new AlertDialog.Builder(MainActivity.this).setMessage(message).setView(input).setNegativeButton("Annulla",(d,w)->result.cancel()).setPositiveButton("Salva",(d,w)->result.confirm(input.getText().toString())).setOnCancelListener(d->result.cancel()).show();return true;}
-   @Override public boolean onJsBeforeUnload(WebView view,String url,String message,JsResult result){new AlertDialog.Builder(MainActivity.this).setMessage("Ci sono modifiche non salvate. Vuoi lasciare la pagina?").setNegativeButton("Resta",(d,w)->result.cancel()).setPositiveButton("Esci",(d,w)->result.confirm()).setOnCancelListener(d->result.cancel()).show();return true;}
-   @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(fileChooser!=null)fileChooser.onReceiveValue(null);fileChooser=callback;Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/*");intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);try{startActivityForResult(intent,PICK_IMAGE);}catch(Exception error){fileChooser.onReceiveValue(null);fileChooser=null;toast("Nessun selettore immagini disponibile.");}return true;}
-  });
-  web.setDownloadListener((url,agent,disposition,mime,length)->downloadUrl(url,agent,disposition,mime));setContentView(root);root.requestApplyInsets();
-  if(state==null||web.restoreState(state)==null){if(!openIntent(getIntent(),false))web.loadUrl(base()+"/");}
-  if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,()->back());
- }
- @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);openIntent(intent,true);}
- private boolean openIntent(Intent intent,boolean preserve){
-  if(intent==null||!Intent.ACTION_VIEW.equals(intent.getAction())||intent.getData()==null)return false;
-  Uri uri=intent.getData();if(!sameServer(uri)){toast("Il link non appartiene al server Alba configurato.");return false;}
-  String path=uri.getPath();if(path==null||!(path.equals("/")||path.equals("/tramonto")||path.equals("/notte"))){toast("Percorso Alba non supportato.");return false;}
-  Runnable open=()->{web.loadUrl(uri.toString());intent.setData(null);};if(preserve)afterSave(open);else open.run();return true;
- }
- private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
- private void add(LinearLayout root,String text,Runnable action){Button b=new Button(this);b.setText(text);b.setTextSize(13);b.setAllCaps(false);b.setOnClickListener(v->action.run());root.addView(b,new LinearLayout.LayoutParams(0,-1,1));}
- private String base(){return preferences.getString("server",getString(R.string.default_server));}
- private boolean sameServer(Uri uri){Uri origin=Uri.parse(base());return "https".equals(uri.getScheme())&&origin.getHost()!=null&&origin.getHost().equalsIgnoreCase(uri.getHost())&&origin.getPort()==uri.getPort()&&uri.getUserInfo()==null;}
- private boolean handleLink(Uri uri,boolean main){
-  if(sameServer(uri)){String path=uri.getPath();if(path!=null&&(path.startsWith("/auth/google")||path.startsWith("/auth/github")||path.startsWith("/auth/discord"))){toast("Nell’app accedi con password, chiave personale o SMS.");return true;}return false;}
-  if(main&&("https".equals(uri.getScheme())||"mailto".equals(uri.getScheme())||"tel".equals(uri.getScheme())))try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception error){toast("Non è disponibile un’app per questo collegamento.");}return true;
- }
- private void afterSave(Runnable action){if(nextNavigation!=null)return;nextNavigation=action;web.evaluateJavascript("(async()=>typeof TramontoTools==='undefined'||await TramontoTools.saveDoc())().then(ok=>AlbaNative.navigationReady(ok)).catch(()=>AlbaNative.navigationReady(false))",null);}
- private void navigate(String path){afterSave(()->web.loadUrl(base()+path));}
- private void back(){afterSave(()->{if(web.canGoBack())web.goBack();else finish();});}
- @Override public void onBackPressed(){back();}
- private void menu(){new AlertDialog.Builder(this).setTitle("Alba · Tramonto · Notte").setItems(new String[]{"Ricarica","Stampa / salva PDF","Cambia server HTTPS"},(d,w)->{if(w==0)afterSave(()->web.reload());else if(w==1)printPage();else afterSave(this::configure);}).show();}
- private void configure(){
-  EditText input=new EditText(this);input.setSingleLine();input.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);input.setText(base());
-  AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Il tuo server Alba").setView(input).setNegativeButton("Annulla",null).setPositiveButton("Salva",null).create();
-  dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String value=input.getText().toString().trim().replaceAll("/+$","");Uri uri=Uri.parse(value);
-   if("https".equals(uri.getScheme())&&uri.getHost()!=null&&uri.getUserInfo()==null&&uri.getQuery()==null&&uri.getFragment()==null&&(uri.getPath()==null||uri.getPath().isEmpty())){preferences.edit().putString("server",value).apply();web.clearHistory();web.loadUrl(value+"/");dialog.dismiss();}else input.setError("Inserisci un’origine HTTPS senza percorso o credenziali.");}));dialog.show();
- }
- private void showConnection(String message){connection.setText(message);connection.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
- private void toast(String message){Toast.makeText(this,message,Toast.LENGTH_LONG).show();}
- private void printPage(){if(sameServer(Uri.parse(web.getUrl()==null?"":web.getUrl())))((PrintManager)getSystemService(PRINT_SERVICE)).print("Tramonto",web.createPrintDocumentAdapter("Tramonto"),null);}
- public final class NativeActions {
-  @JavascriptInterface public void printPage(){runOnUiThread(()->MainActivity.this.printPage());}
-  @JavascriptInterface public void navigationReady(boolean ok){runOnUiThread(()->{Runnable action=nextNavigation;nextNavigation=null;if(ok&&action!=null)action.run();else if(!ok)toast("Modifiche non salvate. Esportale prima di uscire.");});}
-  @JavascriptInterface public void saveFile(String name,String mime,String data){if(data==null||data.length()>MAX_DOWNLOAD*4/3+8){runOnUiThread(()->toast("Esportazione troppo grande (massimo 32 MB)."));return;}try{byte[] bytes=Base64.decode(data,Base64.DEFAULT);runOnUiThread(()->chooseDestination(name,mime,bytes));}catch(Exception error){runOnUiThread(()->toast("Esportazione non valida."));}}
- }
- private void chooseDestination(String name,String mime,byte[] bytes){
-  if(pendingDownload!=null){toast("Completa prima il salvataggio precedente.");return;}pendingDownload=bytes;
-  String filename=(name==null||name.isEmpty()?"Tramonto":name).replaceAll("[/\\\\\\p{Cntrl}]","_");filename=filename.substring(0,Math.min(filename.length(),180));
-  Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType(mime!=null&&mime.matches("[\\w.+-]+/[\\w.+-]+")?mime:"application/octet-stream");intent.putExtra(Intent.EXTRA_TITLE,filename);
-  try{startActivityForResult(intent,SAVE_FILE);}catch(Exception error){pendingDownload=null;toast("Nessun selettore documenti disponibile.");}
- }
- private void downloadUrl(String url,String agent,String disposition,String mime){
-  if(!sameServer(Uri.parse(url))){toast("Scarica i file dal tuo server HTTPS.");return;}String cookies=CookieManager.getInstance().getCookie(url);String filename=URLUtil.guessFileName(url,disposition,mime);toast("Preparazione del file…");
-  io.execute(()->{HttpURLConnection request=null;try{request=(HttpURLConnection)new URL(url).openConnection();request.setInstanceFollowRedirects(false);request.setConnectTimeout(15000);request.setReadTimeout(30000);request.setRequestProperty("User-Agent",agent);if(cookies!=null)request.setRequestProperty("Cookie",cookies);if(request.getResponseCode()!=200)throw new IOException();
-   ByteArrayOutputStream bytes=new ByteArrayOutputStream();try(InputStream stream=request.getInputStream()){byte[] buffer=new byte[8192];int count;while((count=stream.read(buffer))!=-1){if(bytes.size()+count>MAX_DOWNLOAD)throw new IOException();bytes.write(buffer,0,count);}}byte[] result=bytes.toByteArray();runOnUiThread(()->chooseDestination(filename,mime,result));
-  }catch(Exception error){runOnUiThread(()->toast("Download non riuscito. Controlla accesso, connessione e dimensione (massimo 32 MB)."));}finally{if(request!=null)request.disconnect();}});
- }
- @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);
-  if(request==PICK_IMAGE&&fileChooser!=null){Uri[] selected=null;if(result==RESULT_OK&&data!=null){if(data.getClipData()!=null){selected=new Uri[data.getClipData().getItemCount()];for(int i=0;i<selected.length;i++)selected[i]=data.getClipData().getItemAt(i).getUri();}else if(data.getData()!=null)selected=new Uri[]{data.getData()};}fileChooser.onReceiveValue(selected);fileChooser=null;}
-  if(request==SAVE_FILE){byte[] bytes=pendingDownload;pendingDownload=null;if(result==RESULT_OK&&data!=null&&data.getData()!=null&&bytes!=null){Uri uri=data.getData();io.execute(()->{try(OutputStream stream=getContentResolver().openOutputStream(uri)){if(stream==null)throw new IOException();stream.write(bytes);runOnUiThread(()->toast("File salvato."));}catch(Exception error){runOnUiThread(()->toast("Impossibile salvare il file."));}});}}
- }
- @Override protected void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);web.saveState(state);}
- @Override protected void onPause(){super.onPause();CookieManager.getInstance().flush();}
- @Override protected void onDestroy(){if(fileChooser!=null)fileChooser.onReceiveValue(null);web.removeJavascriptInterface("AlbaNative");web.destroy();io.shutdown();super.onDestroy();}
+    @Override public void onCreate(Bundle state){
+        super.onCreate(state);draftStore=new SessionStore(this,"native_drafts");
+        try{String saved=draftStore.load();if(!saved.isEmpty()){JSONObject savedDrafts=new JSONObject(saved);for(int i=0;i<3;i++)drafts[i]=savedDrafts.optString("draft"+i);restoredNote=savedDrafts.optJSONObject("note");}}catch(Exception ignored){}
+        preferences=getSharedPreferences("alba",0);
+        String language=preferences.getString("language","auto");english=language.equals("en")||(language.equals("auto")&&!Locale.getDefault().getLanguage().equals("it"));
+        if(state!=null){section=state.getInt("section",0);for(int i=0;i<3;i++)drafts[i]=state.getString("draft"+i,"");}
+        try{api=new NativeApi(this,preferences.getString("server",getString(R.string.default_server)));}catch(Exception e){toast(e.getMessage());}
+        shell();intent(getIntent());
+        if(!pendingKey.isEmpty())loginKey();else identity();
+        if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::back);
+    }
+    private String t(String it,String en){return english?en:it;}
+    private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
+    private LinearLayout column(){LinearLayout layout=new LinearLayout(this);layout.setOrientation(LinearLayout.VERTICAL);return layout;}
+    private TextView label(String text,int size){TextView view=NativeMarkdown.text(this,text);view.setTextSize(size);return view;}
+    private Button button(String text,Runnable action){Button view=new Button(this);view.setText(text);view.setTextColor(INK);view.setAllCaps(false);view.setOnClickListener(v->action.run());return view;}
+    private EditText input(String hint,boolean secret){EditText view=new EditText(this);view.setTextColor(INK);view.setHintTextColor(0xff879985);view.setHint(hint);view.setTextSize(15);view.setPadding(dp(12),dp(12),dp(12),dp(12));if(secret)view.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);return view;}
+    private void toast(String text){Toast.makeText(this,text,Toast.LENGTH_LONG).show();}
+    private void shell(){
+        root=column();root.setBackgroundColor(BG);
+        root.setOnApplyWindowInsetsListener((v,insets)->{
+            if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}
+            else v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;
+        });
+        LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(dp(14),dp(5),dp(6),dp(5));
+        title=label("notte.",28);title.setTypeface(Typeface.SERIF);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        Button menu=button(t("Menu ▾","Menu ▾"),()->menu());menu.setContentDescription(t("Apri menu sezioni","Open sections menu"));header.addView(menu);root.addView(header);
+        status=label(t("Connessione al Raspberry…","Connecting to Raspberry…"),12);status.setTextColor(SAGE);status.setPadding(dp(20),0,dp(20),dp(8));root.addView(status);
+        body=column();root.addView(body,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);root.requestApplyInsets();
+    }
+    private String[] sections(){return new String[]{t("Chat · Notte","Chat · Notte"),"Alba",t("Quaderni · Tramonto","Notebooks · Tramonto"),t("Memoria e connettori","Memory & connectors"),t("Diario di apprendimento","Learning diary"),t("Tutte le attività","All activity"),t("Modello personale","Personal model"),t("Token e statistiche","Tokens & statistics"),t("Emozioni e sistema","Emotions & system"),t("Impostazioni","Settings"),t("Chat · modello personale","Chat · personal model")};}
+    private void menu(){
+        PopupMenu menu=new PopupMenu(this,title);String[] names=sections();
+        for(int i=0;i<names.length;i++)if(admin||i==1||i==9)menu.getMenu().add(0,i,i,names[i]);
+        menu.setOnMenuItemClickListener(item->{navigate(item.getItemId());return true;});menu.show();
+    }
+    private void request(Work work,Done done){
+        io.execute(()->{try{JSONObject result=work.run();runOnUiThread(()->{if(isFinishing()||isDestroyed())return;try{done.run(result);}catch(Exception e){error(e);}});}catch(Exception e){runOnUiThread(()->error(e));}});
+    }
+    private void error(Exception error){
+        if(isFinishing()||isDestroyed())return;
+        status.setText(t("Connessione o richiesta non riuscita: ","Connection or request failed: ")+error.getMessage());polling=false;
+        if(error instanceof NativeApi.Failure&&((NativeApi.Failure)error).status==401){authenticated=false;showLogin();}
+    }
+    private JSONObject object(String key,Object value){JSONObject object=new JSONObject();try{object.put(key,value);}catch(Exception ignored){}return object;}
+    private JSONObject actionBody(String action,JSONObject value) throws Exception {JSONObject result=new JSONObject(value.toString());result.put("action",action);return result;}
+    private void action(String action,JSONObject value){request(()->api.request("POST","/api/notte/action",actionBody(action,value)),result->{toast(t("Richiesta inviata","Request submitted"));rendered="";poll();});}
+    private void identity(){
+        if(api==null){showLogin();return;}
+        io.execute(()->{try{JSONObject result=api.request("GET","/api/me",null);runOnUiThread(()->signedIn(result));}catch(Exception e){runOnUiThread(()->{authenticated=false;showLogin();status.setText(t("Accedi al tuo Raspberry","Sign in to your Raspberry"));});}});
+    }
+    private void signedIn(JSONObject me){
+        authenticated=true;admin=me.optBoolean("is_admin");if(!admin&&section!=9)section=1;
+        status.setText(me.optString("name","")+" · "+t("AI locale · Android nativo","Local AI · Native Android"));if(restoredNote!=null&&admin){note=restoredNote;restoredNote=null;section=2;generation++;noteChanged=true;try{editor();}catch(Exception e){error(e);}toast(t("Bozza della pagina recuperata","Page draft recovered"));}else navigate(section);
+    }
+    private void showLogin(){
+        generation++;body.removeAllViews();title.setText("alba.");ScrollView scroll=new ScrollView(this);LinearLayout box=column();box.setPadding(dp(20),dp(16),dp(20),dp(20));scroll.addView(box);body.addView(scroll);
+        box.addView(label(t("Una presenza sul tuo Raspberry.","A presence on your Raspberry."),25));
+        box.addView(label(t("Usa il link /web_key di Telegram oppure le tue credenziali. L’AI e i dati restano sul Pi.","Use the /web_key link from Telegram or your credentials. AI and data stay on the Pi."),15));
+        EditText username=input(t("Nome utente","Username"),false),password=input(t("Password","Password"),true),key=input(t("Chiave /web_key","/web_key access key"),true);box.addView(username);box.addView(password);
+        box.addView(button(t("Accedi","Sign in"),()->{String pass=password.getText().toString();password.setText("");JSONObject data=object("username",username.getText().toString().trim());try{data.put("password",pass);data.put("remember",true);}catch(Exception ignored){}request(()->api.request("POST","/api/login",data),r->identity());}));
+        box.addView(key);box.addView(button(t("Accedi con la chiave","Sign in with key"),()->{pendingKey=key.getText().toString().trim();key.setText("");loginKey();}));
+        box.addView(button(t("Server e lingua","Server & language"),()->settings()));
+    }
+    private void loginKey(){final String key=pendingKey;pendingKey="";request(()->api.request("POST","/api/login",object("token",key)),r->identity());}
+    private int channel(){return section==1?1:section==10?2:0;}
+    private void rememberDraft(){if(composer!=null&&(section==0||section==1||section==10))drafts[channel()]=composer.getText().toString();}
+    private void navigate(int target){
+        if(noteChanged){new AlertDialog.Builder(this).setMessage(t("La pagina ha modifiche non salvate.","This page has unsaved changes."))
+            .setNegativeButton(t("Resta","Stay"),null).setNeutralButton(t("Esporta JSON","Export JSON"),(d,w)->exportNote())
+            .setPositiveButton(t("Scarta ed esci","Discard & leave"),(d,w)->{noteChanged=false;note=null;navigate(target);}).show();return;}
+        rememberDraft();section=target;generation++;composer=null;rendered="";body.removeAllViews();title.setText(sections()[target]);
+        if(target==9){settings();return;}
+        if(!authenticated){showLogin();return;}
+        if(target==0||target==1||target==10){chatView();poll();return;}
+        if(target==2){notebooks();return;}
+        panel();poll();
+    }
+    private void panel(){body.removeAllViews();scroller=new ScrollView(this);feed=column();feed.setPadding(dp(12),dp(10),dp(12),dp(24));scroller.addView(feed);body.addView(scroller,new LinearLayout.LayoutParams(-1,-1));}
+    private void chatView(){
+        scroller=new ScrollView(this);feed=column();feed.setPadding(dp(12),dp(8),dp(12),dp(8));scroller.addView(feed);body.addView(scroller,new LinearLayout.LayoutParams(-1,0,1));
+        partial=label("",14);partial.setTextColor(SAGE);partial.setMaxLines(10);body.addView(partial);
+        LinearLayout row=new LinearLayout(this);row.setPadding(dp(10),dp(5),dp(10),dp(10));row.setGravity(Gravity.BOTTOM);
+        composer=input(t("Scrivi qui…","Write here…"),false);composer.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);composer.setMinLines(2);composer.setMaxLines(3);composer.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(3500)});composer.setText(drafts[channel()]);row.addView(composer,new LinearLayout.LayoutParams(0,dp(94),1));
+        LinearLayout controls=column();controls.addView(button(t("Invia","Send"),this::send));controls.addView(button(t("Ferma","Stop"),()->{if(section==1&&!job.isEmpty()){String id=job;request(()->api.request("POST","/api/jobs/"+id+"/cancel",null),r->poll());}else action("stop",new JSONObject());}));row.addView(controls);body.addView(row);
+    }
+    private void send(){
+        String text=composer.getText().toString().trim();if(text.isEmpty())return;
+        if(busy){toast(t("Una risposta è già in corso","A response is already running"));return;}
+        final int current=section;JSONObject value=object(current==1?"message":"text",text);busy=true;
+        io.execute(()->{try{
+            JSONObject result;
+            if(current==1){api.request("POST","/api/presence",new JSONObject());result=api.request("POST","/api/chat",value);}else result=api.request("POST","/api/notte/action",actionBody(current==10?"personal_chat":"chat",value));
+            runOnUiThread(()->{if(current==1)job=result.optString("job_id");if(section==current&&composer!=null)composer.setText("");drafts[current==1?1:current==10?2:0]="";busy=false;poll();});
+        }catch(Exception e){runOnUiThread(()->{busy=false;error(e);});}});
+    }
+    private void poll(){
+        if(polling||!authenticated||!foreground||api==null||section==2||section==9)return;
+        polling=true;final int current=section,version=generation;
+        io.execute(()->{try{
+            JSONObject state=null,content=null;
+            if(admin)state=api.request("GET","/api/notte/status",null);
+            if(current==1){api.request("POST","/api/presence",new JSONObject());content=api.request("GET","/api/history",null);if(!job.isEmpty()){JSONObject update=api.request("GET","/api/jobs/"+job,null);if(!update.optBoolean("pending"))job="";}}
+            else if(current==0||current==10)content=api.request("GET","/api/notte/events?category=chat",null);
+            else if(current==4)content=api.request("GET","/api/notte/diary",null);
+            else if(current==5)content=api.request("GET","/api/notte/events?category=all",null);
+            final JSONObject result=state,rows=content;
+            runOnUiThread(()->{polling=false;if(version!=generation||!foreground)return;try{
+                snapshot=result;
+                if(result!=null){JSONObject resources=result.getJSONObject("resources");status.setText(result.optString("mood")+" · "+(result.optBoolean("running")?result.optString("mode"):t("presente","present"))+" · CPU "+resources.optDouble("cpu_percent",0)+"%");}
+                if(current==0||current==1||current==10){messages=rows.getJSONArray(current==1?"messages":"events");renderChat(messages);if(partial!=null)partial.setText(current==1?(!job.isEmpty()?t("Alba sta pensando…","Alba is thinking…"):""):result.optString("partial"));}
+                else if(current==4)diary(rows.getJSONArray("entries"));else if(current==5)activity(rows.getJSONArray("events"));else renderPanel();
+            }catch(Exception e){error(e);}});
+        }catch(Exception e){runOnUiThread(()->{polling=false;if(version==generation)error(e);});}});
+    }
+    private void renderChat(JSONArray rows) throws Exception {
+        String hash=rows.toString();if(hash.equals(rendered))return;rendered=hash;
+        boolean bottom=scroller.getChildAt(0).getHeight()-scroller.getScrollY()-scroller.getHeight()<dp(120);int previous=scroller.getScrollY();feed.removeAllViews();
+        if(rows.length()==0)feed.addView(label(t("La conversazione comincia qui.","The conversation starts here."),16));
+        for(int i=0;i<rows.length();i++){
+            JSONObject message=rows.getJSONObject(i);String role=message.optString("role");if(!role.equals("user")&&!role.equals("assistant"))continue;
+            LinearLayout bubble=column();bubble.setPadding(dp(10),dp(8),dp(10),dp(10));bubble.setBackgroundColor(role.equals("user")?0xff25372a:PANEL);
+            TextView meta=label((role.equals("user")?t("Tu","You"):section==1?"Alba":"Notte")+" · "+message.optString("emotion",""),11);meta.setTextColor(SAGE);bubble.addView(meta);NativeMarkdown.render(this,bubble,message.optString("content"));
+            LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.topMargin=dp(8);feed.addView(bubble,params);
+        }
+        scroller.post(()->{if(bottom)scroller.fullScroll(View.FOCUS_DOWN);else scroller.scrollTo(0,previous);});
+    }
+    private void card(String heading,String content){LinearLayout box=column();box.setPadding(dp(10),dp(8),dp(10),dp(8));box.setBackgroundColor(PANEL);box.addView(label(heading,18));NativeMarkdown.render(this,box,content);LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);params.bottomMargin=dp(10);feed.addView(box,params);}
+    private void details(String heading,String content){Button expand=button(heading,()->new AlertDialog.Builder(this).setTitle(heading).setView(detailView(content)).setPositiveButton("OK",null).show());feed.addView(expand);}
+    private ScrollView detailView(String text){ScrollView scroll=new ScrollView(this);TextView value=label(text,13);value.setTypeface(Typeface.MONOSPACE);scroll.addView(value);return scroll;}
+    private void renderPanel() throws Exception {
+        if(snapshot==null)return;
+        JSONObject config=snapshot.getJSONObject("config"),resources=snapshot.getJSONObject("resources");String hash=snapshot.toString();
+        // Preserve scroll position while live resources change.
+        int scroll=scroller.getScrollY();feed.removeAllViews();
+        if(section==3){
+            feed.addView(button(t("Consolida ora","Consolidate now"),()->action("consolidation",new JSONObject())));
+            JSONArray connectors=snapshot.getJSONArray("connectors");for(int i=0;i<connectors.length();i++){JSONObject c=connectors.getJSONObject(i);String id=c.getString("id");Switch toggle=new Switch(this);toggle.setText(id+" · "+c.optInt("count")+t(" eventi"," events"));toggle.setTextColor(INK);toggle.setChecked(c.optBoolean("enabled"));toggle.setOnCheckedChangeListener((v,on)->action("config",object("config",object("connectors",object(id,on)))));feed.addView(toggle);feed.addView(button(t("Ispeziona ","Inspect ")+id,()->request(()->api.request("GET","/api/notte/events?category="+id,null),r->{panel();activity(r.getJSONArray("events"));})));}
+        }else if(section==6){
+            JSONObject training=snapshot.getJSONObject("training");card(t("Qwen personale · training CPU","Personal Qwen · CPU training"),training.optString("base")+"\n"+training.optString("schedule")+"\n"+t("Modello attivo: ","Active model: ")+training.optString("active_model","")+"\n"+training.optString("phase"));
+            toggle(t("Addestramento giornaliero","Daily training"),"training_enabled",config.optBoolean("training_enabled"));
+            feed.addView(button(t("Addestra ora","Train now"),()->action("train",new JSONObject())));feed.addView(button(t("Ferma training","Stop training"),()->action("stop_training",new JSONObject())));
+            feed.addView(button(t("Prova modello personale","Try personal model"),()->navigate(10)));
+            JSONArray runs=training.getJSONArray("runs");for(int i=0;i<runs.length();i++){JSONObject run=runs.getJSONObject(i);int id=run.getInt("id");JSONObject metrics=run.optJSONObject("metrics");card("#"+id+" · "+run.optString("day")+" · "+run.optString("status"),run.optString("detail")+"\n"+run.optString("model")+"\n"+t("Esempi: ","Examples: ")+run.optInt("samples")+(metrics!=null&&metrics.has("final_loss")?"\nLoss "+metrics.optDouble("initial_loss")+" → "+metrics.optDouble("final_loss"):""));feed.addView(button(t("Dati, checkpoint e log","Data, checkpoint & logs"),()->request(()->api.request("GET","/api/notte/training/"+id,null),r->{panel();for(java.util.Iterator<String> keys=r.keys();keys.hasNext();){String key=keys.next();details(key,r.optString(key));}})));if(run.optString("status").equals("ready"))feed.addView(button(t("Ripristina #","Restore #")+id,()->action("rollback",object("id",id))));}
+        }else if(section==7){
+            card(t("Token dalla nascita","Lifetime tokens"),Long.toString(snapshot.optLong("lifetime_tokens")));JSONArray tokens=snapshot.getJSONArray("tokens");long total=0;for(int i=0;i<tokens.length();i++)total+=tokens.getJSONObject(i).optLong("total");
+            for(int i=0;i<tokens.length();i++){JSONObject row=tokens.getJSONObject(i);feed.addView(label(row.optString("category")+" · "+row.optLong("total"),15));ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(1000);bar.setProgress(total==0?0:(int)(1000*row.optLong("total")/total));feed.addView(bar);}
+            details(t("Storico giornaliero","Daily history"),snapshot.getJSONArray("history").toString(2));feed.addView(button(t("Esporta statistiche","Export statistics"),()->export(snapshot,"alba-statistics.json")));
+        }else if(section==8){
+            card(t("Raspberry Pi","Raspberry Pi"),"CPU "+resources.optDouble("cpu_percent")+"%\nRAM "+resources.optJSONObject("ram")+"\n"+resources.optDouble("temperature_c")+" °C\n"+t("Energia: ","Energy: ")+resources.optInt("energy")+"/100\n"+resources.optString("model"));
+            JSONObject emotions=snapshot.getJSONObject("emotions");for(java.util.Iterator<String> keys=emotions.keys();keys.hasNext();){String key=keys.next();feed.addView(label(key+" · "+Math.round(emotions.getDouble(key)*100)+"%",14));ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(100);bar.setProgress((int)(emotions.getDouble(key)*100));feed.addView(bar);}
+            feed.addView(button(t("Prova tutte le strategie","Test all strategies"),()->action("benchmark",new JSONObject())));details(t("Benchmark locali","Local benchmarks"),snapshot.optJSONArray("benchmarks").toString(2));
+            details(t("Variazioni emotive","Emotion changes"),snapshot.getJSONArray("emotion_log").toString(2));
+        }
+        scroller.post(()->scroller.scrollTo(0,scroll));
+    }
+    private void diary(JSONArray entries) throws Exception {
+        if(entries.toString().equals(rendered))return;rendered=entries.toString();feed.removeAllViews();feed.addView(button(t("Studia ora","Study now"),()->action("study",new JSONObject())));feed.addView(button(t("Leggi Reddit","Read Reddit"),()->action("reddit",new JSONObject())));
+        java.util.LinkedHashMap<String,LinearLayout> groups=new java.util.LinkedHashMap<>();
+        for(int i=0;i<entries.length();i++){JSONObject entry=entries.getJSONObject(i);String topic=entry.optString("topic");if(!groups.containsKey(topic)){feed.addView(label(topic,23));LinearLayout group=column();feed.addView(group);groups.put(topic,group);}LinearLayout target=groups.get(topic);target.addView(label(entry.optString("title")+" · "+entry.optString("status"),17));NativeMarkdown.render(this,target,entry.optString("summary"));JSONArray sources=entry.optJSONArray("sources");if(sources!=null)for(int j=0;j<sources.length();j++){final String url=sources.getString(j);if(url.startsWith("https://"))target.addView(button(url,()->external(url)));}if(!entry.optString("code").isEmpty()){TextView code=label(entry.optString("code"),13);code.setTypeface(Typeface.MONOSPACE);target.addView(code);}target.addView(label(entry.optString("result"),12));}
+        if(entries.length()==0)card(t("Il diario è pronto","The diary is ready"),t("Le nuove letture e gli esercizi verificati saranno raccolti per argomento.","New readings and verified exercises will be collected by topic."));
+    }
+    private void activity(JSONArray events) throws Exception {
+        if(events.toString().equals(rendered))return;rendered=events.toString();feed.removeAllViews();
+        for(int i=events.length()-1;i>=0;i--){JSONObject event=events.getJSONObject(i);card("#"+event.optInt("id")+" · "+event.optString("category")+" · "+event.optString("role"),event.optString("content"));}
+    }
+    private void toggle(String text,String key,boolean checked){Switch view=new Switch(this);view.setText(text);view.setTextColor(INK);view.setChecked(checked);view.setOnCheckedChangeListener((v,on)->action("config",object("config",object(key,on))));feed.addView(view);}
+    private void settings(){
+        generation++;composer=null;body.removeAllViews();panel();title.setText(t("Impostazioni","Settings"));
+        feed.addView(label(t("Lingua dell’app","App language"),22));Spinner language=new Spinner(this);language.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{t("Lingua del telefono","Phone language"),"Italiano","English"}));String selected=preferences.getString("language","auto");language.setSelection(selected.equals("it")?1:selected.equals("en")?2:0);feed.addView(language);
+        EditText server=input("https://…",false);server.setText(api==null?getString(R.string.default_server):api.origin);feed.addView(label(t("Server Raspberry","Raspberry server"),18));feed.addView(server);
+        feed.addView(button(t("Salva lingua e server","Save language & server"),()->{try{
+            String code=new String[]{"auto","it","en"}[language.getSelectedItemPosition()];NativeApi next=new NativeApi(this,server.getText().toString().trim());if(api!=null&&!api.origin.equals(next.origin)){api.clear();next.clear();authenticated=false;}
+            preferences.edit().putString("server",next.origin).putString("language",code).apply();api=next;english=code.equals("en")||(code.equals("auto")&&!Locale.getDefault().getLanguage().equals("it"));section=admin?0:1;shell();identity();
+        }catch(Exception e){error(e);}}));
+        if(authenticated&&admin&&snapshot!=null){JSONObject config=snapshot.optJSONObject("config");toggle(t("Autonomia","Autonomy"),"enabled",config.optBoolean("enabled"));toggle(t("Ricerca online","Online research"),"web_enabled",config.optBoolean("web_enabled"));toggle(t("Reddit","Reddit"),"reddit_enabled",config.optBoolean("reddit_enabled"));toggle(t("Studio di codice","Code study"),"study_enabled",config.optBoolean("study_enabled"));toggle(t("Telegram · nessun limite giornaliero","Telegram · no daily cap"),"telegram_enabled",config.optBoolean("telegram_enabled"));
+            feed.addView(button(t("Velocità: rapido / accurato","Speed: fast / quality"),()->new AlertDialog.Builder(this).setTitle(t("Profilo del modello","Model profile")).setItems(new String[]{t("Rapido · Qwen 1.5B","Fast · Qwen 1.5B"),t("Accurato · Qwen 3/4B","Quality · Qwen 3/4B"),t("Coder avanzato · 7B","Advanced coder · 7B")},(d,w)->action("config",object("config",object("profile",w==0?"fast":w==1?"quality":"advanced")))).show()));
+            feed.addView(button(t("Seleziona un modello installato","Choose an installed model"),()->request(()->api.request("GET","/api/notte/models",null),r->{JSONArray models=r.getJSONArray("models");String[] names=new String[models.length()];for(int i=0;i<models.length();i++)names[i]=models.getJSONObject(i).getString("name");new AlertDialog.Builder(this).setTitle(t("Modello avanzato","Advanced model")).setItems(names,(d,w)->action("config",object("config",object("advanced_code_model",names[w])))).show();})));
+            feed.addView(button(t("Aggiungi repository GitHub","Add GitHub repository"),()->prompt("owner/repo",value->action("repository",object("text",value)))));}
+        if(authenticated)feed.addView(button(t("Esci dall’account","Sign out"),()->request(()->api.request("POST","/api/logout",new JSONObject()),r->{api.clear();authenticated=false;showLogin();})));
+        feed.addView(label(t("Android nativo · v1.3.0\nIl modello gira sul Raspberry; non sul telefono.","Native Android · v1.3.0\nThe model runs on the Raspberry, not on your phone."),12));
+    }
+    private interface TextResult{void run(String value);}
+    private void prompt(String heading,TextResult result){EditText input=input(heading,false);new AlertDialog.Builder(this).setTitle(heading).setView(input).setNegativeButton(t("Annulla","Cancel"),null).setPositiveButton(t("Conferma","Confirm"),(d,w)->result.run(input.getText().toString())).show();}
+    private void notebooks(){panel();final int version=generation;request(()->api.request("GET","/api/tramonto/notebooks",null),r->{if(version!=generation)return;feed.removeAllViews();feed.addView(button(t("Nuovo quaderno","New notebook"),()->prompt(t("Titolo","Title"),value->request(()->api.request("POST","/api/tramonto/notebooks",object("title",value)),created->notebooks()))));JSONArray books=r.getJSONArray("notebooks");for(int i=0;i<books.length();i++){JSONObject book=books.getJSONObject(i);int id=book.getInt("id");feed.addView(button(book.optString("title")+" · "+book.optInt("note_count"),()->pages(id)));}});}
+    private void pages(int book){panel();request(()->api.request("GET","/api/tramonto/notes?notebook="+book,null),r->{feed.removeAllViews();feed.addView(button(t("Nuova pagina","New page"),()->prompt(t("Titolo","Title"),value->{JSONObject data=object("notebook_id",book);try{data.put("title",value);data.put("subject","generale");}catch(Exception ignored){}request(()->api.request("POST","/api/tramonto/notes",data),created->openNote(created.getInt("id")));})));JSONArray notes=r.getJSONArray("notes");for(int i=0;i<notes.length();i++){JSONObject page=notes.getJSONObject(i);int id=page.getInt("id");feed.addView(button(page.optString("title"),()->openNote(id)));}});}
+    private void openNote(int id){request(()->api.request("GET","/api/tramonto/notes/"+id,null),r->{note=r;noteChanged=false;editor();});}
+    private void editor() throws Exception {
+        panel();JSONObject content=note.getJSONObject("content");noteTitle=input(t("Titolo","Title"),false);noteTitle.setText(note.optString("title"));feed.addView(noteTitle);
+        noteText=input(t("Testo della pagina","Page text"),false);noteText.setGravity(Gravity.TOP);noteText.setMinLines(10);noteText.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_MULTI_LINE);String html=content.optString("html");noteText.setText(Build.VERSION.SDK_INT>=24?Html.fromHtml(html,Html.FROM_HTML_MODE_LEGACY):Html.fromHtml(html));feed.addView(noteText);
+        TextWatcher edits=new TextWatcher(){public void beforeTextChanged(CharSequence s,int start,int count,int after){}public void onTextChanged(CharSequence s,int start,int before,int count){noteChanged=true;}public void afterTextChanged(Editable e){}};noteTitle.addTextChangedListener(edits);noteText.addTextChangedListener(edits);
+        LinearLayout controls=new LinearLayout(this);controls.addView(button(t("Salva","Save"),this::saveNote));controls.addView(button(t("Esporta","Export"),this::exportNote));controls.addView(button(t("Pagine","Pages"),()->navigate(2)));feed.addView(controls);
+        feed.addView(label(t("Disegno · tocca per scrivere","Drawing · touch to draw"),18));canvas=new NotebookCanvas(this,content,()->noteChanged=true);feed.addView(canvas,new LinearLayout.LayoutParams(-1,dp(270)));feed.addView(button(t("Annulla ultimo tratto","Undo last stroke"),()->canvas.undo()));
+        JSONArray formulas=content.optJSONArray("formulas");if(formulas!=null)for(int i=0;i<formulas.length();i++)feed.addView(label(formulas.getString(i),18));
+        if(content.optJSONObject("circuit")!=null)details(t("Circuito e collegamenti","Circuit & connections"),content.getJSONObject("circuit").toString(2));
+        feed.addView(label(t("Gli oggetti avanzati della pagina vengono conservati al salvataggio.","Advanced page objects are preserved when saving."),12));
+    }
+    private JSONObject noteData() throws Exception {
+        // Keep every original graph, formula, image, circuit and network field.
+        JSONObject content=new JSONObject(note.getJSONObject("content").toString());
+        if(noteChanged)content.put("html",Build.VERSION.SDK_INT>=24?Html.toHtml(noteText.getText(),Html.TO_HTML_PARAGRAPH_LINES_CONSECUTIVE):Html.toHtml(noteText.getText()));
+        if(canvas!=null)content.put("drawing",object("strokes",canvas.strokes));
+        JSONObject data=object("content",content);data.put("title",noteTitle.getText().toString());data.put("subject",note.optString("subject"));data.put("notebook_id",note.getInt("notebook_id"));data.put("version",note.getInt("version"));return data;
+    }
+    private void saveNote(){try{JSONObject data=noteData();int id=note.getInt("id");request(()->api.request("PUT","/api/tramonto/notes/"+id,data),result->{note.put("version",result.getInt("version"));note.put("content",data.getJSONObject("content"));noteChanged=false;persistDrafts();toast(t("Pagina salvata","Page saved"));});}catch(Exception e){error(e);}}
+    private void exportNote(){try{export(noteData(),"tramonto-page.json");}catch(Exception e){error(e);}}
+    private void export(JSONObject object,String name){try{exportBytes=object.toString(2).getBytes("UTF-8");Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");intent.putExtra(Intent.EXTRA_TITLE,name);startActivityForResult(intent,20);}catch(Exception e){error(e);}}
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==20&&result==RESULT_OK&&data!=null&&exportBytes!=null){byte[] bytes=exportBytes;exportBytes=null;io.execute(()->{try(OutputStream output=getContentResolver().openOutputStream(data.getData())){output.write(bytes);runOnUiThread(()->toast(t("Esportazione completata","Export complete")));}catch(Exception e){runOnUiThread(()->error(e));}});}}
+    private void external(String url){try{Uri uri=Uri.parse(url);if(!"https".equals(uri.getScheme())||uri.getHost()==null||uri.getUserInfo()!=null)return;startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception e){toast(t("Nessuna app per aprire il link","No app can open this link"));}}
+    private void intent(Intent incoming){
+        if(incoming==null||!Intent.ACTION_VIEW.equals(incoming.getAction())||incoming.getData()==null||api==null)return;
+        Uri uri=incoming.getData();incoming.setData(null); // Never retain a one-time login key in Intent history.
+        Uri base=Uri.parse(api.origin);
+        if(!"https".equals(uri.getScheme())||!TextUtils.equals(base.getHost(),uri.getHost())||base.getPort()!=uri.getPort()||uri.getUserInfo()!=null){toast(t("Il link non appartiene al tuo server","The link does not belong to your server"));return;}
+        String path=uri.getPath();if(!"/".equals(path)&&!"/notte".equals(path)&&!"/tramonto".equals(path))return;
+        section="/tramonto".equals(path)?2:"/notte".equals(path)?0:1;
+        if(uri.getFragment()!=null){Uri fragment=Uri.parse("https://local/?"+uri.getFragment());pendingKey=fragment.getQueryParameter("web_key");if(pendingKey==null)pendingKey="";if(pendingKey.length()>100)pendingKey="";}
+    }
+    @Override protected void onNewIntent(Intent incoming){super.onNewIntent(incoming);setIntent(incoming);if(noteChanged){new AlertDialog.Builder(this).setMessage(t("Salva la pagina prima di aprire un altro link.","Save your page before opening another link.")).setPositiveButton("OK",null).show();incoming.setData(null);return;}rememberDraft();intent(incoming);if(!pendingKey.isEmpty())loginKey();else if(authenticated)navigate(section);else identity();}
+    @Override protected void onResume(){super.onResume();foreground=true;handler.removeCallbacks(tick);handler.post(tick);}
+    @Override protected void onPause(){foreground=false;handler.removeCallbacks(tick);rememberDraft();persistDrafts();super.onPause();}
+    @Override protected void onSaveInstanceState(Bundle state){rememberDraft();state.putInt("section",section);for(int i=0;i<3;i++)state.putString("draft"+i,drafts[i]);super.onSaveInstanceState(state);}
+    private void persistDrafts(){
+        try{JSONObject value=new JSONObject();for(int i=0;i<3;i++)value.put("draft"+i,drafts[i]);
+            if(noteChanged&&note!=null&&noteText!=null){JSONObject saved=new JSONObject(note.toString()),data=noteData();saved.put("content",data.getJSONObject("content"));saved.put("title",data.getString("title"));value.put("note",saved);}
+            draftStore.save(value.toString());
+        }catch(Exception e){toast(t("Bozza non salvata: ","Draft not saved: ")+e.getMessage());}
+    }
+    private void back(){if(section!=0&&authenticated)navigate(admin?0:1);else{rememberDraft();moveTaskToBack(true);}}
+    @Override public void onBackPressed(){back();}
+    @Override protected void onDestroy(){foreground=false;handler.removeCallbacksAndMessages(null);io.shutdownNow();super.onDestroy();}
 }

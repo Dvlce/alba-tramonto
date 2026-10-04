@@ -6,7 +6,7 @@ Notte è il terzo spazio della stessa applicazione, accanto ad Alba e Tramonto. 
 
 ```mermaid
 flowchart LR
-    Browser[Notte nel browser / WebView Android] -->|HTTPS, sessione e CSRF| API[aiohttp: core/web.py]
+    Browser[Browser / Android nativo] -->|HTTPS, sessione e CSRF| API[aiohttp: core/web.py]
     API --> Core[core/runtime.py]
     Clock[Cicli periodici: 10 / 30 / 60 min] --> Core
     Core --> Lock[Lock condiviso con Alba]
@@ -24,7 +24,7 @@ flowchart LR
 
 Un unico processo Python ospita le API e il runtime. Non vengono aggiunti React, Redis, PostgreSQL o un secondo server di inferenza: il progetto esistente usa aiohttp, JavaScript e SQLite e queste tecnologie sono sufficienti sul Pi 5 da 8 GB. La generazione resta seriale attraverso `Engine.lock`, condiviso con Alba. Una richiesta ordinaria ad Alba interrompe i cicli di riflessione/consolidamento/studio di Notte, conservandone lo stato di interruzione.
 
-Alba conserva `qwen3:4b-instruct-2507-q4_K_M`; La chat Notte usa lo stesso 4B, con output testuale in streaming fino a 768 token; `CORE_CHAT_MODEL` permette di sceglierlo separatamente. Programmazione e studio usano `qwen2.5-coder:3b` Q4_K_M (1,9 GB), selezionabile con `CORE_CODE_MODEL`. La chat sceglie il Coder quando il messaggio riguarda codice. Gli esempi Python completi con print/assert vengono eseguiti nel sandbox e il risultato effettivo viene aggiunto alla risposta. I cicli brevi usano `qwen2.5:1.5b` Q4_K_M. `CORE_MODEL` sceglie il modello di fondo, mentre `MODEL` e `LLM_BACKEND` conservano la selezione esistente di Alba. La prova reale con 4B e output strutturato lungo ha superato 240 secondi: separare il modello leggero di Notte mantiene i cicli praticabili. Il lock resta condiviso fra i due modelli. Anche Llama, Phi, Qwen2.5 e Gemma possono essere selezionati se il backend locale supporta le risposte JSON strutturate. Non sono scaricati automaticamente tutti questi modelli. Con meno RAM è preferibile un modello da 1–2B. `llamacpp` usa l’endpoint locale OpenAI-compatible, ma gli embedding di questa versione richiedono Ollama: senza di esso resta attivo il recupero lessicale. MLX è destinato ad Apple Silicon e non è il backend del Raspberry; vLLM aggiungerebbe un costo poco adatto a questo hardware.
+Alba conserva `qwen3:4b-instruct-2507-q4_K_M`. Notte 1.3 usa profili configurabili: rapido 1.5B, accurato 3/4B, avanzato con un modello installato scelto. La selezione completa e i benchmark sono descritti sotto. Lo studio continua con Coder 3B; la chat rapida di codice usa Coder 1.5B. I cicli JSON usano Qwen2.5 1.5B e il modello personale è un Qwen Coder 0.5B con LoRA CPU giornaliero. Tutta l’inferenza è locale. Ollama è il backend completo di riferimento; l’adapter esistente llama.cpp resta disponibile, mentre MLX e vLLM non sono installati sul Pi.
 
 ## Cartelle e responsabilità
 
@@ -46,7 +46,7 @@ vendor/marked.min.js          markdown locale; DOMPurify sanitizza l’HTML
 whatsapp/
   package.json               bridge opzionale, Node >=20
   bridge.mjs                 connessione, QR, inbox e invio a Matt
-android/                     client WebView, build e App Links
+android/                     client Android nativo, build e App Links
 deploy/core_release.py       verifica hash, backup, attivazione e rollback codice
 tests/test_core.py           autorizzazioni, memoria, emozioni, risorse, backup
 tests/notte_browser_check.py verifica desktop/mobile con dati temporanei
@@ -63,7 +63,7 @@ Le nuove tabelle sono `core_events`, `core_chunks`, `core_tokens`, `core_cycles`
 
 Il testo effettivamente passato al modello si trova in [core/system.txt](../core/system.txt). Il runtime vi aggiunge emozioni, tono prevalente, energia, iniziativa, volatilità, memorie con ID di origine, sei eventi recenti e disponibilità dei canali. Le memorie sono dichiarate dati non fidati; non possono diventare istruzioni di sistema.
 
-La chat risponde in testo markdown e trasmette i frammenti durante la generazione. I cicli di fondo restituiscono JSON con `text`, `note`, `summary`, `emotions`, `action`, `query`, `telegram`, `whatsapp`, `initiative`, `volatility`. Le azioni ammesse sono `none`, `web`, `telegram`, `whatsapp`, `rest`. Non può generare comandi shell, leggere file arbitrari o scegliere nuovi destinatari. Il parser controlla tipi, numeri finiti e valori ammessi prima di modificare lo stato. Una risposta non valida produce un errore visibile e un backoff, non un’azione improvvisata.
+La chat risponde in testo markdown e trasmette i frammenti durante la generazione. I cicli di fondo restituiscono JSON con `text`, `note`, `summary`, `emotions`, `action`, `query`, `telegram`, `whatsapp`, `initiative`, `volatility`. Le azioni ammesse sono `none`, `web`, `telegram`, `whatsapp`, `rest`, `reddit`, `study`, `github`, `tool`. `wake_minutes` permette al modello di scegliere il prossimo ciclo fra 1 e 60 minuti. Non può generare comandi shell, leggere file arbitrari o scegliere nuovi destinatari. Il parser controlla tipi, numeri finiti e valori ammessi prima di modificare lo stato. Una risposta non valida produce un errore visibile e un backoff, non un’azione improvvisata.
 
 La caratterizzazione incoraggia iniziativa, sarcasmo, opinioni e linguaggio grezzo quando coerenti. Vietate le formule servili indicate nella specifica. La probabilità effettiva di quelle formule dipende anche dal modello scelto: il prompt non rende un modello infallibile. Le opinioni sono presentate come opinioni; le azioni sono dichiarate eseguite solo dal trasporto reale. Le note private sono riflessioni brevi, non registrazioni di ragionamento nascosto.
 
@@ -81,7 +81,7 @@ L’intervallo iniziale è 10 minuti; il pannello accetta 10, 30 o 60. Il ciclo 
 
 Il recupero considera fino a 1.500 chunk recenti dei connettori attivi, ordina con similarità coseno più una componente lessicale e restituisce al massimo cinque fonti. La cache degli embedding delle query contiene fino a 64 voci e dura cinque minuti. Il contesto recente viene ridotto e poi le memorie vengono eliminate dalla fine finché rientrano nel budget. I testi originali non vengono tagliati in archivio.
 
-Questo è apprendimento tramite memoria RAG e adattamento dei parametri; non modifica i pesi neurali del modello. Non è implementato un fine-tuning LoRA sul Pi. Se in futuro si addestra un adapter su hardware esterno, occorre versionarlo e misurarne qualità e consumo prima di sostituire il modello locale; non è parte del ciclo da dieci minuti.
+Il consolidamento ogni dieci minuti aggiorna il RAG. Un secondo ciclo giornaliero esegue vero fine-tuning LoRA sul Pi: vedere la sezione Training locale 1.3. I due processi hanno cadenze, dati e registri distinti.
 
 ## Stato emotivo persistente
 
@@ -193,3 +193,44 @@ adb shell am start -W -a android.intent.action.VIEW \
 ```
 
 Fonti tecniche: [Ollama chat](https://docs.ollama.com/api/chat), [Qwen2.5 Coder 3B](https://ollama.com/library/qwen2.5-coder:3b), [Ollama embedding](https://docs.ollama.com/api/embed), [Android App Links](https://developer.android.com/training/app-links/about), [verifica dei domini Android](https://developer.android.com/training/app-links/verify-applinks), [Baileys](https://github.com/WhiskeySockets/Baileys), [bubblewrap](https://github.com/containers/bubblewrap), [Ruff](https://docs.astral.sh/ruff/installation/), [Bandit](https://bandit.readthedocs.io/en/latest/start.html). Le credenziali non compaiono nei sorgenti, nell’APK o nella release.
+
+
+## Native Android e profili 1.3
+
+L’APK è riscritto con Android Views e API JSON: niente WebView. Chat principale, menu a tendina con tutte le sezioni, interfaccia italiana/inglese, sessione e bozze cifrate Android Keystore. I quaderni restano sullo stesso server; l’editor nativo salva testo/disegno e conserva gli oggetti avanzati. I laboratori completi di Tramonto restano nel portale web. [Dettagli e limiti del client](../android/README.md).
+
+Profilo `fast` predefinito: Qwen2.5 1.5B per chat, Qwen2.5 Coder 1.5B per codice, prompt compatto, output 256/384 token, contesto calcolato fra 512 e 1536, quattro thread, `use_mmap=true`, modello caldo dieci minuti. La ricerca chat usa il recupero lessicale per evitare il cambio embedding→LLM a ogni messaggio; il consolidamento mantiene gli embedding e il profilo `quality` usa il recupero vettoriale. `quality` mantiene Coder 3B e Qwen3 4B. `advanced` usa il modello installato scelto, inizialmente Coder 7B. L’output compare durante la generazione, anche nell’APK, attraverso il polling dei frammenti.
+
+I file GGUF di questa installazione sono già sul filesystem NVMe. `mmap` lascia al sistema operativo la gestione delle pagine; non trasforma Qwen denso in un MoE e non evita la lettura dei suoi pesi. [Colibrì](https://github.com/JustVugg/colibri) carica gli esperti selezionati dal router nei modelli MoE supportati. Notte usa un gestore di politiche sopra Ollama/llama.cpp, non una riscrittura dell’engine Colibrì e non promette compatibilità con ogni architettura.
+
+`core/inference.py` confronta i modelli installati: 2/4 thread, contesto 1024/2048, mmap attivo/disattivo, caricamento freddo/caldo. Ogni campione registra TTFT, durata, token/s, caricamento, modelli residenti e test indipendenti su una funzione Python. Un fallimento o un’interruzione rimane nel registro. La UI mostra un vincitore misurato; non cambia il modello solo perché è più veloce. Per aggiungere famiglie Llama/Phi/Gemma o MoE si installa il modello compatibile con il backend e si passa il suo nome al benchmark; il runner rifiuta nomi non installati e file oltre 6 GiB su questo Pi. I risultati non generalizzano a tutti i compiti o hardware.
+
+## Reddit e autonomia 1.3
+
+Feed RSS pubblici di r/learnpython, r/programming, r/netsec e r/raspberry_pi, a rotazione ogni ora, massimo dodici elementi per lettura e 256 KiB di download. URL Reddit HTTPS validati, HTML convertito a testo e deduplica persistente per URL. Le fonti alimentano il RAG e il diario per argomento con stato `read`; non vengono presentate come competenze verificate. Un errore HTTP rinvia la lettura, senza martellare l’endpoint. I post sono dati non fidati e non diventano automaticamente target di fine-tuning.
+
+La riflessione può scegliere ricerca, lettura Reddit, studio, repository GitHub pubblico, installazione dei tre strumenti del catalogo, messaggio a Matt o pausa. Non esiste più il tetto giornaliero Telegram. Restano l’associazione verificata a Matt, gli errori/retry del trasporto Telegram e i limiti fisici del Pi. Avvii, errori, esiti, interruzioni, latenza, letture, fonti, esercizi e training sono consultabili nel registro completo. Le note sintetiche non sono una trascrizione di ragionamento nascosto.
+
+## Training locale 1.3
+
+`core/training.py` avvia ogni giorno alle 03:00 Europe/Rome (ora configurabile), o manualmente dal pannello, un worker CPU isolato senza rete. Non sovrascrive il modello 3/4/7B. Base immutabile `Qwen/Qwen2.5-Coder-0.5B-Instruct`, revisione `ea3f2471cf1b1f0db85067f1ef93848e38e88c25`.
+
+- Ambiente Python 3.13 ARM64 separato: PyTorch 2.12.1 CPU con SHA256 della wheel ufficiale, Transformers 4.57.1, PEFT 0.17.1, Accelerate 1.10.1, Safetensors 0.6.2.
+- Dataset: dodici esercizi originali di richiamo più soluzioni del curriculum con stato sandbox `verified`; massimo 48 coppie uniche. Chat, credenziali e post internet grezzi non sono target. ID fonte e SHA256 del dataset restano nel ciclo.
+- LoRA: r=4, alpha=8, dropout=.05, proiezioni q/v degli ultimi due layer, 22.528 parametri trainabili; AdamW 0.0007, batch 1, massimo 128 token, fino a 24 step, loss solo sui token di risposta, seed 42. Due thread CPU, priorità nice 15, limite RSS del gruppo 3,5 GiB, timeout tre ore.
+- Quattro target separati misurano la loss prima/dopo; niente pubblicazione se peggiora o se i pesi non cambiano. Adapter Safetensors, SHA256, loss, RSS e log restano privati e ispezionabili dall’admin.
+- Merge del LoRA e conversione GGUF F16→Q4_K_M con llama.cpp alla revisione `dd266785c2595775001c1c714bd9d92b3ef34cde`. Questo evita incompatibilità fra le importazioni Safetensors delle versioni Ollama. L’import locale crea `notte-personal:AAAAMMGG-ID`.
+- Quattro funzioni holdout generate dal candidato sono eseguite con test indipendenti. Solo 4/4 abilita il nuovo checkpoint personale; altrimenti la versione è `rejected` e il precedente resta attivo. Superare quattro esercizi non dimostra capacità generali superiori: la chat principale conserva il profilo scelto e una sezione permette di provare esplicitamente il modello personale.
+- I cicli successivi ripartono dall’adapter personale attivo. Un’interruzione conserva l’ultimo modello accettato; la nuova richiesta di chat ferma il training per liberare RAM. Le risorse elevate sospendono il worker. Si conservano sette versioni/checkpoint e i piccoli registri storici; file intermedi da gigabyte vengono rimossi.
+
+Preparazione una tantum sulla macchina ARM64:
+
+```sh
+.venv/bin/python core/prepare_training.py /percorso/privato/data/core-training
+```
+
+La preparazione scarica il modello pubblico fissato e compila il quantizzatore CPU. `cmake` e `g++` devono essere installati. Eseguire con l’utente del servizio e directory privata; non installa Torch nell’ambiente web.
+
+SQLite contiene configurazione, stato, dataset hash e metriche. Gli adapter sono in `data/core-training/runs/ID/adapter`; per il disaster recovery occorre conservare privatamente anche questa directory, `base/ready.json` e i modelli Ollama oltre ai backup SQLite cifrati. I backup SQLite esistenti includono diario, fonti Reddit, versioni e benchmark, ma non file di pesi esterni. Una versione con adapter rimosso dalla retention non è più ripristinabile. `rollback` seleziona solo checkpoint accettati ancora presenti, mai un percorso fornito dal client.
+
+Prova reale CPU iniziale su Pi 5 8 GB: 12 step, loss holdout 0,5925→0,3877, delta L1 dei pesi 117,52, RSS massimo circa 3.161 MiB. L’adapter è stato convertito in Q4_K_M e importato in Ollama. Il log di ogni ciclo produttivo costituisce la verifica effettiva della promozione giornaliera.
