@@ -38,6 +38,8 @@ public final class MainActivity extends Activity {
     private NotebookCanvas canvas;
     private JSONObject snapshot,note,restoredNote;
     private SessionStore draftStore;
+    private long draftOwner=0;
+    private String draftOrigin="";
     private JSONArray messages=new JSONArray();
     private boolean english,authenticated,admin,foreground,busy,polling,noteChanged;
     private int section=0,generation=0;
@@ -50,7 +52,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);draftStore=new SessionStore(this,"native_drafts");
-        try{String saved=draftStore.load();if(!saved.isEmpty()){JSONObject savedDrafts=new JSONObject(saved);for(int i=0;i<3;i++)drafts[i]=savedDrafts.optString("draft"+i);restoredNote=savedDrafts.optJSONObject("note");}}catch(Exception ignored){}
+        try{String saved=draftStore.load();if(!saved.isEmpty()){JSONObject savedDrafts=new JSONObject(saved);draftOwner=savedDrafts.optLong("owner");draftOrigin=savedDrafts.optString("origin");for(int i=0;i<3;i++)drafts[i]=savedDrafts.optString("draft"+i);restoredNote=savedDrafts.optJSONObject("note");}}catch(Exception ignored){}
         preferences=getSharedPreferences("alba",0);
         String language=preferences.getString("language","auto");english=language.equals("en")||(language.equals("auto")&&!Locale.getDefault().getLanguage().equals("it"));
         if(state!=null){section=state.getInt("section",0);for(int i=0;i<3;i++)drafts[i]=state.getString("draft"+i,"");}
@@ -100,10 +102,14 @@ public final class MainActivity extends Activity {
         io.execute(()->{try{JSONObject result=api.request("GET","/api/me",null);runOnUiThread(()->signedIn(result));}catch(Exception e){runOnUiThread(()->{authenticated=false;showLogin();status.setText(t("Accedi al tuo Raspberry","Sign in to your Raspberry"));});}});
     }
     private void signedIn(JSONObject me){
+        long owner=me.optLong("user_id");
+        if(owner<=0||owner!=draftOwner||!api.origin.equals(draftOrigin))clearDrafts();
+        draftOwner=owner;draftOrigin=api.origin;
         authenticated=true;admin=me.optBoolean("is_admin");if(!admin&&section!=9)section=1;
         status.setText(me.optString("name","")+" · "+t("AI locale · Android nativo","Local AI · Native Android"));if(restoredNote!=null&&admin){note=restoredNote;restoredNote=null;section=2;generation++;noteChanged=true;try{editor();}catch(Exception e){error(e);}toast(t("Bozza della pagina recuperata","Page draft recovered"));}else navigate(section);
     }
     private void showLogin(){
+        composer=null;
         generation++;body.removeAllViews();title.setText("alba.");ScrollView scroll=new ScrollView(this);LinearLayout box=column();box.setPadding(dp(20),dp(16),dp(20),dp(20));scroll.addView(box);body.addView(scroll);
         box.addView(label(t("Una presenza sul tuo Raspberry.","A presence on your Raspberry."),25));
         box.addView(label(t("Usa il link /web_key di Telegram oppure le tue credenziali. L’AI e i dati restano sul Pi.","Use the /web_key link from Telegram or your credentials. AI and data stay on the Pi."),15));
@@ -185,13 +191,13 @@ public final class MainActivity extends Activity {
         int scroll=scroller.getScrollY();feed.removeAllViews();
         if(section==3){
             feed.addView(button(t("Consolida ora","Consolidate now"),()->action("consolidation",new JSONObject())));
-            JSONArray connectors=snapshot.getJSONArray("connectors");for(int i=0;i<connectors.length();i++){JSONObject c=connectors.getJSONObject(i);String id=c.getString("id");Switch toggle=new Switch(this);toggle.setText(id+" · "+c.optInt("count")+t(" eventi"," events"));toggle.setTextColor(INK);toggle.setChecked(c.optBoolean("enabled"));toggle.setOnCheckedChangeListener((v,on)->action("config",object("config",object("connectors",object(id,on)))));feed.addView(toggle);feed.addView(button(t("Ispeziona ","Inspect ")+id,()->request(()->api.request("GET","/api/notte/events?category="+id,null),r->{panel();activity(r.getJSONArray("events"));})));}
+            JSONArray connectors=snapshot.getJSONArray("connectors");for(int i=0;i<connectors.length();i++){JSONObject c=connectors.getJSONObject(i);String id=c.getString("id");Switch toggle=new Switch(this);toggle.setText(id+" · "+c.optInt("count")+t(" eventi"," events"));toggle.setTextColor(INK);toggle.setChecked(c.optBoolean("enabled"));toggle.setOnCheckedChangeListener((v,on)->action("config",object("config",object("connectors",object(id,on)))));feed.addView(toggle);feed.addView(button(t("Ispeziona ","Inspect ")+id,()->request(()->api.request("GET","/api/notte/events?category="+id,null),r->new AlertDialog.Builder(this).setTitle(id).setView(detailView(r.getJSONArray("events").toString(2))).setPositiveButton("OK",null).show())));}
         }else if(section==6){
             JSONObject training=snapshot.getJSONObject("training");card(t("Qwen personale · training CPU","Personal Qwen · CPU training"),training.optString("base")+"\n"+training.optString("schedule")+"\n"+t("Modello attivo: ","Active model: ")+training.optString("active_model","")+"\n"+training.optString("phase"));
             toggle(t("Addestramento giornaliero","Daily training"),"training_enabled",config.optBoolean("training_enabled"));
             feed.addView(button(t("Addestra ora","Train now"),()->action("train",new JSONObject())));feed.addView(button(t("Ferma training","Stop training"),()->action("stop_training",new JSONObject())));
             feed.addView(button(t("Prova modello personale","Try personal model"),()->navigate(10)));
-            JSONArray runs=training.getJSONArray("runs");for(int i=0;i<runs.length();i++){JSONObject run=runs.getJSONObject(i);int id=run.getInt("id");JSONObject metrics=run.optJSONObject("metrics");card("#"+id+" · "+run.optString("day")+" · "+run.optString("status"),run.optString("detail")+"\n"+run.optString("model")+"\n"+t("Esempi: ","Examples: ")+run.optInt("samples")+(metrics!=null&&metrics.has("final_loss")?"\nLoss "+metrics.optDouble("initial_loss")+" → "+metrics.optDouble("final_loss"):""));feed.addView(button(t("Dati, checkpoint e log","Data, checkpoint & logs"),()->request(()->api.request("GET","/api/notte/training/"+id,null),r->{panel();for(java.util.Iterator<String> keys=r.keys();keys.hasNext();){String key=keys.next();details(key,r.optString(key));}})));if(run.optString("status").equals("ready"))feed.addView(button(t("Ripristina #","Restore #")+id,()->action("rollback",object("id",id))));}
+            JSONArray runs=training.getJSONArray("runs");for(int i=0;i<runs.length();i++){JSONObject run=runs.getJSONObject(i);int id=run.getInt("id");JSONObject metrics=run.optJSONObject("metrics");card("#"+id+" · "+run.optString("day")+" · "+run.optString("status"),run.optString("detail")+"\n"+run.optString("model")+"\n"+t("Esempi: ","Examples: ")+run.optInt("samples")+(metrics!=null&&metrics.has("final_loss")?"\nLoss "+metrics.optDouble("initial_loss")+" → "+metrics.optDouble("final_loss"):""));feed.addView(button(t("Dati, checkpoint e log","Data, checkpoint & logs"),()->request(()->api.request("GET","/api/notte/training/"+id,null),r->new AlertDialog.Builder(this).setTitle(t("Dati e log #","Data & logs #")+id).setView(detailView(r.toString(2))).setPositiveButton("OK",null).show())));if(run.optString("status").equals("ready"))feed.addView(button(t("Ripristina #","Restore #")+id,()->action("rollback",object("id",id))));}
         }else if(section==7){
             card(t("Token dalla nascita","Lifetime tokens"),Long.toString(snapshot.optLong("lifetime_tokens")));JSONArray tokens=snapshot.getJSONArray("tokens");long total=0;for(int i=0;i<tokens.length();i++)total+=tokens.getJSONObject(i).optLong("total");
             for(int i=0;i<tokens.length();i++){JSONObject row=tokens.getJSONObject(i);feed.addView(label(row.optString("category")+" · "+row.optLong("total"),15));ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(1000);bar.setProgress(total==0?0:(int)(1000*row.optLong("total")/total));feed.addView(bar);}
@@ -220,14 +226,14 @@ public final class MainActivity extends Activity {
         feed.addView(label(t("Lingua dell’app","App language"),22));Spinner language=new Spinner(this);language.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{t("Lingua del telefono","Phone language"),"Italiano","English"}));String selected=preferences.getString("language","auto");language.setSelection(selected.equals("it")?1:selected.equals("en")?2:0);feed.addView(language);
         EditText server=input("https://…",false);server.setText(api==null?getString(R.string.default_server):api.origin);feed.addView(label(t("Server Raspberry","Raspberry server"),18));feed.addView(server);
         feed.addView(button(t("Salva lingua e server","Save language & server"),()->{try{
-            String code=new String[]{"auto","it","en"}[language.getSelectedItemPosition()];NativeApi next=new NativeApi(this,server.getText().toString().trim());if(api!=null&&!api.origin.equals(next.origin)){api.clear();next.clear();authenticated=false;}
+            String code=new String[]{"auto","it","en"}[language.getSelectedItemPosition()];NativeApi next=new NativeApi(this,server.getText().toString().trim());if(api!=null&&!api.origin.equals(next.origin)){api.clear();next.clear();clearDrafts();authenticated=false;}
             preferences.edit().putString("server",next.origin).putString("language",code).apply();api=next;english=code.equals("en")||(code.equals("auto")&&!Locale.getDefault().getLanguage().equals("it"));section=admin?0:1;shell();identity();
         }catch(Exception e){error(e);}}));
         if(authenticated&&admin&&snapshot!=null){JSONObject config=snapshot.optJSONObject("config");toggle(t("Autonomia","Autonomy"),"enabled",config.optBoolean("enabled"));toggle(t("Ricerca online","Online research"),"web_enabled",config.optBoolean("web_enabled"));toggle(t("Reddit","Reddit"),"reddit_enabled",config.optBoolean("reddit_enabled"));toggle(t("Studio di codice","Code study"),"study_enabled",config.optBoolean("study_enabled"));toggle(t("Telegram · nessun limite giornaliero","Telegram · no daily cap"),"telegram_enabled",config.optBoolean("telegram_enabled"));
             feed.addView(button(t("Velocità: rapido / accurato","Speed: fast / quality"),()->new AlertDialog.Builder(this).setTitle(t("Profilo del modello","Model profile")).setItems(new String[]{t("Rapido · Qwen 1.5B","Fast · Qwen 1.5B"),t("Accurato · Qwen 3/4B","Quality · Qwen 3/4B"),t("Coder avanzato · 7B","Advanced coder · 7B")},(d,w)->action("config",object("config",object("profile",w==0?"fast":w==1?"quality":"advanced")))).show()));
             feed.addView(button(t("Seleziona un modello installato","Choose an installed model"),()->request(()->api.request("GET","/api/notte/models",null),r->{JSONArray models=r.getJSONArray("models");String[] names=new String[models.length()];for(int i=0;i<models.length();i++)names[i]=models.getJSONObject(i).getString("name");new AlertDialog.Builder(this).setTitle(t("Modello avanzato","Advanced model")).setItems(names,(d,w)->action("config",object("config",object("advanced_code_model",names[w])))).show();})));
             feed.addView(button(t("Aggiungi repository GitHub","Add GitHub repository"),()->prompt("owner/repo",value->action("repository",object("text",value)))));}
-        if(authenticated)feed.addView(button(t("Esci dall’account","Sign out"),()->request(()->api.request("POST","/api/logout",new JSONObject()),r->{api.clear();authenticated=false;showLogin();})));
+        if(authenticated)feed.addView(button(t("Esci dall’account","Sign out"),()->request(()->api.request("POST","/api/logout",new JSONObject()),r->{api.clear();clearDrafts();authenticated=false;showLogin();})));
         feed.addView(label(t("Android nativo · v1.3.0\nIl modello gira sul Raspberry; non sul telefono.","Native Android · v1.3.0\nThe model runs on the Raspberry, not on your phone."),12));
     }
     private interface TextResult{void run(String value);}
@@ -266,16 +272,18 @@ public final class MainActivity extends Activity {
         section="/tramonto".equals(path)?2:"/notte".equals(path)?0:1;
         if(uri.getFragment()!=null){Uri fragment=Uri.parse("https://local/?"+uri.getFragment());pendingKey=fragment.getQueryParameter("web_key");if(pendingKey==null)pendingKey="";if(pendingKey.length()>100)pendingKey="";}
     }
-    @Override protected void onNewIntent(Intent incoming){super.onNewIntent(incoming);setIntent(incoming);if(noteChanged){new AlertDialog.Builder(this).setMessage(t("Salva la pagina prima di aprire un altro link.","Save your page before opening another link.")).setPositiveButton("OK",null).show();incoming.setData(null);return;}rememberDraft();intent(incoming);if(!pendingKey.isEmpty())loginKey();else if(authenticated)navigate(section);else identity();}
+    @Override protected void onNewIntent(Intent incoming){super.onNewIntent(incoming);setIntent(incoming);if(noteChanged){new AlertDialog.Builder(this).setMessage(t("Salva la pagina prima di aprire un altro link.","Save your page before opening another link.")).setPositiveButton("OK",null).show();incoming.setData(null);return;}rememberDraft();int previous=section;intent(incoming);int target=section;section=previous;if(!pendingKey.isEmpty()){section=target;composer=null;loginKey();}else if(authenticated)navigate(target);else{section=target;identity();}}
     @Override protected void onResume(){super.onResume();foreground=true;handler.removeCallbacks(tick);handler.post(tick);}
     @Override protected void onPause(){foreground=false;handler.removeCallbacks(tick);rememberDraft();persistDrafts();super.onPause();}
     @Override protected void onSaveInstanceState(Bundle state){rememberDraft();state.putInt("section",section);for(int i=0;i<3;i++)state.putString("draft"+i,drafts[i]);super.onSaveInstanceState(state);}
     private void persistDrafts(){
-        try{JSONObject value=new JSONObject();for(int i=0;i<3;i++)value.put("draft"+i,drafts[i]);
+        if(!authenticated||draftOwner<=0)return;
+        try{JSONObject value=new JSONObject();value.put("owner",draftOwner);value.put("origin",draftOrigin);for(int i=0;i<3;i++)value.put("draft"+i,drafts[i]);
             if(noteChanged&&note!=null&&noteText!=null){JSONObject saved=new JSONObject(note.toString()),data=noteData();saved.put("content",data.getJSONObject("content"));saved.put("title",data.getString("title"));value.put("note",saved);}
             draftStore.save(value.toString());
         }catch(Exception e){toast(t("Bozza non salvata: ","Draft not saved: ")+e.getMessage());}
     }
+    private void clearDrafts(){for(int i=0;i<3;i++)drafts[i]="";draftOwner=0;draftOrigin="";restoredNote=null;note=null;noteChanged=false;composer=null;try{draftStore.save("");}catch(Exception e){toast(e.getMessage());}}
     private void back(){if(section!=0&&authenticated)navigate(admin?0:1);else{rememberDraft();moveTaskToBack(true);}}
     @Override public void onBackPressed(){back();}
     @Override protected void onDestroy(){foreground=false;handler.removeCallbacksAndMessages(null);io.shutdownNow();super.onDestroy();}

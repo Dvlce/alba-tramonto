@@ -67,7 +67,7 @@ class Training:
 
     async def execute(self,work,previous):
         args=['bwrap','--unshare-all','--die-with-parent','--ro-bind','/usr','/usr',
-              '--symlink','usr/lib','/lib','--symlink','usr/bin','/bin','--dev','/dev','--proc','/proc',
+              '--symlink','usr/lib','/lib','--symlink','usr/bin','/bin','--dev','/dev','--ro-bind','/proc','/proc',
               '--tmpfs','/tmp','--dir','/etc','--ro-bind',str(self.root/'environment'),'/venv',
               '--ro-bind',str(self.root/'base'),'/base','--bind',str(work),'/work',
               '--ro-bind',str(Path(__file__).parent/'training_worker.py'),'/worker.py','--chdir','/work']
