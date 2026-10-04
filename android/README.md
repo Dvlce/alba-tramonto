@@ -1,32 +1,32 @@
-# Alba · Tramonto · Notte per Android
+# Alba · Tramonto · Notte — Native Android 1.3
 
-La versione 1.2.0 apre Alba, Tramonto e Notte **dentro l’app**, con una WebView: non avvia una Custom Tab o il browser per usare la piattaforma. I pulsanti Alba/Tramonto/Notte, il tasto Indietro, il caricamento immagini, la stampa A4/PDF e il salvataggio di JSON/SVG usano la navigazione e i selettori Android. Le dimensioni e l’allineamento degli oggetti sono gli stessi del sito. Rotazione e apertura del selettore immagini conservano la pagina corrente.
+The Android app uses Java and Android Views. It contains **no WebView, Javascript engine or browser UI**. Chat is the main screen; a dropdown contains Alba, Tramonto notebooks, memory, topic diary, all activity, personal-model training, token statistics, emotions, hardware and settings.
 
-Richiede Android 6+ con Android System WebView aggiornato e un server HTTPS raggiungibile. **Non è offline**: AI, account e quaderni rimangono sul server. Non contiene modello, password o dati personali. Il menu ⋯ permette di cambiare server. Solo i collegamenti esterni selezionati esplicitamente (per esempio Telegram o un’informativa esterna) vengono aperti nella rispettiva app.
+Italian and English UI follow the phone language, with a manual choice in Settings. AI responses follow the language of the message. The AI, SQLite database, notebooks and training run on the Raspberry; the APK is a native network client, not an on-phone LLM. HTTPS is required.
 
-Al primo avvio accedi con password o chiave personale; la sessione è conservata nell’app, separatamente dal browser. L’accesso SMS funziona se configurato sul server. Google/GitHub/Discord richiedono il browser secondo le regole dei provider e non sono integrati in questo client: usa uno degli altri metodi. HTTPS è obbligatorio; certificati non validi non vengono accettati. I file esportati possono essere salvati tramite il selettore documenti, fino a 32 MB, senza permessi generali sulla memoria del telefono.
+Login uses your existing account or a one-time `/web_key` Telegram link. Sessions and recovered page drafts are encrypted with an Android Keystore key, excluded from backups. Drafts are bound to the authenticated account and server, and cleared on logout or account changes. Passwords and one-time keys are not stored. API mutations use CSRF and same-origin requests; redirects and invalid TLS certificates are rejected. HTTP 401 / expired sessions return to native login.
 
-Installa l’APK dal sito o dal file di release consentendo l’installazione dalla sorgente scelta. La versione 1.2.0 mantiene `local.alba` e usa la chiave di firma della distribuzione precedente, quindi può aggiornarla senza disinstallare. Le versioni successive devono conservare la stessa chiave.
+Tramonto has native text editing, ink, JSON export and optimistic version checks. Saving preserves existing graph, formula, circuit, network and image data. Its complete visual math/electronics/network laboratories remain in the existing web portal; native editing of those advanced objects, image upload and PDF printing are not part of this release. The native APK does not open that portal inside itself.
+
+The package `local.alba`, signing certificate and HTTPS App Links remain unchanged. Update the APK without uninstalling. The first native login is required because the old browser session cannot be reused by the native API client. Phone-specific Telegram in-app browser settings may still affect external app opening.
 
 ## Build
 
-Python 3.9+, JDK 17 e Android SDK con `platforms;android-36` e `build-tools;36.0.0`. Installa gli strumenti dal [sito ufficiale Android](https://developer.android.com/studio), poi:
+Python 3.9+, JDK 17, Android SDK 36 and build-tools 36.0.0:
 
 ```sh
-python3 android/build.py --sdk /percorso/android-sdk --server https://alba.example.org
+python3 android/build.py --sdk /path/to/android-sdk --server https://alba.example.org
 ```
 
-Sul Mac con il JDK Homebrew:
+Output: `dist/alba-albi.apk`, `dist/assetlinks.json`. The private signing key stays in `~/.local/alba-signing`; keep it for future updates. Publish the generated assetlinks at `/.well-known/assetlinks.json` on the same HTTPS origin. The manifest host is generated from `--server`.
+
+## Native UI verification
 
 ```sh
-JAVA_HOME=/opt/homebrew/opt/openjdk@17 PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH \
-  python3 android/build.py --server https://alba.example.org
+python3 android/test_native.py --sdk /path/to/android-sdk
+adb install -r dist/alba-albi.apk
+adb install -r android/build/smoke/native-smoke.apk
+adb shell am instrument -w local.alba.smoke/local.alba.NativeUiSmoke
 ```
 
-Il risultato è `dist/alba-albi.apk`. La build genera le risorse del server nella directory di build senza modificare quelle tracciate nel repository; pulisce i vecchi `.class`, verifica la firma e stampa lo SHA256. La chiave privata resta in `~/.local/alba-signing` con permessi protetti; `--signing-dir` seleziona un altro archivio. Conserva chiave e password per gli aggiornamenti.
-
-Verifica sul dispositivo: primo login, Alba → Tramonto, scelta di un’immagine, rotazione durante la scrittura, formula/grafico/circuito inseriti e ridimensionati, esportazione JSON/SVG, PDF A4, tasto Indietro con salvataggio, server non raggiungibile e ritorno della connessione. La sola build non equivale a questa verifica su telefono.
-
-## Apertura dei link Telegram
-
-La build genera l’intent filter HTTPS del dominio scelto e `dist/assetlinks.json` con il certificato dell’APK. Pubblica quest’ultimo in `/.well-known/assetlinks.json` sullo stesso dominio. L’app gestisce avvio e riapertura con il frammento della chiave monouso. Android deve verificare il dominio; i browser incorporati possono richiedere l’apertura esterna. Altri server configurati nel menu richiedono una build e una associazione per il loro dominio. [Diagnostica e dettagli](../docs/ALBA_CORE.md#android-e-link-telegram).
+The test APK is separate from the release. Its explicit fixture transport checks native markdown/table rendering, menu navigation, warm links, rejected external link keys, account-bound chat drafts, diary, training/system/activity screens, Italian/English UI, notebook content preservation and versioned saving. It never uses real credentials, trains models or sends Telegram messages. Production API tests verify authentication, authorization and CSRF independently. GitHub Actions runs the emulator on the CI runner, not on the user's Mac. Test signing keys created in CI are ephemeral; published APKs use the existing release key.

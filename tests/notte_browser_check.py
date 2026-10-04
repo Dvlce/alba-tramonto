@@ -19,6 +19,7 @@ from test_core import Model
 
 
 async def main():
+    (ROOT/'artifacts').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder)
         for name in ('web.html','web.css','web.js','notte.html','notte.css','notte.js'):
@@ -47,7 +48,7 @@ async def main():
                 await page.locator('#chatEvents .night-event.assistant').wait_for()
                 assert await page.locator('#chatEvents strong').inner_text()=='Interessante.'
                 await page.locator('#tab-memory').click()
-                assert await page.locator('.connector').count()==9
+                assert await page.locator('.connector').count()==12
                 await page.locator('.connector').filter(has_text='Note interne').get_by_text('Ispeziona').click()
                 await page.locator('#inspection .night-event').first.wait_for()
                 assert await page.locator('#inspection script').count()==0

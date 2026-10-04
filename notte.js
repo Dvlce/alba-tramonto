@@ -1,11 +1,11 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('it-IT');
-const labels = {chat:'Chat',web:'Ricerca web',notes:'Note interne',summaries:'Riassunti',whatsapp:'WhatsApp',telegram:'Telegram',files:'File locali',consolidation:'Consolidamento',system:'Riflessione',alba:'Alba · storico chat',github:'Repository GitHub',diary:'Diario di studio',study:'Studio e programmazione'};
+const labels = {chat:'Chat',web:'Ricerca web',notes:'Note interne',summaries:'Riassunti',whatsapp:'WhatsApp',telegram:'Telegram',files:'File locali',consolidation:'Consolidamento',system:'Riflessione',alba:'Alba · storico chat',github:'Repository GitHub',diary:'Diario di studio',study:'Studio e programmazione',reddit:'Reddit',training:'Training locale',activity:'Attività'};
 const colors = ['#aed087','#d58c57','#8772ad','#347c9d','#5a9672','#d36776','#8f753c'];
 let csrf = '', data = null, activePanel = 'chat', socket = null, reconnectTimer = null;
 let inspecting = null, refreshBusy = false, lastChatId = 0, lastBusy = false, sending = false;
-let slices = [];
+let slices = [], activityBefore = 0, activityCursor = 0;
 const when = value => value ? new Date(value*1000).toLocaleString('it-IT') : 'Mai';
 function notice(text,error=false){$('notice').textContent=text;$('notice').classList.toggle('error',error);}
 async function api(path,body){
@@ -29,7 +29,7 @@ function renderEvents(target,events,empty='Non c’è ancora nulla qui.'){
   }
   box.replaceChildren(fragment);if(nearBottom)box.scrollTop=box.scrollHeight;
 }
-async function loadEvents(category,target){const result=await api('/api/notte/events?category='+category);renderEvents(target,result.events);if(category==='chat')lastChatId=result.events.at(-1)?.id||0;}
+async function loadEvents(category,target){const result=await api('/api/notte/events?category='+category+(target==='activityEvents'&&activityBefore?'&before='+activityBefore:''));if(target==='activityEvents'){activityCursor=result.before||result.events[0]?.id||0;$('olderActivity').disabled=!activityCursor;}renderEvents(target,result.events);if(category==='chat')lastChatId=result.events.at(-1)?.id||0;}
 function renderStatus(){
   $('entityMood').textContent=data.mood;$('moodLabel').textContent=data.mood;
   $('toggleAutonomy').textContent=data.config.enabled?'Metti in pausa l’autonomia':'Risveglia Notte';
@@ -46,8 +46,9 @@ function renderStatus(){
   if(data.error)notice(data.error,true);
   if(activePanel==='memory')renderConnectors();
   if(activePanel==='tokens')renderTokens();
-  if(activePanel==='system')renderEmotionLog();
+  if(activePanel==='system'){renderEmotionLog();$('benchmarkResults').replaceChildren(...(data.benchmarks||[]).map(r=>{const a=element('article',undefined,'night-event');a.append(element('h3',r.model+' · '+r.metrics.cache),element('p',r.status+' · '+JSON.stringify(r.options)),element('p',r.metrics.tokens_per_second+' token/s · primo token '+r.metrics.first_token_ms+' ms · test '+r.metrics.test_passed));return a;}));}
   if(activePanel==='diary')renderLearning();
+  if(activePanel==='training')renderTraining();
 }
 function renderConnectors(){
   const fragment=document.createDocumentFragment();
@@ -66,7 +67,7 @@ function renderEmotionLog(){
 function renderLearning(){
   const l=data.learning;
   $('studyNow').disabled=data.running;
-  if($('diaryTopic').options.length===1)for(const topic of l.topics){const option=element('option',topic);option.value=topic;$('diaryTopic').append(option);}
+  if($('diaryTopic').options.length===1)for(const topic of [...new Set([...l.topics,'Reddit · learnpython','Reddit · programming','Reddit · netsec','Reddit · raspberry_pi'])]){const option=element('option',topic);option.value=topic;$('diaryTopic').append(option);}
   $('sandboxStatus').textContent=l.sandbox_available?'Esercizi in ambiente isolato · rete disattivata · test indipendenti.':'Sandbox assente: gli esercizi non vengono eseguiti.';
   $('repositoryList').replaceChildren(...l.repositories.map(r=>element('p',r.name+' · '+r.files+' file · '+r.revision.slice(0,10))));
   $('toolList').replaceChildren(...l.tools.map(t=>element('p',t.name+' '+t.version+' · '+t.status+(t.status==='error'?' · '+t.detail:''))));
@@ -77,13 +78,15 @@ async function loadDiary(){
     const article=element('article',undefined,'night-event diary-entry');
     article.append(element('header',d.topic+' · '+when(d.created)),element('h3',d.title),element('p',({verified:'Test superati',failed:'Test falliti',error:'Studio non completato',interrupted:'Studio interrotto'}[d.status]||d.status),'diary-status '+d.status));
     const prose=element('div',undefined,'prose');prose.innerHTML=DOMPurify.sanitize(marked.parse(d.summary),{FORBID_TAGS:['img','iframe','style'],FORBID_ATTR:['style']});article.append(prose);
-    const sources=element('p',undefined,'sources');for(const url of d.sources){const a=element('a',url);if(url.startsWith('https://github.com/'))a.href=url;a.target='_blank';a.rel='noopener noreferrer';sources.append(a,element('br'));}article.append(sources);
+    const sources=element('p',undefined,'sources');for(const url of d.sources){const a=element('a',url);if(url.startsWith('https://github.com/')||url.startsWith('https://www.reddit.com/'))a.href=url;a.target='_blank';a.rel='noopener noreferrer';sources.append(a,element('br'));}article.append(sources);
     if(d.code){const details=element('details'),pre=element('pre'),code=element('code',d.code);pre.append(code);details.append(element('summary','Codice e risultato'),pre,element('pre',d.result));article.append(details);}else article.append(element('p',d.result));
     return article;
   });
   $('diaryEntries').replaceChildren(...(entries.length?entries:[element('p','Il primo ciclo di studio scriverà qui fonti, scoperte e prove.','empty')]));
 }
 $('diaryTopic').onchange=()=>loadDiary().catch(e=>notice(e.message,true));
+$('olderActivity').onclick=()=>{if(activityCursor){activityBefore=activityCursor;loadEvents('all','activityEvents').catch(e=>notice(e.message,true));}};
+$('latestActivity').onclick=()=>{activityBefore=0;loadEvents('all','activityEvents').catch(e=>notice(e.message,true));};
 $('studyNow').onclick=()=>action('study').catch(e=>notice(e.message,true));
 $('repoForm').onsubmit=event=>{event.preventDefault();action('repository',{text:$('repoName').value}).then(()=>notice('Lettura del repository avviata.')).catch(e=>notice(e.message,true));};
 $('installTool').onclick=()=>action('tool',{text:$('toolName').value}).catch(e=>notice(e.message,true));
@@ -106,17 +109,36 @@ $('historyPeriod').onchange=()=>renderTokens();
 function describeTokens(row,total){$('chartDetail').textContent=(labels[row.category]||row.category)+': '+fmt.format(row.total)+' token · '+(total?Math.round(row.total/total*100):0)+'%';}
 $('tokenChart').addEventListener('pointermove',event=>{const rect=event.currentTarget.getBoundingClientRect(),x=(event.clientX-rect.left)/rect.width*300-150,y=(event.clientY-rect.top)/rect.height*300-150,r=Math.hypot(x,y);let a=Math.atan2(y,x);if(a<-Math.PI/2)a+=2*Math.PI;const match=slices.find(s=>a>=s.start&&a<s.end);if(match&&r>=78&&r<=115)describeTokens(match.row,data.tokens.reduce((v,r)=>v+r.total,0));});
 $('tokenChart').addEventListener('keydown',event=>{if(event.key==='Enter'&&slices.length)describeTokens(slices[0].row,data.tokens.reduce((v,r)=>v+r.total,0));});
-async function refresh(){if(refreshBusy)return;refreshBusy=true;try{data=await api('/api/notte/status');renderStatus();if(!data.running&&lastBusy){if(activePanel==='diary')await loadDiary();await loadEvents('chat','chatEvents');if(activePanel==='summaries'){await loadEvents('summaries','summaryEvents');await loadEvents('notes','noteEvents');}if(inspecting&&activePanel==='memory')await loadEvents(inspecting,'inspection');}lastBusy=data.running;}catch(e){notice(e.message,true);}finally{refreshBusy=false;}}
-async function panel(name){activePanel=name;document.querySelectorAll('[data-panel]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.panel===name)));document.querySelectorAll('[role=tabpanel]').forEach(s=>s.hidden=s.id!=='panel-'+name);if(!data)return;renderStatus();if(name==='diary'){await loadDiary();}if(name==='summaries'){await loadEvents('summaries','summaryEvents');await loadEvents('notes','noteEvents');}if(name==='system'){
-  const c=data.config;$('studyMinutes').value=c.study_minutes;$('studyEnabled').checked=c.study_enabled;$('interval').value=c.interval;$('reflectionMinutes').value=c.reflection_minutes;$('initiative').value=c.initiative;$('volatility').value=c.volatility;$('webEnabled').checked=c.web_enabled;$('telegramEnabled').checked=c.telegram_enabled;$('whatsappEnabled').checked=c.whatsapp_enabled;$('mattNumber').value=c.matt_number;
+async function refresh(){if(refreshBusy)return;refreshBusy=true;try{data=await api('/api/notte/status');renderStatus();if(activePanel==='activity')await loadEvents('all','activityEvents');if(!data.running&&lastBusy){if(activePanel==='diary')await loadDiary();await loadEvents('chat','chatEvents');if(activePanel==='summaries'){await loadEvents('summaries','summaryEvents');await loadEvents('notes','noteEvents');}if(inspecting&&activePanel==='memory')await loadEvents(inspecting,'inspection');}lastBusy=data.running;}catch(e){notice(e.message,true);}finally{refreshBusy=false;}}
+async function panel(name){activePanel=name;document.querySelectorAll('[data-panel]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.panel===name)));document.querySelectorAll('[role=tabpanel]').forEach(s=>s.hidden=s.id!=='panel-'+name);if(!data)return;renderStatus();if(name==='diary'){await loadDiary();}if(name==='activity')await loadEvents('all','activityEvents');if(name==='summaries'){await loadEvents('summaries','summaryEvents');await loadEvents('notes','noteEvents');}if(name==='system'){
+  const c=data.config;$('modelProfile').value=c.profile;$('studyMinutes').value=c.study_minutes;$('studyEnabled').checked=c.study_enabled;$('interval').value=c.interval;$('reflectionMinutes').value=c.reflection_minutes;$('initiative').value=c.initiative;$('volatility').value=c.volatility;$('webEnabled').checked=c.web_enabled;$('telegramEnabled').checked=c.telegram_enabled;$('whatsappEnabled').checked=c.whatsapp_enabled;$('mattNumber').value=c.matt_number;
 }}
 document.querySelectorAll('[data-panel]').forEach(button=>{button.onclick=()=>panel(button.dataset.panel).catch(e=>notice(e.message,true));button.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();const tabs=[...document.querySelectorAll('[data-panel]')],index=tabs.indexOf(button),next=tabs[(index+(['ArrowLeft','ArrowUp'].includes(event.key)?tabs.length-1:1))%tabs.length];next.focus();next.click();};});
 for(const [id,name] of [['consolidate','consolidation'],['reflect','reflection'],['stopCore','stop']])$(id).onclick=()=>action(name).catch(e=>notice(e.message,true));
 $('toggleAutonomy').onclick=()=>action('config',{config:{enabled:!data.config.enabled}}).then(()=>notice(data.config.enabled?'Autonomia attiva.':'Autonomia in pausa.')).catch(e=>notice(e.message,true));
 $('chatForm').onsubmit=async event=>{event.preventDefault();if(sending)return;sending=true;$('sendChat').disabled=true;try{await action('chat',{text:$('chatText').value.trim()});$('chatText').value='';await loadEvents('chat','chatEvents');$('chatEvents').scrollTop=$('chatEvents').scrollHeight;}catch(e){notice(e.message,true);}finally{sending=false;$('sendChat').disabled=Boolean(data?.running&&data?.mode==='chat');}};
-$('settingsForm').onsubmit=event=>{event.preventDefault();action('config',{config:{study_minutes:Number($('studyMinutes').value),study_enabled:$('studyEnabled').checked,interval:Number($('interval').value),reflection_minutes:Number($('reflectionMinutes').value),initiative:Number($('initiative').value),volatility:Number($('volatility').value),web_enabled:$('webEnabled').checked,telegram_enabled:$('telegramEnabled').checked,whatsapp_enabled:$('whatsappEnabled').checked,matt_number:$('mattNumber').value}}).then(()=>notice('Ritmo aggiornato.')).catch(e=>notice(e.message,true));};
+$('settingsForm').onsubmit=event=>{event.preventDefault();action('config',{config:{profile:$('modelProfile').value,study_minutes:Number($('studyMinutes').value),study_enabled:$('studyEnabled').checked,interval:Number($('interval').value),reflection_minutes:Number($('reflectionMinutes').value),initiative:Number($('initiative').value),volatility:Number($('volatility').value),web_enabled:$('webEnabled').checked,telegram_enabled:$('telegramEnabled').checked,whatsapp_enabled:$('whatsappEnabled').checked,matt_number:$('mattNumber').value}}).then(()=>notice('Ritmo aggiornato.')).catch(e=>notice(e.message,true));};
 $('importFile').onclick=()=>action('import',{text:$('importText').value}).then(()=>{$('importText').value='';notice('Documento salvato.');}).catch(e=>notice(e.message,true));
 $('resetStats').onclick=()=>{if(confirm('Azzerare il periodo visualizzato? Il totale di vita rimane.'))action('reset_stats').catch(e=>notice(e.message,true));};
 function connect(){if(socket||document.hidden)return;socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/notte/stream');socket.onopen=()=>{$('streamState').textContent='In diretta dal Raspberry';};socket.onmessage=async event=>{const update=JSON.parse(event.data);await refresh();if(update.last_id>lastChatId)await loadEvents('chat','chatEvents');};socket.onerror=()=>socket?.close();socket.onclose=()=>{socket=null;$('streamState').textContent='Riconnessione…';clearTimeout(reconnectTimer);if(!document.hidden)reconnectTimer=setTimeout(connect,5000);};}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(reconnectTimer);socket?.close();}else{refresh();connect();}});
 (async()=>{try{const me=await api('/api/me');if(!me.is_admin){notice('Notte è riservata all’amministratore.',true);return;}csrf=me.csrf;await refresh();await loadEvents('chat','chatEvents');connect();}catch(e){notice(e.message,true);}})();
+
+function renderTraining(){
+ const t=data.training;$('trainingState').textContent=t.base+' · '+t.schedule+' · '+(t.running?t.phase:t.ready?'Pronto':'Preparazione richiesta')+' · '+(t.active_model||'Nessuna versione personale attiva');
+ $('trainNow').disabled=t.running||!t.ready;$('stopTraining').disabled=!t.running;
+ if(document.activeElement!==$('trainingHour'))$('trainingHour').value=data.config.training_hour;
+ $('dailyTraining').checked=data.config.training_enabled;
+ $('trainingRuns').replaceChildren(...t.runs.map(r=>{const card=element('article',undefined,'night-event');card.append(element('h3','#'+r.id+' · '+r.day+' · '+r.status),element('p',r.detail),element('p',r.model));
+ const m=r.metrics;if(m.final_loss!=null)card.append(element('p','Loss '+m.initial_loss.toFixed(3)+' → '+m.final_loss.toFixed(3)+' · '+m.steps+' step · '+m.trainable_parameters+' parametri'));
+ if(m.benchmark)card.append(element('p','Test funzionali '+m.benchmark.passed+'/'+m.benchmark.total));
+ const inspect=element('button','Dati, verifiche e log');inspect.onclick=async()=>{try{const files=await api('/api/notte/training/'+r.id);$('trainingFiles').replaceChildren(...Object.entries(files).map(([name,value])=>{const d=element('details');d.append(element('summary',name),element('pre',value));return d;}));}catch(e){notice(e.message,true);}};card.append(inspect);
+ if(r.status==='ready'){const restore=element('button','Ripristina versione');restore.onclick=()=>action('rollback',{id:r.id}).catch(e=>notice(e.message,true));card.append(restore);}return card;}));
+}
+$('readReddit').onclick=()=>action('reddit').catch(e=>notice(e.message,true));
+$('trainNow').onclick=()=>action('train').catch(e=>notice(e.message,true));
+$('stopTraining').onclick=()=>action('stop_training').catch(e=>notice(e.message,true));
+$('saveTraining').onclick=()=>action('config',{config:{training_enabled:$('dailyTraining').checked,training_hour:Number($('trainingHour').value)}}).catch(e=>notice(e.message,true));
+$('personalChat').onsubmit=e=>{e.preventDefault();action('personal_chat',{text:$('personalText').value.trim()}).then(()=>{$('personalText').value='';panel('chat');}).catch(e=>notice(e.message,true));};
+
+$('benchmarkNow').onclick=()=>action('benchmark').catch(e=>notice(e.message,true));

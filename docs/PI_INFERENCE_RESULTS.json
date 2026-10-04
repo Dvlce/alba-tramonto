@@ -1,0 +1,1920 @@
+{
+  "date": "2026-10-04",
+  "hardware": {
+    "device": "Raspberry Pi 5",
+    "ram_gb": 8,
+    "architecture": "aarch64",
+    "storage": "NVMe SSD",
+    "inference": "Ollama 0.34.2 CPU",
+    "max_loaded_models": 1
+  },
+  "protocol": {
+    "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+    "temperature": 0,
+    "max_output_tokens": 140,
+    "independent_cases": [
+      [
+        [
+          3,
+          1,
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          1,
+          2
+        ]
+      ],
+      [
+        [],
+        []
+      ],
+      [
+        [
+          "a",
+          "A",
+          "a"
+        ],
+        [
+          "a",
+          "A"
+        ]
+      ]
+    ],
+    "note": "One short programming task, not a general capability evaluation. Ollama reported model bytes are not measured process RSS."
+  },
+  "samples": [
+    {
+      "id": 1,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 5733,
+        "wall_ms": 6859,
+        "load_ms": 4355,
+        "tokens_per_second": 13.32,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 50.4,
+        "ram_percent": 20.8,
+        "temperature_c": 37.5
+      }
+    },
+    {
+      "id": 2,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 85,
+        "wall_ms": 1208,
+        "load_ms": 2,
+        "tokens_per_second": 13.36,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 50.4,
+        "ram_percent": 20.8,
+        "temperature_c": 37.5
+      }
+    },
+    {
+      "id": 3,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3653,
+        "wall_ms": 4819,
+        "load_ms": 2868,
+        "tokens_per_second": 12.84,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 95.8,
+        "ram_percent": 20.8,
+        "temperature_c": 40.2
+      }
+    },
+    {
+      "id": 4,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 120,
+        "wall_ms": 1294,
+        "load_ms": 2,
+        "tokens_per_second": 12.79,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 95.8,
+        "ram_percent": 20.8,
+        "temperature_c": 40.2
+      }
+    },
+    {
+      "id": 5,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3410,
+        "wall_ms": 4570,
+        "load_ms": 2624,
+        "tokens_per_second": 12.79,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2088679504,
+        "cpu_percent": 93.3,
+        "ram_percent": 21.3,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 6,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 100,
+        "wall_ms": 1265,
+        "load_ms": 2,
+        "tokens_per_second": 12.76,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2088679504,
+        "cpu_percent": 93.3,
+        "ram_percent": 21.3,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 7,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3898,
+        "wall_ms": 5061,
+        "load_ms": 3127,
+        "tokens_per_second": 12.9,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 1270192536,
+        "cpu_percent": 78.7,
+        "ram_percent": 23.3,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 8,
+      "model": "qwen2.5:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 167,
+        "wall_ms": 1319,
+        "load_ms": 2,
+        "tokens_per_second": 12.97,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 1270192536,
+        "cpu_percent": 97.4,
+        "ram_percent": 23.1,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 9,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 6526,
+        "wall_ms": 7651,
+        "load_ms": 5131,
+        "tokens_per_second": 13.33,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 35.5,
+        "ram_percent": 21.3,
+        "temperature_c": 38.0
+      }
+    },
+    {
+      "id": 10,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 87,
+        "wall_ms": 1210,
+        "load_ms": 2,
+        "tokens_per_second": 13.34,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 49.8,
+        "ram_percent": 21.2,
+        "temperature_c": 40.8
+      }
+    },
+    {
+      "id": 11,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3679,
+        "wall_ms": 4889,
+        "load_ms": 2871,
+        "tokens_per_second": 12.4,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 100,
+        "ram_percent": 20.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 12,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 99,
+        "wall_ms": 1294,
+        "load_ms": 2,
+        "tokens_per_second": 12.49,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2058270800,
+        "cpu_percent": 100,
+        "ram_percent": 20.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 13,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3404,
+        "wall_ms": 4574,
+        "load_ms": 2621,
+        "tokens_per_second": 12.82,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2088679504,
+        "cpu_percent": 98.4,
+        "ram_percent": 21.2,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 14,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 102,
+        "wall_ms": 1269,
+        "load_ms": 2,
+        "tokens_per_second": 12.82,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 2088679504,
+        "cpu_percent": 98.4,
+        "ram_percent": 21.2,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 15,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 4152,
+        "wall_ms": 5311,
+        "load_ms": 3381,
+        "tokens_per_second": 12.95,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 1270192536,
+        "cpu_percent": 80.6,
+        "ram_percent": 23.0,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 16,
+      "model": "qwen2.5-coder:1.5b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 99,
+        "wall_ms": 1261,
+        "load_ms": 2,
+        "tokens_per_second": 12.88,
+        "prompt_tokens": 55,
+        "output_tokens": 15,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    return list(set(values))\n",
+        "reported_model_bytes": 1270192536,
+        "cpu_percent": 97.8,
+        "ram_percent": 22.9,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 17,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 12814,
+        "wall_ms": 19935,
+        "load_ms": 9902,
+        "tokens_per_second": 6.32,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3970758081,
+        "cpu_percent": 50.3,
+        "ram_percent": 31.0,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 18,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 167,
+        "wall_ms": 7319,
+        "load_ms": 2,
+        "tokens_per_second": 6.29,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3970758081,
+        "cpu_percent": 50.4,
+        "ram_percent": 30.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 19,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 6452,
+        "wall_ms": 13996,
+        "load_ms": 4675,
+        "tokens_per_second": 5.96,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3970758081,
+        "cpu_percent": 100,
+        "ram_percent": 31.0,
+        "temperature_c": 44.6
+      }
+    },
+    {
+      "id": 20,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 185,
+        "wall_ms": 7699,
+        "load_ms": 4,
+        "tokens_per_second": 5.99,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3970758081,
+        "cpu_percent": 100,
+        "ram_percent": 30.8,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 21,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 6140,
+        "wall_ms": 13539,
+        "load_ms": 4431,
+        "tokens_per_second": 6.08,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 4009555393,
+        "cpu_percent": 80.6,
+        "ram_percent": 31.7,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 22,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 180,
+        "wall_ms": 7681,
+        "load_ms": 2,
+        "tokens_per_second": 6.0,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 4009555393,
+        "cpu_percent": 94.6,
+        "ram_percent": 31.4,
+        "temperature_c": 43.5
+      }
+    },
+    {
+      "id": 23,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 6656,
+        "wall_ms": 13982,
+        "load_ms": 4922,
+        "tokens_per_second": 6.14,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 2303029410,
+        "cpu_percent": 100,
+        "ram_percent": 34.3,
+        "temperature_c": 45.8
+      }
+    },
+    {
+      "id": 24,
+      "model": "qwen2.5-coder:3b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 173,
+        "wall_ms": 7488,
+        "load_ms": 3,
+        "tokens_per_second": 6.15,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 2303029410,
+        "cpu_percent": 100,
+        "ram_percent": 33.8,
+        "temperature_c": 46.9
+      }
+    },
+    {
+      "id": 25,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 27664,
+        "wall_ms": 42959,
+        "load_ms": 20757,
+        "tokens_per_second": 2.94,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8805416958,
+        "cpu_percent": 50.6,
+        "ram_percent": 58.3,
+        "temperature_c": 45.8
+      }
+    },
+    {
+      "id": 26,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 356,
+        "wall_ms": 15664,
+        "load_ms": 7,
+        "tokens_per_second": 2.94,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8805416958,
+        "cpu_percent": 50.6,
+        "ram_percent": 58.5,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 27,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 19263,
+        "wall_ms": 36105,
+        "load_ms": 14342,
+        "tokens_per_second": 2.67,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8805416958,
+        "cpu_percent": 86.0,
+        "ram_percent": 58.7,
+        "temperature_c": 44.6
+      }
+    },
+    {
+      "id": 28,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 415,
+        "wall_ms": 17256,
+        "load_ms": 10,
+        "tokens_per_second": 2.67,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8805416958,
+        "cpu_percent": 91.0,
+        "ram_percent": 58.6,
+        "temperature_c": 44.6
+      }
+    },
+    {
+      "id": 29,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 22347,
+        "wall_ms": 39400,
+        "load_ms": 17199,
+        "tokens_per_second": 2.64,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8865185790,
+        "cpu_percent": 95.0,
+        "ram_percent": 59.7,
+        "temperature_c": 46.3
+      }
+    },
+    {
+      "id": 30,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 396,
+        "wall_ms": 17484,
+        "load_ms": 7,
+        "tokens_per_second": 2.63,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 8865185790,
+        "cpu_percent": 100,
+        "ram_percent": 58.8,
+        "temperature_c": 48.5
+      }
+    },
+    {
+      "id": 31,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 19749,
+        "wall_ms": 36394,
+        "load_ms": 15056,
+        "tokens_per_second": 2.7,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 4883260373,
+        "cpu_percent": 76.8,
+        "ram_percent": 62.9,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 32,
+      "model": "qwen2.5-coder:7b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 434,
+        "wall_ms": 17086,
+        "load_ms": 3,
+        "tokens_per_second": 2.7,
+        "prompt_tokens": 55,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 4883260373,
+        "cpu_percent": 100,
+        "ram_percent": 62.1,
+        "temperature_c": 48.0
+      }
+    },
+    {
+      "id": 33,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 12838,
+        "wall_ms": 21569,
+        "load_ms": 10474,
+        "tokens_per_second": 5.15,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5216938228,
+        "cpu_percent": 43.6,
+        "ram_percent": 38.3,
+        "temperature_c": 44.6
+      }
+    },
+    {
+      "id": 34,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 215,
+        "wall_ms": 9020,
+        "load_ms": 2,
+        "tokens_per_second": 5.11,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5216938228,
+        "cpu_percent": 50.5,
+        "ram_percent": 37.7,
+        "temperature_c": 45.8
+      }
+    },
+    {
+      "id": 35,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 7089,
+        "wall_ms": 16603,
+        "load_ms": 5687,
+        "tokens_per_second": 4.73,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5216938228,
+        "cpu_percent": 100,
+        "ram_percent": 38.0,
+        "temperature_c": 47.4
+      }
+    },
+    {
+      "id": 36,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 238,
+        "wall_ms": 9854,
+        "load_ms": 2,
+        "tokens_per_second": 4.68,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5216938228,
+        "cpu_percent": 100,
+        "ram_percent": 37.7,
+        "temperature_c": 48.0
+      }
+    },
+    {
+      "id": 37,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 7339,
+        "wall_ms": 16870,
+        "load_ms": 5926,
+        "tokens_per_second": 4.72,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5368981748,
+        "cpu_percent": 100,
+        "ram_percent": 39.5,
+        "temperature_c": 48.0
+      }
+    },
+    {
+      "id": 38,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 373,
+        "wall_ms": 9871,
+        "load_ms": 2,
+        "tokens_per_second": 4.74,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 5368981748,
+        "cpu_percent": 100,
+        "ram_percent": 39.6,
+        "temperature_c": 48.5
+      }
+    },
+    {
+      "id": 39,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 8363,
+        "wall_ms": 17816,
+        "load_ms": 6941,
+        "tokens_per_second": 4.76,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3046931168,
+        "cpu_percent": 91.5,
+        "ram_percent": 42.0,
+        "temperature_c": 46.3
+      }
+    },
+    {
+      "id": 40,
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 245,
+        "wall_ms": 9823,
+        "load_ms": 2,
+        "tokens_per_second": 4.69,
+        "prompt_tokens": 34,
+        "output_tokens": 45,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 3046931168,
+        "cpu_percent": 99.9,
+        "ram_percent": 41.6,
+        "temperature_c": 49.0
+      }
+    },
+    {
+      "id": 41,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 5313,
+        "wall_ms": 6123,
+        "load_ms": 4370,
+        "tokens_per_second": 15.99,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1701692045,
+        "cpu_percent": 50.1,
+        "ram_percent": 18.7,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 42,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 73,
+        "wall_ms": 894,
+        "load_ms": 2,
+        "tokens_per_second": 15.84,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1701692045,
+        "cpu_percent": 42.4,
+        "ram_percent": 18.6,
+        "temperature_c": 40.2
+      }
+    },
+    {
+      "id": 43,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3480,
+        "wall_ms": 4452,
+        "load_ms": 2896,
+        "tokens_per_second": 13.37,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1701692045,
+        "cpu_percent": 75.5,
+        "ram_percent": 18.5,
+        "temperature_c": 39.7
+      }
+    },
+    {
+      "id": 44,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 176,
+        "wall_ms": 1087,
+        "load_ms": 3,
+        "tokens_per_second": 14.27,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1701692045,
+        "cpu_percent": 75.5,
+        "ram_percent": 18.5,
+        "temperature_c": 39.7
+      }
+    },
+    {
+      "id": 45,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3362,
+        "wall_ms": 4409,
+        "load_ms": 2642,
+        "tokens_per_second": 12.34,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1736295053,
+        "cpu_percent": 90.2,
+        "ram_percent": 19.0,
+        "temperature_c": 43.5
+      }
+    },
+    {
+      "id": 46,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 149,
+        "wall_ms": 967,
+        "load_ms": 2,
+        "tokens_per_second": 15.75,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1736295053,
+        "cpu_percent": 74.0,
+        "ram_percent": 19.1,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 47,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3443,
+        "wall_ms": 4273,
+        "load_ms": 2901,
+        "tokens_per_second": 15.55,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1117572299,
+        "cpu_percent": 45.1,
+        "ram_percent": 22.0,
+        "temperature_c": 43.5
+      }
+    },
+    {
+      "id": 48,
+      "model": "llama3.2:1b-instruct-q4_K_M",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "llama",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 75,
+        "wall_ms": 912,
+        "load_ms": 2,
+        "tokens_per_second": 15.53,
+        "prompt_tokens": 51,
+        "output_tokens": 13,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    return list(dict.fromkeys(values))",
+        "reported_model_bytes": 1117572299,
+        "cpu_percent": 74.0,
+        "ram_percent": 21.9,
+        "temperature_c": 41.9
+      }
+    },
+    {
+      "id": 49,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 4176,
+        "wall_ms": 9615,
+        "load_ms": 2991,
+        "tokens_per_second": 13.24,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1362739854,
+        "cpu_percent": 50.5,
+        "ram_percent": 13.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 50,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 229,
+        "wall_ms": 5669,
+        "load_ms": 2,
+        "tokens_per_second": 13.23,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1362739854,
+        "cpu_percent": 50.9,
+        "ram_percent": 13.5,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 51,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3365,
+        "wall_ms": 8565,
+        "load_ms": 2723,
+        "tokens_per_second": 13.85,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1362739854,
+        "cpu_percent": 85.1,
+        "ram_percent": 13.7,
+        "temperature_c": 43.5
+      }
+    },
+    {
+      "id": 52,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 164,
+        "wall_ms": 5294,
+        "load_ms": 2,
+        "tokens_per_second": 14.04,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1362739854,
+        "cpu_percent": 85.5,
+        "ram_percent": 13.5,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 53,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3116,
+        "wall_ms": 8298,
+        "load_ms": 2473,
+        "tokens_per_second": 13.89,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1363788430,
+        "cpu_percent": 100,
+        "ram_percent": 13.6,
+        "temperature_c": 47.4
+      }
+    },
+    {
+      "id": 54,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 167,
+        "wall_ms": 5287,
+        "load_ms": 2,
+        "tokens_per_second": 14.06,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1363788430,
+        "cpu_percent": 100,
+        "ram_percent": 13.7,
+        "temperature_c": 47.4
+      }
+    },
+    {
+      "id": 55,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 3620,
+        "wall_ms": 8716,
+        "load_ms": 2984,
+        "tokens_per_second": 14.13,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1198270708,
+        "cpu_percent": 99.8,
+        "ram_percent": 20.9,
+        "temperature_c": 47.4
+      }
+    },
+    {
+      "id": 56,
+      "model": "gemma3:1b",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "gemma3",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 163,
+        "wall_ms": 5352,
+        "load_ms": 2,
+        "tokens_per_second": 13.88,
+        "prompt_tokens": 33,
+        "output_tokens": 72,
+        "test_passed": true,
+        "test_result": "PASS: 3 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n",
+        "code": "def unique(values):\n    \"\"\"Rimuove duplicati mantenendo l'ordine.\"\"\"\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n",
+        "reported_model_bytes": 1198270708,
+        "cpu_percent": 100,
+        "ram_percent": 21.1,
+        "temperature_c": 48.0
+      }
+    },
+    {
+      "id": 57,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 2681,
+        "wall_ms": 3945,
+        "load_ms": 1620,
+        "tokens_per_second": 26.9,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 661756311,
+        "cpu_percent": 38.0,
+        "ram_percent": 12.3,
+        "temperature_c": 40.8
+      }
+    },
+    {
+      "id": 58,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 2,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 48,
+        "wall_ms": 1317,
+        "load_ms": 1,
+        "tokens_per_second": 26.77,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 661756311,
+        "cpu_percent": 50.4,
+        "ram_percent": 12.0,
+        "temperature_c": 41.4
+      }
+    },
+    {
+      "id": 59,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 2162,
+        "wall_ms": 3324,
+        "load_ms": 1603,
+        "tokens_per_second": 29.29,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 661756311,
+        "cpu_percent": 87.7,
+        "ram_percent": 12.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 60,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 80,
+        "wall_ms": 1229,
+        "load_ms": 1,
+        "tokens_per_second": 29.31,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 661756311,
+        "cpu_percent": 87.7,
+        "ram_percent": 12.8,
+        "temperature_c": 43.0
+      }
+    },
+    {
+      "id": 61,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 2358,
+        "wall_ms": 3519,
+        "load_ms": 1599,
+        "tokens_per_second": 29.27,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 675387799,
+        "cpu_percent": 66.7,
+        "ram_percent": 12.7,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 62,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 2048,
+        "num_thread": 4,
+        "use_mmap": true
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 48,
+        "wall_ms": 1317,
+        "load_ms": 1,
+        "tokens_per_second": 26.71,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 675387799,
+        "cpu_percent": 97.9,
+        "ram_percent": 12.4,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 63,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "cold",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 2161,
+        "wall_ms": 3321,
+        "load_ms": 1593,
+        "tokens_per_second": 29.24,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 587968018,
+        "cpu_percent": 42.3,
+        "ram_percent": 16.6,
+        "temperature_c": 45.2
+      }
+    },
+    {
+      "id": 64,
+      "model": "notte-personal:20261004-7",
+      "options": {
+        "num_ctx": 1024,
+        "num_thread": 4,
+        "use_mmap": false
+      },
+      "status": "ok",
+      "metrics": {
+        "cache": "warm",
+        "family": "qwen2",
+        "quantization": "Q4_K_M",
+        "first_token_ms": 59,
+        "wall_ms": 1213,
+        "load_ms": 1,
+        "tokens_per_second": 29.24,
+        "prompt_tokens": 55,
+        "output_tokens": 34,
+        "test_passed": false,
+        "test_result": "Traceback (most recent call last):\n  File \"/worker.py\", line 32, in <module>\n    assert actual == case['expected'], f\"Atteso {case['expected']!r}, ottenuto {actual!r}\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Atteso [3, 1, 2], ottenuto [1, 2, 3]\n",
+        "code": "def unique(values):\n    seen = set()\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n    return list(seen)",
+        "reported_model_bytes": 587968018,
+        "cpu_percent": 97.7,
+        "ram_percent": 16.4,
+        "temperature_c": 45.8
+      }
+    }
+  ],
+  "personal_training": {
+    "id": 7,
+    "model": "notte-personal:20261004-7",
+    "status": "ready",
+    "samples": 13,
+    "dataset_hash": "a95316ff39d05b72b6fb28ecd729a899a112f39091068c70f1a5b26e6c39e8c4",
+    "cycle_seconds": 83,
+    "initial_loss": 0.5925170555710793,
+    "final_loss": 0.3636699952185154,
+    "parameter_delta_l1": 127.05972790718079,
+    "steps": 13,
+    "trainable_parameters": 22528,
+    "accepted": true,
+    "interrupted": false,
+    "seconds": 38,
+    "rss_mb": 3573.96875,
+    "losses": [
+      0.5299121737480164,
+      0.5618762969970703,
+      0.4073132276535034,
+      0.37988224625587463,
+      0.377828985452652,
+      0.527945339679718,
+      0.8697243332862854,
+      0.3829961121082306,
+      0.5063320994377136,
+      0.2558330297470093,
+      0.397859126329422,
+      0.27469292283058167,
+      0.1707301288843155
+    ],
+    "adapter_sha256": "1105a8ce7a1d0e131b6737792734719d5a0ba441afe9acd90bdb6e38c8db04d3",
+    "gguf_sha256": "be158541279de6e9134994989c6b7675f39235706ff62c2b3fd7ecadb355a872",
+    "benchmark": {
+      "passed": 4,
+      "total": 4,
+      "results": [
+        {
+          "function": "cube",
+          "passed": true,
+          "code": "def cube(x):\n    return x ** 3",
+          "result": "PASS: 2 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n"
+        },
+        {
+          "function": "is_positive",
+          "passed": true,
+          "code": "def is_positive(x):\n    return x > 0",
+          "result": "PASS: 2 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n"
+        },
+        {
+          "function": "last_or_none",
+          "passed": true,
+          "code": "def last_or_none(values):\n    if not values:\n        return None\n    else:\n        return values[-1]",
+          "result": "PASS: 2 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n"
+        },
+        {
+          "function": "maximum",
+          "passed": true,
+          "code": "def maximum(values):\n    if not values:\n        return None\n    else:\n        return max(values)",
+          "result": "PASS: 2 casi indipendenti\n\nruff (exit 0): All checks passed!\n\nbandit (exit 0): \npytest (exit 0): .                                                                        [100%]\n1 passed in 0.01s\n"
+        }
+      ]
+    }
+  },
+  "production_chat": [
+    {
+      "cache": "cold",
+      "first_token_ms": 8344,
+      "total_ms": 17774,
+      "tokens_per_second": 11.45
+    },
+    {
+      "cache": "warm",
+      "first_token_ms": 2897,
+      "total_ms": 8180,
+      "tokens_per_second": 11.35
+    }
+  ]
+}
