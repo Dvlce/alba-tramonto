@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 from core.gguf_plan import GIB, inspect_gguf, plan
 from core.prepare_ssd import digest, register
 from core.ssd_runtime import SSDRuntime, command
+from core.inference import cache_friendly_messages
 
 
 def gguf(moe=False):
@@ -31,6 +32,19 @@ def gguf(moe=False):
 
 
 class PlannerTests(unittest.TestCase):
+    def test_emotion_updates_keep_cached_prefix_and_preserve_all_state(self):
+        base=[{'role':'system','content':'Persona\nSTATO E MEMORIA:\n{"emotion":0.4,"memory":"user fact"}'},
+              {'role':'user','content':'earlier question'},{'role':'assistant','content':'earlier answer'},
+              {'role':'user','content':'current question'}]
+        first=cache_friendly_messages(base)
+        changed=[dict(m) for m in base];changed[0]['content']=changed[0]['content'].replace('0.4','0.5')
+        second=cache_friendly_messages(changed)
+        self.assertEqual(first[:-1],second[:-1])
+        self.assertIn('{"emotion":0.4,"memory":"user fact"}',first[-1]['content'])
+        self.assertIn('{"emotion":0.5,"memory":"user fact"}',second[-1]['content'])
+        self.assertTrue(first[-1]['content'].startswith('current question'))
+        self.assertEqual(first[1:3],base[1:3]);self.assertIn('STATO E MEMORIA',base[0]['content'])
+
     def test_dense_and_moe_actual_tensor_index(self):
         with tempfile.TemporaryDirectory() as temporary:
             path=Path(temporary)/'model.gguf'

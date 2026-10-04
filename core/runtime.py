@@ -196,7 +196,9 @@ class Core:
         if self.config['profile']=='fast':context_fields['emotion']=max(self.emotions,key=self.emotions.get)
         else:context_fields['emotions']=self.emotions
         context = json.dumps({**context_fields,'memories':memories},ensure_ascii=False)
-        recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT 8") if self.config['connectors']['chat'] else []
+        ssd_chat_active=self.config['ssd_enabled'] and self.config['profile']=='advanced' and not personal
+        history_limit=128 if ssd_chat_active else 8
+        recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT ?",(history_limit,)) if self.config['connectors']['chat'] else []
         messages = [{'role':'system','content':prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context[:6500]}]
         # The current user event is already in the log; include it exactly once.
         history = list(reversed(recent))
@@ -220,9 +222,10 @@ class Core:
         model=self.config['personal_model'] if personal else (self.config['code_model'] if coding else self.config['model']) if fast else (self.config['code_model'] if coding else self.config['chat_model'])
         if not personal and self.config['profile']=='advanced':model=self.config['advanced_code_model']
         maximum=384 if fast and coding else 256 if fast else 768
-        from .inference import context_size
+        from .inference import context_size,cache_friendly_messages
+        if ssd_chat_active:messages=cache_friendly_messages(messages)
         resource['context_tokens']=context_size(messages,maximum,resource['context_tokens'])
-        if self.config['ssd_enabled'] and self.config['profile']=='advanced' and not personal:
+        if ssd_chat_active:
             # The chosen target is mandatory. A resource failure is visible;
             # there is no hidden fallback to a smaller model.
             await self.ssd.chat(model,messages,maximum,resource['context_tokens'])
