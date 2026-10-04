@@ -17,7 +17,7 @@ from test_tramonto import PNG
 async def main():
  with tempfile.TemporaryDirectory() as folder:
   root=Path(folder)
-  for filename in ('web.html','web.css','web.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'):shutil.copy2(ROOT/filename,root/filename)
+  for filename in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'):shutil.copy2(ROOT/filename,root/filename)
   shutil.copytree(ROOT/'vendor',root/'vendor');settings=Settings(root=root,admins=(1,),allowed=(2,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'));service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings));store.register(1,'Admin');store.register(2,'User');server=TestServer(web_app(service));errors=[]
   async def simulated(_self,prepared):
    await asyncio.sleep(.4);return {'engine':'test fixture','analysis':'op','x':[0],'series':[{'name':'P1','unit':'V','values':[2.5]}],'total_samples':1,'display_samples':1}

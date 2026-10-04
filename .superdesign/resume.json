@@ -14,7 +14,7 @@
         ".superdesign/design-system.md"
       ],
       "fingerprints": {
-        "tramonto.html": "0c8fdd7ffccb4944b8d6a4a4ff311045b3bb5d427727ca3a404c808d89082e81",
+        "tramonto.html": "07acb5698f58b5347d56dcf260f67f6cfa682e688ccb9faac0ffdf4f2ba4c2c4",
         "tramonto.css": "266c52c06bfafff015ef67f5655d6aa0ed79614cc50edb07e15dbd56fc7ff804",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf"
@@ -28,12 +28,12 @@
       ],
       "drafts": {
         "b562c42e-8f4a-4b42-9425-a2b1d5f397d6": {
-          "title": "Tramonto \u2014 stili e palette",
-          "visualDirection": "approved notebook with selectable skins, luminosity and accent palettes",
-          "currentVersion": 3
+          "title": "Tramonto Portal Transition",
+          "visualDirection": "Existing notebook with a uniform accessible three-space dropdown and finite identity-based portal motion",
+          "currentVersion": 6
         }
       },
-      "updatedAt": "2026-10-02T08:47:44.958304+00:00"
+      "updatedAt": "2026-10-04T16:53:16.341177+00:00"
     },
     "/notte": {
       "targetKind": "new-ui",

@@ -22,7 +22,7 @@ async def main():
     (ROOT/'artifacts').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder)
-        for name in ('web.html','web.css','web.js','notte.html','notte.css','notte.js'):
+        for name in ('web.html','web.css','web.js','portal-motion.js','notte.html','notte.css','notte.js'):
             shutil.copy2(ROOT/name,root/name)
         (root/'vendor').mkdir()
         for name in ('marked.min.js','purify.min.js'):shutil.copy2(ROOT/'vendor'/name,root/'vendor'/name)

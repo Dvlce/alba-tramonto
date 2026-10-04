@@ -5,11 +5,11 @@
   <meta name="theme-color" content="#f4f5ee">
   <title>Alba · Uno spazio per parlarne</title>
   <link rel="stylesheet" href="/assets/web.css"><script defer src="/assets/web.js"></script>
-</head>
+<script defer src="/assets/portal-motion.js?v=20261004-menu"></script></head>
 <body class="alba-app"><main>
   <header class="site-header">
-    <div class="brand">
-      <button class="symbol" id="albaSymbol" aria-label="Apri il menu Alba" aria-controls="siteMenu" aria-expanded="false" type="button">
+    <div class="brand portal-switcher">
+      <button class="symbol portal-switch-trigger" data-portal-trigger id="albaSymbol" aria-label="Scegli il tuo spazio" aria-controls="siteMenu" aria-expanded="false" type="button">
         <svg viewBox="0 0 72 72" aria-hidden="true">
           <defs>
             <path id="snakeGuide1" d="M43 22 C38 15 20 16 18 30 C15 45 33 51 41 36 C44 30 45 25 43 22"/>
@@ -22,8 +22,8 @@
           <g id="iconParticles" class="icon-particles"><circle cx="10" cy="16" r="1.8"/><circle cx="60" cy="12" r="1.4"/><circle cx="60" cy="56" r="1.8"/><path d="m13 51 1.5 4.5 4.5 1.5-4.5 1.5L13 63l-1.5-4.5L7 57l4.5-1.5Z"/></g>
         </svg>
       </button>
-      <div><h1>alba<span>.</span></h1><p>Un pensiero alla volta.</p></div>
-      <nav id="siteMenu" class="portal-menu" aria-label="Scegli il tuo spazio" hidden><a href="/">☀ Alba <small>Conversazione e memoria</small></a><a id="tramontoLink" href="/tramonto" hidden>◒ Tramonto <small>Quaderni, formule e idee</small></a><a id="notteLink" href="/notte" hidden>☾ Notte <small>ALBA-CORE · vita locale</small></a><p id="portalAccessNote">Tramonto è riservato all’amministratore.</p></nav>
+      <div class="portal-brand-copy"><h1 class="portal-name">alba<span>.</span></h1><p>Un pensiero alla volta.</p></div>
+      <nav id="siteMenu" class="portal-menu" aria-label="Scegli il tuo spazio" hidden><p class="portal-menu-heading">I tuoi spazi</p><a href="/"><span class="portal-link-copy"><span>Alba</span><small>Conversazione e memoria</small></span></a><a id="tramontoLink" href="/tramonto" hidden><span class="portal-link-copy"><span>Tramonto</span><small>Quaderni, formule e idee</small></span></a><a id="notteLink" href="/notte" hidden><span class="portal-link-copy"><span>Notte</span><small>ALBA-CORE · vita locale</small></span></a><p id="portalAccessNote">Tramonto e Notte sono riservati all’amministratore.</p></nav>
     </div>
     <div class="header-actions">
       <details id="appearanceSettings" class="appearance-settings"><summary aria-label="Aspetto di Alba">Aspetto</summary><div class="motion-popover appearance-popover"><strong>Alba, come piace a te.</strong><label for="surfaceStyle">Stile</label><select id="surfaceStyle"><option value="classic">Classico</option><option value="neo">Neomorfismo</option><option value="glass">Vetro</option><option value="clay">Claymorphism</option><option value="cyber">Cybercore</option><option value="brutal">Neobrutalism</option><option value="scrap">Scrapbook</option><option value="surreal">Surrealism</option></select><label for="appearanceTheme">Luminosità</label><select id="appearanceTheme"><option value="light">Chiaro</option><option value="dark">Scuro</option><option value="gray">Grigio</option><option value="black">Nero</option></select><label for="appearancePalette">Colore</label><select id="appearancePalette"><option value="sage">Salvia</option><option value="graphite">Grafite</option><option value="ocean">Oceano</option><option value="violet">Viola</option><option value="rose">Rosa</option><option value="amber">Ambra</option></select><small>Le tue scelte restano memorizzate su questo dispositivo.</small></div></details>

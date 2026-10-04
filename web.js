@@ -193,9 +193,6 @@ $('chatForm').addEventListener('submit', event => {event.preventDefault(); const
 $('message').addEventListener('keydown', event => {if(event.key === 'Enter' && !event.shiftKey){event.preventDefault();$('chatForm').requestSubmit();}});
 document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => send(button.dataset.command)));
 $('logout').addEventListener('click', async () => {try {await api('/api/logout', {});} finally {loggedIn = false; usageSequence++; location.reload();}});
-$('albaSymbol').addEventListener('click', () => { $('siteMenu').hidden = !$('siteMenu').hidden; $('albaSymbol').setAttribute('aria-expanded',String(!$('siteMenu').hidden)); });
-document.addEventListener('click',event => { if (!event.target.closest('.brand')) { $('siteMenu').hidden = true; $('albaSymbol').setAttribute('aria-expanded','false'); } });
-document.addEventListener('keydown',event => { if (event.key === 'Escape') { $('siteMenu').hidden = true; $('albaSymbol').setAttribute('aria-expanded','false'); } });
 async function loadDevices() {
   const data = await api('/api/devices'); $('deviceList').replaceChildren();
   const current = data.devices.find(device => device.current);

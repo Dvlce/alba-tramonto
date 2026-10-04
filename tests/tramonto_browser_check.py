@@ -21,7 +21,7 @@ from test_tramonto import PNG
 async def main():
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder)
-        for name in ('web.html','web.css','web.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'): shutil.copy2(ROOT/name,root/name)
+        for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'): shutil.copy2(ROOT/name,root/name)
         shutil.copytree(ROOT/'vendor',root/'vendor')
         settings=Settings(root=root,admins=(1,),allowed=(2,)); store=Store(settings.data/'alba.sqlite3'); keys=Keys(store,secret_file(settings.data/'auth.key'))
         service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings)); store.register(1,'Andrea'); store.register(2,'Alice')
@@ -34,10 +34,10 @@ async def main():
                 await page.goto(str(server.make_url('/'))); await page.locator('#username').fill(username); await page.locator('#password').fill(password); await page.locator('#loginButton').click(); await page.locator('#dashboard').wait_for(state='visible')
                 assert 'albicocca' in await page.locator('#mascotButton svg').get_attribute('aria-label')
                 assert await page.locator('.leaf-stem').count()==1
-                await page.locator('#motionSettings summary').click()
+                await page.locator('#appearanceSettings summary').click()
                 for style in ('neo','glass','classic'):
                     await page.locator('#surfaceStyle').select_option(style); assert await page.evaluate('document.documentElement.dataset.style')==style
-                await page.locator('#motionSettings summary').click()
+                await page.locator('#appearanceSettings summary').click()
                 await page.locator('#devicesButton').click(); await page.locator('#deviceDialog').wait_for(state='visible'); await page.wait_for_function('()=>document.querySelector("#currentRemember").checked')
                 await page.locator('#deviceLabel').fill('Computer di prova'); await page.locator('#deviceForm button').click(); await page.wait_for_function('()=>document.querySelector("#deviceList").textContent.includes("Computer di prova")')
                 await page.locator('#closeDevices').click()
