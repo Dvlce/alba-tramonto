@@ -168,7 +168,7 @@ class Training:
             # New Ollama releases may route safetensors through MLX, which
             # cannot load Qwen2 on Linux. Import a portable CPU GGUF instead.
             env={'PATH':'/usr/local/bin:/usr/bin:/bin','LC_ALL':'C.UTF-8','PYTHONNOUSERSITE':'1',
-                 'HF_HUB_OFFLINE':'1','TRANSFORMERS_OFFLINE':'1','OMP_NUM_THREADS':'2'}
+                 'HOME':str(self.root),'USER':'alba','HF_HUB_OFFLINE':'1','TRANSFORMERS_OFFLINE':'1','OMP_NUM_THREADS':'2'}
             self.core.event('training','conversion','Conversione e quantizzazione CPU GGUF Q4_K_M')
             source=self.root/'llama.cpp';fp16=work/'candidate-f16.gguf';quantized=work/'candidate-q4.gguf'
             async with self.core.engine.lock:
@@ -179,7 +179,7 @@ class Training:
                 if rc:raise ValueError('Quantizzazione CPU non riuscita: '+out[-1200:])
                 (work/'Modelfile').write_text('FROM '+str(quantized)+'\nPARAMETER num_ctx 2048\n')
                 rc,out=await self.core.learning.bounded_process(['ollama','create',name,'-f',str(work/'Modelfile')],300,
-                       {'PATH':'/usr/local/bin:/usr/bin:/bin','LC_ALL':'C.UTF-8','OLLAMA_HOST':self.core.settings.llm_url},output_limit=262144)
+                       {'PATH':'/usr/local/bin:/usr/bin:/bin','LC_ALL':'C.UTF-8','HOME':str(self.root),'USER':'alba','OLLAMA_HOST':self.core.settings.llm_url},output_limit=262144)
             if rc:raise ValueError('Import Ollama non riuscito: '+out[-1200:])
             report['gguf_sha256']=hashlib.sha256(quantized.read_bytes()).hexdigest()
             self.core.event('training','imported',name+' · '+report['gguf_sha256'])
@@ -197,7 +197,7 @@ class Training:
                 self.core.event('training','rejected',name);return
             self.core.config['personal_model']=name;self.core.config['personal_adapter']=str(row);self.core.save()
             self.core.store.execute("UPDATE core_training SET status='ready',model=?,finished=?,detail=? WHERE id=?",
-                  (name,time.time(),'LoRA allenato e importato; chat 3/4B preservata finché il benchmark funzionale non autorizza il cambio',row))
+                  (name,time.time(),'LoRA verificato (4/4), disponibile nella chat personale; profilo principale conservato',row))
             self.core.event('training','complete',json.dumps({'model':name,'metrics':report},ensure_ascii=False))
         except asyncio.CancelledError:
             cancelled=True

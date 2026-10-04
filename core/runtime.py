@@ -182,8 +182,11 @@ class Core:
             from .inference import FAST_PROMPT
             prompt=FAST_PROMPT
         memories = await self.retrieve(query,prefer_lexical=self.config['profile']=='fast')
-        if self.config['profile']=='fast':memories=[{**r,'content':r['content'][:450]} for r in memories[:3]]
-        context = json.dumps({'emotions':self.emotions,'mood':self.mood(),'memories':memories},ensure_ascii=False)
+        if self.config['profile']=='fast':memories=[{**r,'content':r['content'][:300]} for r in memories[:2]]
+        context_fields={'mood':self.mood()}
+        if self.config['profile']=='fast':context_fields['emotion']=max(self.emotions,key=self.emotions.get)
+        else:context_fields['emotions']=self.emotions
+        context = json.dumps({**context_fields,'memories':memories},ensure_ascii=False)
         recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT 8") if self.config['connectors']['chat'] else []
         messages = [{'role':'system','content':prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context[:6500]}]
         # The current user event is already in the log; include it exactly once.
@@ -193,7 +196,7 @@ class Core:
         while len(context)+sum(len(r['content']) for r in history)>budget and history: history.pop(0)
         while len(context)>budget and memories:
             memories.pop()
-            context=json.dumps({'emotions':self.emotions,'mood':self.mood(),'memories':memories},ensure_ascii=False)
+            context=json.dumps({**context_fields,'memories':memories},ensure_ascii=False)
         messages[0]['content']=prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context
         messages.extend({'role':r['role'],'content':r['content']} for r in history)
         messages.append({'role':'user','content':query})
