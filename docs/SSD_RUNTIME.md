@@ -1,5 +1,9 @@
 # ALBA SSD Runtime
 
+[Measured Pi results and limitations](SSD_RUNTIME_RESULTS.md): the runtime is
+experimental; the tested 14B runs at 0.10 token/s and long-history 7B chat remains
+minutes. The backend is opt-in and does not replace the existing default path.
+
 The runtime executes the selected GGUF itself on the Raspberry. It does not
 substitute a smaller model, prune layers, retrain weights, change quantization or
 quantize the KV cache. An optional small draft proposes tokens; llama.cpp checks
