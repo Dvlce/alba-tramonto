@@ -31,6 +31,18 @@ LESSONS = (
     {'topic':'Linux e automazione', 'repo':'psf/requests', 'function':'redact',
      'task':'Scrivi redact(values): restituisci una nuova dict sostituendo con "[redacted]" i valori delle chiavi che contengono token, password o secret (case insensitive). Non modificare l\'input.',
      'cases':[{'args':[{'API_TOKEN':'abc','name':'Matt'}],'expected':{'API_TOKEN':'[redacted]','name':'Matt'}},{'args':[{'Password':'p','secret_key':'k','cpu':12}],'expected':{'Password':'[redacted]','secret_key':'[redacted]','cpu':12}},{'args':[{}],'expected':{}}]},
+    {'topic':'Dati e file', 'repo':'PyCQA/pycodestyle', 'function':'parse_csv',
+     'task':'Scrivi parse_csv(text): usa csv.reader su io.StringIO. Restituisci lista di righe, ognuna lista di stringhe. Gestisci celle fra virgolette.',
+     'cases':[{'args':['a,b\n1,2\n'],'expected':[['a','b'],['1','2']]},{'args':['"alba,notte",x'],'expected':[['alba,notte','x']]},{'args':[''],'expected':[]}]},
+    {'topic':'HTTP e API', 'repo':'psf/requests', 'function':'normalize_headers',
+     'task':'Scrivi normalize_headers(headers): restituisci una nuova dict con chiavi strip().lower() e valori strip(), senza modificare l\'input. Chiavi e valori sono stringhe.',
+     'cases':[{'args':[{' Content-Type ':' text/plain ','X-ID':' 7 '}],'expected':{'content-type':'text/plain','x-id':'7'}},{'args':[{}],'expected':{}},{'args':[{'A':'1','a':'2'}],'expected':{'a':'2'}}]},
+    {'topic':'Sicurezza e reti', 'repo':'PyCQA/bandit', 'function':'is_loopback',
+     'task':'Scrivi is_loopback(address): usa ipaddress.ip_address(address).is_loopback. Restituisci False per indirizzi invalidi (ValueError). Gestisci IPv4 e IPv6.',
+     'cases':[{'args':[p],'expected':v} for p,v in [('127.0.0.1',True),('::1',True),('8.8.8.8',False),('192.168.1.1',False),('not-an-ip',False)]]},
+    {'topic':'Algoritmi', 'repo':'PyCQA/pycodestyle', 'function':'group_by_length',
+     'task':'Scrivi group_by_length(words): restituisci dict con chiavi stringa della lunghezza e valori liste di parole, mantenendo ordine e duplicati.',
+     'cases':[{'args':[['a','bb','c','bb']],'expected':{'1':['a','c'],'2':['bb','bb']}},{'args':[[]],'expected':{}},{'args':[['','à']],'expected':{'0':[''],'1':['à']}}]},
 )
 TEXT_SUFFIXES = {'.py','.js','.ts','.md','.rst','.txt','.toml','.json','.yaml','.yml'}
 
@@ -188,7 +200,7 @@ class Learning:
             self.core.event('github','source',f"Fonte: https://github.com/{name}/blob/{revision}/{entry['path']}\n"+entry['content'][:7000])
         return {'name':name,'revision':revision,'files':len(selected)},docs
 
-    async def bounded_process(self,args,timeout,env):
+    async def bounded_process(self,args,timeout,env,output_limit=32768):
         process=await asyncio.create_subprocess_exec(*args,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,
                     env=env,start_new_session=True)
         async def read():
@@ -197,7 +209,7 @@ class Learning:
                 part=await process.stdout.read(4096)
                 if not part: break
                 result.extend(part)
-                if len(result)>32768: raise ValueError('Output del processo oltre il limite.')
+                if len(result)>output_limit: raise ValueError('Output del processo oltre il limite.')
             await process.wait()
             return process.returncode,result.decode('utf-8',errors='replace')
         try: return await asyncio.wait_for(read(),timeout)
