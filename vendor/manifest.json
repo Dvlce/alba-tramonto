@@ -47,10 +47,20 @@
       "layout-grid",
       "route",
       "scan-search",
-      "palette"
+      "palette",
+      "message-square",
+      "database",
+      "file-text",
+      "chart-pie",
+      "settings"
     ],
     "license": "LUCIDE_LICENSE",
     "bundle": "tramonto-icons.js",
     "sha256": "5d0fc9a4d54bb7a85d5efce44f18251a1cf8385e57418c74978fc7b4795684eb"
+  },
+  "marked": {
+    "version": "15.0.12",
+    "source": "https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
+    "sha256": "3e7e7d7feb3e5d58cb6c804f68ab5c24cc7e5eb6270fd6e5cbb9124739217d0c"
   }
 }

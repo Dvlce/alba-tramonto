@@ -15,3 +15,6 @@ android/build/
 *.idsig
 .superdesign/tmp/
 .superdesign/init/
+
+whatsapp/node_modules/
+whatsapp/.env

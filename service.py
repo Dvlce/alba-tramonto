@@ -31,6 +31,7 @@ Telegram resta un servizio online. Nei gruppi uso solo il contesto pubblico di q
 /export_prompt CHIAVE — system prompt personale
 /web_key — accesso al sito dalla propria chat Telegram
 /web_password — crea o rinnova la password del sito; /web_password revoke — revoca
+/notte — associa questa chat privata ai messaggi autonomi Notte (admin); /notte off — disattiva
 /stop — interrompe la tua risposta in corso in questa chat
 /forget ID — elimina memoria e fonti; /forget all confermo — cancella conversazioni e memorie
 /memory_key — autorizza 15 minuti di lettura amministrativa; /memory_key revoke — revoca
@@ -158,6 +159,10 @@ class Service:
             if not self.store.allowed(event.uid):
                 return Result(f'Il tuo ID Telegram è {event.uid}. Chiedi all’amministratore di autorizzarlo.') if event.kind=='private' else Result()
             self.last_interaction=time.time()
+            core=getattr(self,'core',None)
+            if core and core.task and not core.task.done() and core.mode in ('reflection','consolidation'):
+                core.task.cancel()
+                await asyncio.gather(core.task,return_exceptions=True)
             if self.maintenance_task and not self.maintenance_task.done():
                 self.maintenance_task.cancel()  # A person has priority over background inference.
                 await asyncio.gather(self.maintenance_task,return_exceptions=True)
@@ -218,6 +223,21 @@ class Service:
         parts = e.text.strip().split()
         command = parts[0].split('@',1)[0].lower()
         args = parts[1:]
+        if command=='/notte':
+            self.private(e,telegram=True)
+            if not self.is_admin(e.uid): raise PermissionError('Notte è riservata all’amministratore.')
+            core=getattr(self,'core',None)
+            if not core: raise ValueError('ALBA-CORE non avviato.')
+            if args==['off']:
+                core.config['telegram_enabled']=False
+                core.save()
+                return Result('Messaggi autonomi Notte su Telegram disattivati.')
+            if args: raise ValueError('Usa /notte oppure /notte off.')
+            core.config['telegram_matt_id']=e.uid
+            core.config['telegram_enabled']=True
+            core.save()
+            self.store.audit(e.uid,'core_telegram_pair',e.uid)
+            return Result('Matt associato a questa chat. Notte può scriverti autonomamente, fino a 6 messaggi al giorno. /notte off per fermarli. Pannello: '+self.settings.public_url+'/notte')
         if command in ('/start','/help'):
             return Result(HELP)
         if command in ('/privacy','/cookies','/policy'):

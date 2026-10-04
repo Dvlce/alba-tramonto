@@ -46,6 +46,7 @@ class Telegram:
         self.service,self.session=service,session
         self.base='https://api.telegram.org/bot'+token+'/'
         self.bot=None
+        if getattr(service,'core',None): service.core.telegram_send=self.send_core
         self.queue=asyncio.Queue(maxsize=30)
         self.locks={}
         service.group_admin_check=self.group_admin
@@ -53,6 +54,9 @@ class Telegram:
         service.request_memory_access=self.memory_request
         service.store.db.executescript('''CREATE TABLE IF NOT EXISTS pending_updates(
           update_id INTEGER PRIMARY KEY, payload TEXT NOT NULL);''')
+
+    async def send_core(self,uid,text):
+        await self.api('sendMessage',{'chat_id':uid,'text':'☾ Notte · '+text,'link_preview_options':{'is_disabled':True}})
 
     async def api(self,method,payload=None,form=None):
         for _ in range(3):
@@ -110,7 +114,7 @@ class Telegram:
             for i in range(0,len(text),3800):
                 payload={**common,'text':text[i:i+3800],'link_preview_options':{'is_disabled':True}}
                 if result.login_url and i==0:
-                    payload['reply_markup']={'inline_keyboard':[[{'text':'Entra nel sito ↗','url':result.login_url}]]}
+                    payload['reply_markup']={'inline_keyboard':[[{'text':'Apri Alba · app o sito ↗','url':result.login_url}]]}
                 if event.message_id:
                     payload['reply_parameters']={'message_id':event.message_id,'allow_sending_without_reply':True}
                 if event.text.startswith(('/export_key','/web_key','/web_password','/admin generate_test_key')):
@@ -156,11 +160,11 @@ class Telegram:
         if configured:
             self.service.store.set_setting('telegram_identity_configured',1)
         commands=['start','help','profile','memory','timeline','search','stats','export','export_key',
-                  'export_personality','export_prompt','forget','backup','web_key','web_password','memory_key','feedback','stop','group','admin','privacy','cookies','policy']
-        if self.service.store.setting('telegram_commands_version')!='consent-20260930':
+                  'export_personality','export_prompt','forget','backup','web_key','web_password','memory_key','feedback','stop','group','notte','admin','privacy','cookies','policy']
+        if self.service.store.setting('telegram_commands_version')!='notte-20261004':
             try:
                 await self.api('setMyCommands',{'commands':[{'command':c,'description':c.replace('_',' ')} for c in commands]})
-                self.service.store.set_setting('telegram_commands_version','consent-20260930')
+                self.service.store.set_setting('telegram_commands_version','notte-20261004')
             except (ClientError,asyncio.TimeoutError,ValueError) as exc:
                 log.warning('Elenco comandi Telegram rinviato (%s)',type(exc).__name__)
         try: await self.api('deleteWebhook',{'drop_pending_updates':False})

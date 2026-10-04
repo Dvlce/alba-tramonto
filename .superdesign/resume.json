@@ -34,6 +34,28 @@
         }
       },
       "updatedAt": "2026-10-02T08:47:44.958304+00:00"
+    },
+    "/notte": {
+      "targetKind": "new-ui",
+      "projectId": "9eca8a62-4590-400f-bf3b-81c88ac87e16",
+      "activeDraftId": "5254c5f7-3743-436b-9dc2-ca01c64d19c8",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/context/tramonto-tokens.md"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
+        ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d"
+      },
+      "drafts": {
+        "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
+          "title": "Notte \u00b7 ALBA-CORE",
+          "visualDirection": "Approved dark sage dashboard, conversation center, emotion and resource sidebar",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-10-04T10:19:44.510556+00:00"
     }
   }
 }

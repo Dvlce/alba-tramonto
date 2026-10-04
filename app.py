@@ -21,6 +21,7 @@ from datetime import datetime
 from maintenance_tasks import periodic_memory,memory_cycle
 from runtime_features import quota,break_status
 from tramonto import setup_tramonto
+from core.web import setup_core
 from http_guard import HTTPGuard
 from identity import setup_identity
 from learning import record_feedback
@@ -67,7 +68,7 @@ def web_app(service):
                                  'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()',
                                  'Cross-Origin-Resource-Policy':'same-origin','Cross-Origin-Opener-Policy':'same-origin','Server':'Alba',
                                  'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"})
-        if request.path=='/tramonto': response.headers['Content-Security-Policy']="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+        if request.path in ('/tramonto','/notte'): response.headers['Content-Security-Policy']="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
         return response
     app=web.Application(middlewares=[security],client_max_size=10*1024*1024)
 
@@ -496,6 +497,7 @@ def web_app(service):
         return web.json_response({'ok':True})
     app.router.add_post('/api/feedback',feedback)
     setup_tramonto(app,service)
+    setup_core(app,service)
     setup_identity(app,service,session_cookie,guard)
     return app
 
@@ -531,6 +533,7 @@ async def main():
         tasks.append(asyncio.create_task(periodic_backup()))
         tasks.append(asyncio.create_task(service.performance.run()))
         tasks.append(asyncio.create_task(periodic_memory(store,service)))
+        tasks.append(asyncio.create_task(service.core.run()))
         if settings.bot_token:
             telegram=Telegram(service,session,settings.bot_token)
             async def maintenance_notice():

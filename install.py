@@ -26,7 +26,10 @@ else:
   if line.startswith('MODEL='):
    model=line.split('=',1)[1].strip().strip('\"').strip("'") or model
    break
-if not args.no_model:subprocess.run(['ollama','pull',model],check=True)
+if not args.no_model:
+ subprocess.run(['ollama','pull',model],check=True)
+ subprocess.run(['ollama','pull',os.environ.get('CORE_MODEL','qwen2.5:1.5b')],check=True)
+ subprocess.run(['ollama','pull','embeddinggemma'],check=True)
 if not args.no_service:
  user=getpass.getuser();unit=(root/'deploy/alba.service').read_text().replace('/home/dvlce/supporto-ai',str(root)).replace('User=alba','User='+user).replace('Group=alba','Group='+str(subprocess.check_output(['id','-gn'],text=True).strip()));unit=unit.replace('ProtectHome=tmpfs\nBindReadOnlyPaths='+str(root),'ProtectHome=read-only')
  temporary=root/'data/alba-install.service';temporary.write_text(unit);subprocess.run(['sudo','install','-m','644',str(temporary),'/etc/systemd/system/alba.service'],check=True);temporary.unlink();subprocess.run(['sudo','systemctl','daemon-reload'],check=True);subprocess.run(['sudo','systemctl','enable','--now','alba'],check=True)

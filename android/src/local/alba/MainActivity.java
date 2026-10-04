@@ -41,11 +41,11 @@ public final class MainActivity extends Activity {
    else v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;
   });
   LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(8),0,dp(8),0);
-  add(nav,"☀ Alba",()->navigate("/"));add(nav,"◒ Tramonto",()->navigate("/tramonto"));add(nav,"⋯",this::menu);root.addView(nav,new LinearLayout.LayoutParams(-1,dp(48)));
+  add(nav,"☀ Alba",()->navigate("/"));add(nav,"◒ Tramonto",()->navigate("/tramonto"));add(nav,"☾ Notte",()->navigate("/notte"));add(nav,"⋯",this::menu);root.addView(nav,new LinearLayout.LayoutParams(-1,dp(48)));
   progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);root.addView(progress,new LinearLayout.LayoutParams(-1,dp(3)));
   connection=new TextView(this);connection.setTextColor(Color.rgb(112,59,31));connection.setPadding(dp(16),dp(8),dp(16),dp(8));connection.setVisibility(View.GONE);connection.setOnClickListener(v->web.reload());root.addView(connection);
   web=new WebView(this);web.setBackgroundColor(Color.rgb(244,245,238));root.addView(web,new LinearLayout.LayoutParams(-1,0,1));
-  WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setUseWideViewPort(true);settings.setBuiltInZoomControls(true);settings.setDisplayZoomControls(false);settings.setUserAgentString(settings.getUserAgentString()+" AlbaAndroid/1.1.0");
+  WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setSupportMultipleWindows(false);settings.setUseWideViewPort(true);settings.setBuiltInZoomControls(true);settings.setDisplayZoomControls(false);settings.setUserAgentString(settings.getUserAgentString()+" AlbaAndroid/1.2.0");
   CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);web.addJavascriptInterface(new NativeActions(),"AlbaNative");
   web.setWebViewClient(new WebViewClient(){
    @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){return handleLink(request.getUrl(),request.isForMainFrame());}
@@ -69,8 +69,15 @@ public final class MainActivity extends Activity {
    @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(fileChooser!=null)fileChooser.onReceiveValue(null);fileChooser=callback;Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("image/*");intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);try{startActivityForResult(intent,PICK_IMAGE);}catch(Exception error){fileChooser.onReceiveValue(null);fileChooser=null;toast("Nessun selettore immagini disponibile.");}return true;}
   });
   web.setDownloadListener((url,agent,disposition,mime,length)->downloadUrl(url,agent,disposition,mime));setContentView(root);root.requestApplyInsets();
-  if(state==null||web.restoreState(state)==null)web.loadUrl(base()+"/");
+  if(state==null||web.restoreState(state)==null){if(!openIntent(getIntent(),false))web.loadUrl(base()+"/");}
   if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,()->back());
+ }
+ @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);openIntent(intent,true);}
+ private boolean openIntent(Intent intent,boolean preserve){
+  if(intent==null||!Intent.ACTION_VIEW.equals(intent.getAction())||intent.getData()==null)return false;
+  Uri uri=intent.getData();if(!sameServer(uri)){toast("Il link non appartiene al server Alba configurato.");return false;}
+  String path=uri.getPath();if(path==null||!(path.equals("/")||path.equals("/tramonto")||path.equals("/notte"))){toast("Percorso Alba non supportato.");return false;}
+  Runnable open=()->{web.loadUrl(uri.toString());intent.setData(null);};if(preserve)afterSave(open);else open.run();return true;
  }
  private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
  private void add(LinearLayout root,String text,Runnable action){Button b=new Button(this);b.setText(text);b.setTextSize(13);b.setAllCaps(false);b.setOnClickListener(v->action.run());root.addView(b,new LinearLayout.LayoutParams(0,-1,1));}
@@ -84,7 +91,7 @@ public final class MainActivity extends Activity {
  private void navigate(String path){afterSave(()->web.loadUrl(base()+path));}
  private void back(){afterSave(()->{if(web.canGoBack())web.goBack();else finish();});}
  @Override public void onBackPressed(){back();}
- private void menu(){new AlertDialog.Builder(this).setTitle("Alba · Tramonto").setItems(new String[]{"Ricarica","Stampa / salva PDF","Cambia server HTTPS"},(d,w)->{if(w==0)afterSave(()->web.reload());else if(w==1)printPage();else afterSave(this::configure);}).show();}
+ private void menu(){new AlertDialog.Builder(this).setTitle("Alba · Tramonto · Notte").setItems(new String[]{"Ricarica","Stampa / salva PDF","Cambia server HTTPS"},(d,w)->{if(w==0)afterSave(()->web.reload());else if(w==1)printPage();else afterSave(this::configure);}).show();}
  private void configure(){
   EditText input=new EditText(this);input.setSingleLine();input.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_URI);input.setText(base());
   AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Il tuo server Alba").setView(input).setNegativeButton("Annulla",null).setPositiveButton("Salva",null).create();

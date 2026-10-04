@@ -1,6 +1,6 @@
-# Alba + Tramonto
+# Alba + Tramonto + Notte
 
-AI conversazionale locale, Telegram e web, con memoria nel tempo. Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
+AI conversazionale locale, Telegram e web, con memoria nel tempo. **Notte / ALBA-CORE** aggiunge una personalità autonoma con emozioni persistenti, memoria vettoriale locale, riflessione, riassunti, ricerca Wikipedia e messaggi Telegram a Matt. [Architettura, configurazione e limiti di ALBA-CORE](docs/ALBA_CORE.md). Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
 
 ![Tramonto](docs/tramonto.png)
 
@@ -67,7 +67,7 @@ Restore: ferma il servizio, poi `maintenance.py restore FILE --service-stopped`;
 
 ## Android e integrazione
 
-APK in [Releases](https://github.com/Dvlce/alba-tramonto/releases), oppure `/download/alba-albi.apk` se il gestore lo ha installato sul server. La versione 1.1.0 apre Alba e Tramonto al suo interno, senza lanciare il browser. Supporta immagini, esportazione e PDF A4; non incorpora dati personali o un LLM e richiede connessione al server. Il server HTTPS si può cambiare dall’app. [Sorgenti e build Android](android/README.md).
+APK in [Releases](https://github.com/Dvlce/alba-tramonto/releases), oppure `/download/alba-albi.apk` se il gestore lo ha installato sul server. La versione 1.2.0 apre Alba, Tramonto e Notte al suo interno, senza lanciare il browser. Include Android App Links verificati per i link personali Telegram. Invia `/notte` nella chat privata admin di Alba per associare Matt ai messaggi autonomi. Supporta immagini, esportazione e PDF A4; non incorpora dati personali o un LLM e richiede connessione al server. Il server HTTPS si può cambiare dall’app. [Sorgenti e build Android](android/README.md).
 
 Per integrare il motore in un sistema esistente: [alba-local-kit](https://github.com/Dvlce/alba-local-kit), package Python con adapter, Telegram e chiavi web/CLI.
 
@@ -77,7 +77,7 @@ Per integrare il motore in un sistema esistente: [alba-local-kit](https://github
 .venv/bin/python -m unittest discover -s tests
 ```
 
-314 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py`, `tests/alba_appearance_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
+323 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py`, `tests/alba_appearance_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
 
 Alba è un supporto alla riflessione e ai problemi quotidiani, non un servizio clinico o di emergenza. I controlli di provenienza riducono gli errori, ma un modello può ancora produrre risposte inesatte. Il gestore configura privacy, contatti, accessi e manutenzione.
 

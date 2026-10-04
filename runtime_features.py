@@ -69,7 +69,10 @@ class Performance:
             ram=dict(total=total,used=used,percent=round(100*used/total,1))
         except (OSError,ValueError,KeyError,IndexError): pass
         disk=shutil.disk_usage(self.root)
-        self.snapshot={'timestamp':time.time(),'cpu_percent':cpu,'ram':ram,
+        temperature=None
+        try: temperature=round(float(Path('/sys/class/thermal/thermal_zone0/temp').read_text())/1000,1)
+        except (OSError,ValueError): pass
+        self.snapshot={'temperature_c':temperature,'timestamp':time.time(),'cpu_percent':cpu,'ram':ram,
                        'disk':dict(total=disk.total,used=disk.used,free=disk.free,percent=round(100*disk.used/disk.total,1))}
         return self.snapshot
 
