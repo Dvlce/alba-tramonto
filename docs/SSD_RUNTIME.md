@@ -93,7 +93,11 @@ in the existing native Android app or portal streams from the local CPU server.
 Each request unloads other Ollama weights, starts the native server, restores a
 compatible context checkpoint, then releases it on completion, cancellation or
 failure. Checkpoints are keyed by target SHA, llama.cpp revision, policy and
-context size; the server reuses only the exact matching prompt prefix. A corrupt
+context size; the server reuses only the exact matching prompt prefix. Dynamic
+state is appended as labelled data to the current message instead of changing
+the beginning of the system prompt. All selected state/history content is kept;
+up to 128 recent messages are considered within the same bounded context budget.
+A corrupt
 cache is discarded and the original model computes the context again. Completed
 chat saves atomically with 0600 permissions. These caches are reconstructable,
 not substitutes for the persistent conversation archive. This avoids a second persistent model

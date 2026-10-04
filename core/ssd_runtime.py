@@ -27,7 +27,7 @@ def command(binary,model,policy,context,key,port=8092,draft=None,slots=None):
     args=[str(binary),'--model',str(model),'--host','127.0.0.1','--port',str(port),
           '--api-key-file',str(key),'--threads','4','--threads-batch','4','--poll','0',
           '--ctx-size',str(context),'--parallel','1','--batch-size','128','--ubatch-size','128',
-          '--load-mode','mmap','--cache-type-k','f16','--cache-type-v','f16',
+          '--load-mode','mmap','--fit','off','--n-gpu-layers','0','--cache-type-k','f16','--cache-type-v','f16',
           '--cache-ram','0','--no-context-shift','--no-warmup','--jinja','--metrics',
           '--flash-attn','on']
     if policy in ('mapped','speculative'):args+=['--no-repack']
