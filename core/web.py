@@ -77,6 +77,7 @@ def setup_core(app, service):
     async def optimization_report(request):
         name=request.match_info['name']
         if name not in ('SSD_RUNTIME.md','SSD_RUNTIME_RESULTS.md','SSD_RUNTIME_RESULTS.json','TEST_LAB.md','TESTING_REPORTS.md',
+                        'TEST_LAB_RESULTS.md','TEST_LAB_RESULTS.json','test-lab-comparison.png','test-lab-comparison.svg',
                         '7b-decode.png','7b-decode.svg','checkpoint.png','checkpoint.svg','chat-latency.png','chat-latency.svg','14b-decode.png','14b-decode.svg'):
             raise web.HTTPNotFound()
         path=service.settings.root/'docs'/('ssd-results/'+name if name.endswith(('.png','.svg')) else name)

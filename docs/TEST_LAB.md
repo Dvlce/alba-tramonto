@@ -103,5 +103,6 @@ Canvas charts, input preservation and native evolution cards. Fixture rates
 are never included as real hardware benchmark measurements.
 
 Follow [the reporting convention](TESTING_REPORTS.md) for every test campaign.
-Hardware test results for this new lab are recorded separately from the
+Hardware test results for this new lab are recorded in
+[the measured comparison report](TEST_LAB_RESULTS.md), separately from the
 [previous controlled SSD experiments](SSD_RUNTIME_RESULTS.md).

@@ -30,8 +30,9 @@ async def main():
             shutil.copy2(ROOT/name,root/name)
         shutil.copytree(ROOT/'vendor',root/'vendor')
         (root/'docs').mkdir()
-        for name in ('OPTIMIZATION_HISTORY.json','SSD_RUNTIME_RESULTS.json'):
+        for name in ('OPTIMIZATION_HISTORY.json','SSD_RUNTIME_RESULTS.json','TEST_LAB_RESULTS.json'):
             shutil.copy2(ROOT/'docs'/name,root/'docs'/name)
+        shutil.copytree(ROOT/'docs/ssd-results',root/'docs/ssd-results')
         settings=Settings(root=root,admins=(1,),allowed=(2,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'))
         service=Service(store,settings,keys,Engine(store,settings,Model()),Backups(store,settings));store.register(1,'Fixture');store.register(2,'Other')
         cookie,_=keys.create_session(1,True);server=TestServer(web_app(service));await server.start_server()

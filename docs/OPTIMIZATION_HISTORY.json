@@ -7,10 +7,10 @@
       "version": "Test Lab",
       "title_it": "Un banco di prova, due percorsi reali",
       "title_en": "One test bench, two actual runtimes",
-      "body_it": "Prove private con lo stesso modello e prompt: Ollama normale, runtime SSD o confronto sequenziale. Identità dei pesi verificata, risposte visibili, grafici e report esportabili. Il profilo della chat resta indipendente.",
-      "body_en": "Private same-model, same-prompt tests: standard Ollama, SSD runtime or sequential comparison. Verified weight identity, visible outputs, charts and downloadable reports. Production chat settings remain separate.",
-      "status": "experimental",
-      "report": "TEST_LAB.md"
+      "body_it": "Prove private con lo stesso modello e prompt: Ollama normale, runtime SSD o confronto sequenziale. Identità dei pesi verificata, risposte visibili, grafici e report esportabili. Il profilo della chat resta indipendente. Prima misura reale 7B: primo token 15,17 s SSD contro 21,10 s normale; decode 2,69 contro 3,63 token/s. Una prova aritmetica, avvio incluso, cache non svuotata.",
+      "body_en": "Private same-model, same-prompt tests: standard Ollama, SSD runtime or sequential comparison. Verified weight identity, visible outputs, charts and downloadable reports. Production chat settings remain separate. First actual 7B measurement: SSD first token 15.17 s versus normal 21.10 s; decode 2.69 versus 3.63 token/s. One arithmetic probe, startup included, cache not cleared.",
+      "status": "measured",
+      "report": "TEST_LAB_RESULTS.md"
     },
     {
       "date": "2026-10-04",

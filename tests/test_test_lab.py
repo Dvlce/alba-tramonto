@@ -132,6 +132,11 @@ class LabTests(unittest.IsolatedAsyncioTestCase):
         self.store.execute('INSERT INTO core_lab_runs(config,status,result,created) VALUES(?,?,?,?)',
                            (json.dumps({**CONFIG, 'prompt': 'private-secret'}), 'ok', '{}', 1))
         self.assertNotIn('private-secret', json.dumps(project_data(self.root)))
+        (self.root/'docs').mkdir()
+        (self.root/'docs/TEST_LAB_RESULTS.json').write_text(json.dumps({'samples': [{'content': 'public-42'}]}))
+        public = project_data(self.root)
+        self.assertEqual(public['lab_measurements']['samples'][0]['content'], 'public-42')
+        self.assertNotIn('private-secret', json.dumps(public))
 
 
 class LabWebTests(unittest.IsolatedAsyncioTestCase):
@@ -157,6 +162,12 @@ class LabWebTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get('/api/notte/lab', headers=self.headers[2])).status, 403)
         self.assertEqual((await self.client.get('/api/notte/lab', headers=self.headers[1])).status, 200)
         self.assertEqual((await self.client.get('/optimization/reports/server.key')).status, 404)
+        (self.root/'docs/ssd-results').mkdir(parents=True)
+        for name in ('TEST_LAB_RESULTS.md', 'TEST_LAB_RESULTS.json'):
+            shutil.copy2(ROOT/'docs'/name, self.root/'docs'/name)
+        shutil.copy2(ROOT/'docs/ssd-results/test-lab-comparison.svg', self.root/'docs/ssd-results/test-lab-comparison.svg')
+        for name in ('TEST_LAB_RESULTS.md', 'TEST_LAB_RESULTS.json', 'test-lab-comparison.svg'):
+            self.assertEqual((await self.client.get('/optimization/reports/'+name)).status, 200)
 
     async def test_lab_start_requires_csrf_and_rejects_extra_parameters(self):
         without = {'Cookie': self.headers[1]['Cookie']}

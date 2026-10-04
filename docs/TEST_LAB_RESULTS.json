@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-04",
+  "provenance": "Development-owned public arithmetic probe on the actual Pi; no private history or user test data.",
+  "hardware": {"device": "Raspberry Pi 5", "ram_bytes": 8453947392, "storage": "NVMe", "backend_revision": "dd266785c2595775001c1c714bd9d92b3ef34cde"},
+  "config": {"model": "qwen2.5-coder:7b", "prompt": "Quanto fa 17+25? Rispondi solo con il numero.", "mode": "compare", "policy": "mapped", "context": 512, "output": 16, "temperature": 0, "seed": 42},
+  "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. One probe only; no universal speed or intelligence claim.",
+  "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+  "samples": [
+    {"backend": "normal", "status": "ok", "content": "42", "first_token_ms": 21101, "load_ms": 16455, "wall_ms": 21933, "prompt_tokens": 47, "output_tokens": 3, "tokens_per_second": 3.6265170929838986},
+    {"backend": "optimized", "status": "ok", "content": "42", "first_token_ms": 15171, "wall_ms": 15914, "prompt_tokens": 47, "output_tokens": 3, "tokens_per_second": 2.692623557763507, "tokens": [19,17,151645], "cache_n": 0,
+     "peak": {"rss_bytes": 4788748288, "anonymous_bytes": 99041280, "swap_bytes": 0, "disk_read_bytes": 2785898496, "temperature_c": 48.5}}
+  ],
+  "same_text": true,
+  "same_tokens": null,
+  "production_settings_unchanged": true,
+  "validation": {"pi_unit_tests": 368, "pi_unit_failed": 0, "pi_unit_skipped": 0, "native_ui_checks": 59, "browser_fixture_passed": true}
+}
