@@ -19,14 +19,15 @@ from pathlib import Path
 
 ROOT_FILES = {'app.py','service.py','telegram_bot.py','runtime_features.py','install.py',
               'web.html','web.css','web.js','tramonto.html','tramonto.css','tramonto.js',
-              'tramonto-lab.js','notte.html','notte.css','notte.js'}
+              'tramonto-lab.js','notte.html','notte.css','notte.js',
+              'optimization.html','optimization.css','optimization.js'}
 
 
 def allowed(name):
     p=Path(name)
     if p.is_absolute() or '..' in p.parts: return False
     return name in ROOT_FILES or (len(p.parts)>1 and p.parts[0] in ('core','vendor','tests','docs','dist')
-            and p.suffix in ('.py','.txt','.js','.css','.md','.json','.apk','.woff2','.png'))
+            and p.suffix in ('.py','.txt','.js','.css','.md','.json','.apk','.woff2','.png','.svg'))
 
 
 def deploy(archive,root,check=False):
