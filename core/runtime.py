@@ -195,8 +195,12 @@ class Core:
         context_fields={'mood':self.mood()}
         if self.config['profile']=='fast':context_fields['emotion']=max(self.emotions,key=self.emotions.get)
         else:context_fields['emotions']=self.emotions
-        context = json.dumps({**context_fields,'memories':memories},ensure_ascii=False)
         ssd_chat_active=self.config['ssd_enabled'] and self.config['profile']=='advanced' and not personal
+        def chat_state():
+            # Stable retrieved data first, volatile emotional weights last.
+            value={'memories':memories,**context_fields} if ssd_chat_active else {**context_fields,'memories':memories}
+            return json.dumps(value,ensure_ascii=False)
+        context=chat_state()
         history_limit=128 if ssd_chat_active else 8
         recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT ?",(history_limit,)) if self.config['connectors']['chat'] else []
         messages = [{'role':'system','content':prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context[:6500]}]
@@ -207,7 +211,7 @@ class Core:
         while len(context)+sum(len(r['content']) for r in history)>budget and history: history.pop(0)
         while len(context)>budget and memories:
             memories.pop()
-            context=json.dumps({**context_fields,'memories':memories},ensure_ascii=False)
+            context=chat_state()
         messages[0]['content']=prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context
         messages.extend({'role':r['role'],'content':r['content']} for r in history)
         messages.append({'role':'user','content':query})

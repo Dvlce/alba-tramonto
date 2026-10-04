@@ -258,10 +258,12 @@ class SSDRuntime:
             await self.start(model,'mapped',1024)
             prompt=await self.template([{'role':'user','content':'Quanto fa 17+25? Rispondi solo con il numero.'}])
             first=await self.completion(prompt,12)
+            self.core.tokens('benchmark',first.get('timings',{}).get('prompt_n'),first.get('timings',{}).get('predicted_n'))
             if not await self.checkpoint(model,'mapped',1024,'save','probe'):raise ValueError('Checkpoint non salvato: consulta attività.')
             await self.stop();await self.start(model,'mapped',1024)
             if not await self.checkpoint(model,'mapped',1024,'restore','probe'):raise ValueError('Checkpoint non ripristinato: consulta attività.')
             second=await self.completion(prompt,12)
+            self.core.tokens('benchmark',second.get('timings',{}).get('prompt_n'),second.get('timings',{}).get('predicted_n'))
             metrics.update({'samples':[first,second],'same_tokens':bool(first.get('tokens')) and first['tokens']==second.get('tokens'),
                             'same_text':first['content']==second['content'],'peak':dict(self.peak)})
             if not metrics['same_tokens'] or second.get('timings',{}).get('cache_n',0)==0:
