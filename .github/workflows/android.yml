@@ -34,13 +34,18 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 0
             adb install -r dist/alba-albi.apk
             adb install -r android/build/smoke/native-smoke.apk
             adb shell am instrument -w local.alba.smoke/local.alba.NativeUiSmoke > native-ui-result.txt
             cat native-ui-result.txt
+            adb logcat -d -s AndroidRuntime ActivityTaskManager > native-ui-logcat.txt
             grep -q 'PASS:' native-ui-result.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: native-ui-test-report
-          path: native-ui-result.txt
+          path: |
+            native-ui-result.txt
+            native-ui-logcat.txt

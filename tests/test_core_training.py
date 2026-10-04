@@ -32,6 +32,19 @@ class SelfLearningTests(unittest.IsolatedAsyncioTestCase):
         feed=b'''<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Python</title><link href="https://www.reddit.com/r/learnpython/comments/abc/"/><content type="html">&lt;b&gt;Example&lt;/b&gt; &amp;amp; code</content></entry><entry><title>Private</title><link href="http://127.0.0.1/secret"/></entry></feed>'''
         rows=reddit_entries(feed);self.assertEqual(len(rows),1);self.assertEqual(rows[0]['excerpt'],'Example & code')
 
+    async def test_complete_activity_history_with_private_bounded_cursor(self):
+        for i in range(205):self.core.event('notes','note',str(i))
+        response=await self.req('/api/notte/events?category=all');newest=await response.json()
+        self.assertEqual(len(newest['events']),100)
+        response=await self.req('/api/notte/events?category=all&before='+str(newest['before']));older=await response.json()
+        self.assertEqual(len(older['events']),100)
+        self.assertLess(older['events'][-1]['id'],newest['events'][0]['id'])
+        response=await self.req('/api/notte/events?category=all&before='+str(older['before']));oldest=await response.json()
+        self.assertEqual(len(oldest['events']),5)
+        for query in ('before=-1','before=bad','before=1&after=1'):
+            self.assertEqual((await self.req('/api/notte/events?'+query)).status,403)
+        self.assertEqual((await self.req('/api/notte/events?category=all&before=100',uid=2)).status,403)
+
     async def test_reddit_dedup_and_diary_do_not_claim_tested_learning(self):
         self.core.learning.public_get=AsyncMock(return_value=b'<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Python</title><link href="https://www.reddit.com/r/learnpython/comments/abc/"/><content>Discuss functions.</content></entry></feed>')
         await self.core.learning.reddit();await self.core.learning.reddit()

@@ -191,7 +191,7 @@ public final class MainActivity extends Activity {
         int scroll=scroller.getScrollY();feed.removeAllViews();
         if(section==3){
             feed.addView(button(t("Consolida ora","Consolidate now"),()->action("consolidation",new JSONObject())));
-            JSONArray connectors=snapshot.getJSONArray("connectors");for(int i=0;i<connectors.length();i++){JSONObject c=connectors.getJSONObject(i);String id=c.getString("id");Switch toggle=new Switch(this);toggle.setText(id+" · "+c.optInt("count")+t(" eventi"," events"));toggle.setTextColor(INK);toggle.setChecked(c.optBoolean("enabled"));toggle.setOnCheckedChangeListener((v,on)->action("config",object("config",object("connectors",object(id,on)))));feed.addView(toggle);feed.addView(button(t("Ispeziona ","Inspect ")+id,()->request(()->api.request("GET","/api/notte/events?category="+id,null),r->new AlertDialog.Builder(this).setTitle(id).setView(detailView(r.getJSONArray("events").toString(2))).setPositiveButton("OK",null).show())));}
+            JSONArray connectors=snapshot.getJSONArray("connectors");for(int i=0;i<connectors.length();i++){JSONObject c=connectors.getJSONObject(i);String id=c.getString("id");Switch toggle=new Switch(this);toggle.setText(id+" · "+c.optInt("count")+t(" eventi"," events"));toggle.setTextColor(INK);toggle.setChecked(c.optBoolean("enabled"));toggle.setOnCheckedChangeListener((v,on)->action("config",object("config",object("connectors",object(id,on)))));feed.addView(toggle);feed.addView(button(t("Ispeziona ","Inspect ")+id,()->request(()->api.request("GET","/api/notte/events?category="+id,null),r->historyDialog(id,r))));}
         }else if(section==6){
             JSONObject training=snapshot.getJSONObject("training");card(t("Qwen personale · training CPU","Personal Qwen · CPU training"),training.optString("base")+"\n"+training.optString("schedule")+"\n"+t("Modello attivo: ","Active model: ")+training.optString("active_model","")+"\n"+training.optString("phase"));
             toggle(t("Addestramento giornaliero","Daily training"),"training_enabled",config.optBoolean("training_enabled"));
@@ -216,8 +216,14 @@ public final class MainActivity extends Activity {
         for(int i=0;i<entries.length();i++){JSONObject entry=entries.getJSONObject(i);String topic=entry.optString("topic");if(!groups.containsKey(topic)){feed.addView(label(topic,23));LinearLayout group=column();feed.addView(group);groups.put(topic,group);}LinearLayout target=groups.get(topic);target.addView(label(entry.optString("title")+" · "+entry.optString("status"),17));NativeMarkdown.render(this,target,entry.optString("summary"));JSONArray sources=entry.optJSONArray("sources");if(sources!=null)for(int j=0;j<sources.length();j++){final String url=sources.getString(j);if(url.startsWith("https://"))target.addView(button(url,()->external(url)));}if(!entry.optString("code").isEmpty()){TextView code=label(entry.optString("code"),13);code.setTypeface(Typeface.MONOSPACE);target.addView(code);}target.addView(label(entry.optString("result"),12));}
         if(entries.length()==0)card(t("Il diario è pronto","The diary is ready"),t("Le nuove letture e gli esercizi verificati saranno raccolti per argomento.","New readings and verified exercises will be collected by topic."));
     }
+    private void historyDialog(String category,JSONObject result) throws Exception {
+        JSONArray rows=result.getJSONArray("events");int before=rows.length()>0?rows.getJSONObject(0).getInt("id"):0;
+        AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle(t("Registro · ","History · ")+category).setView(detailView(rows.toString(2))).setPositiveButton("OK",null);
+        if(before>0)dialog.setNeutralButton(t("Precedenti","Earlier"),(d,w)->request(()->api.request("GET","/api/notte/events?category="+category+"&before="+before,null),r->historyDialog(category,r)));
+        dialog.show();
+    }
     private void activity(JSONArray events) throws Exception {
-        if(events.toString().equals(rendered))return;rendered=events.toString();feed.removeAllViews();
+        if(events.toString().equals(rendered))return;rendered=events.toString();feed.removeAllViews();if(events.length()>0){int before=events.getJSONObject(0).getInt("id");feed.addView(button(t("Attività precedenti","Earlier events"),()->request(()->api.request("GET","/api/notte/events?category=all&before="+before,null),r->historyDialog("all",r))));}
         for(int i=events.length()-1;i>=0;i--){JSONObject event=events.getJSONObject(i);card("#"+event.optInt("id")+" · "+event.optString("category")+" · "+event.optString("role"),event.optString("content"));}
     }
     private void toggle(String text,String key,boolean checked){Switch view=new Switch(this);view.setText(text);view.setTextColor(INK);view.setChecked(checked);view.setOnCheckedChangeListener((v,on)->action("config",object("config",object(key,on))));feed.addView(view);}

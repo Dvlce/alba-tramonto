@@ -5,7 +5,7 @@ const labels = {chat:'Chat',web:'Ricerca web',notes:'Note interne',summaries:'Ri
 const colors = ['#aed087','#d58c57','#8772ad','#347c9d','#5a9672','#d36776','#8f753c'];
 let csrf = '', data = null, activePanel = 'chat', socket = null, reconnectTimer = null;
 let inspecting = null, refreshBusy = false, lastChatId = 0, lastBusy = false, sending = false;
-let slices = [];
+let slices = [], activityBefore = 0, activityCursor = 0;
 const when = value => value ? new Date(value*1000).toLocaleString('it-IT') : 'Mai';
 function notice(text,error=false){$('notice').textContent=text;$('notice').classList.toggle('error',error);}
 async function api(path,body){
@@ -29,7 +29,7 @@ function renderEvents(target,events,empty='Non c’è ancora nulla qui.'){
   }
   box.replaceChildren(fragment);if(nearBottom)box.scrollTop=box.scrollHeight;
 }
-async function loadEvents(category,target){const result=await api('/api/notte/events?category='+category);renderEvents(target,result.events);if(category==='chat')lastChatId=result.events.at(-1)?.id||0;}
+async function loadEvents(category,target){const result=await api('/api/notte/events?category='+category+(target==='activityEvents'&&activityBefore?'&before='+activityBefore:''));if(target==='activityEvents'){activityCursor=result.before||result.events[0]?.id||0;$('olderActivity').disabled=!activityCursor;}renderEvents(target,result.events);if(category==='chat')lastChatId=result.events.at(-1)?.id||0;}
 function renderStatus(){
   $('entityMood').textContent=data.mood;$('moodLabel').textContent=data.mood;
   $('toggleAutonomy').textContent=data.config.enabled?'Metti in pausa l’autonomia':'Risveglia Notte';
@@ -85,6 +85,8 @@ async function loadDiary(){
   $('diaryEntries').replaceChildren(...(entries.length?entries:[element('p','Il primo ciclo di studio scriverà qui fonti, scoperte e prove.','empty')]));
 }
 $('diaryTopic').onchange=()=>loadDiary().catch(e=>notice(e.message,true));
+$('olderActivity').onclick=()=>{if(activityCursor){activityBefore=activityCursor;loadEvents('all','activityEvents').catch(e=>notice(e.message,true));}};
+$('latestActivity').onclick=()=>{activityBefore=0;loadEvents('all','activityEvents').catch(e=>notice(e.message,true));};
 $('studyNow').onclick=()=>action('study').catch(e=>notice(e.message,true));
 $('repoForm').onsubmit=event=>{event.preventDefault();action('repository',{text:$('repoName').value}).then(()=>notice('Lettura del repository avviata.')).catch(e=>notice(e.message,true));};
 $('installTool').onclick=()=>action('tool',{text:$('toolName').value}).catch(e=>notice(e.message,true));

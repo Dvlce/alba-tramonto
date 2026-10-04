@@ -75,7 +75,8 @@ class Training:
         else:args+=['--dir','/previous']
         if Path('/lib64').exists():args+=['--symlink','usr/lib64','/lib64']
         args+=['/usr/bin/python3','-I','/worker.py']
-        env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','OPENBLAS_NUM_THREADS':'2','OMP_NUM_THREADS':'2'}
+        env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','USER':'alba','HOME':'/tmp',
+             'OPENBLAS_NUM_THREADS':'2','OMP_NUM_THREADS':'2'}
         self.process=await asyncio.create_subprocess_exec(*args,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,
                       env=env,start_new_session=True)
         process=self.process

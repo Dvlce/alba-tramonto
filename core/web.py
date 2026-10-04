@@ -37,16 +37,20 @@ def setup_core(app, service):
         admin(request)
         category = request.query.get('category','chat')
         if category not in (*CONNECTORS,'all'): raise ValueError('Connettore non valido.')
-        try: after = int(request.query.get('after','0'))
+        try:
+            after = int(request.query.get('after','0'))
+            before = int(request.query.get('before','0'))
         except ValueError: raise ValueError('Cursore non valido.')
-        if after < 0: raise ValueError('Cursore non valido.')
-        if category=='all':
+        if after < 0 or before < 0 or (after and before): raise ValueError('Cursore non valido.')
+        if before:
+            rows=list(reversed(core.store.rows('SELECT * FROM core_events WHERE id<? ORDER BY id DESC LIMIT 100',(before,)))) if category=='all' else list(reversed(core.store.rows('SELECT * FROM core_events WHERE category=? AND id<? ORDER BY id DESC LIMIT 100',(category,before))))
+        elif category=='all':
             rows=core.store.rows('SELECT * FROM core_events WHERE id>? ORDER BY id LIMIT 100',(after,)) if after else list(reversed(core.store.rows('SELECT * FROM core_events ORDER BY id DESC LIMIT 100')))
         elif after:
             rows = core.store.rows('SELECT * FROM core_events WHERE category=? AND id>? ORDER BY id LIMIT 100',(category,after))
         else:
             rows = list(reversed(core.store.rows('SELECT * FROM core_events WHERE category=? ORDER BY id DESC LIMIT 100',(category,))))
-        return web.json_response({'events':rows})
+        return web.json_response({'events':rows,'before':rows[0]['id'] if rows else 0})
 
     async def action(request):
         uid = admin(request)
