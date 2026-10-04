@@ -1,7 +1,7 @@
 """Same-GGUF CPU runtime: bounded mmap, native kernels and verified speculation.
 
 This is a llama.cpp integration, not a universal Colibri implementation. Dense
-weights are never skipped. Policies never requantize weights or the f16 KV.
+weights are never skipped. Weights are unchanged. The optional compact policy quantizes only KV to q8_0.
 """
 import asyncio
 import json
@@ -14,7 +14,7 @@ from aiohttp import ClientError
 from .gguf_plan import GIB, inspect_gguf, plan
 from .prepare_conversion import LLAMA_REVISION
 
-POLICIES=('native','mapped','speculative')
+POLICIES=('native','mapped','speculative','compact')
 
 
 def memory():
@@ -27,10 +27,10 @@ def command(binary,model,policy,context,key,port=8092,draft=None,slots=None):
     args=[str(binary),'--model',str(model),'--host','127.0.0.1','--port',str(port),
           '--api-key-file',str(key),'--threads','4','--threads-batch','4','--poll','0',
           '--ctx-size',str(context),'--parallel','1','--batch-size','128','--ubatch-size','128',
-          '--load-mode','mmap','--fit','off','--n-gpu-layers','0','--cache-type-k','f16','--cache-type-v','f16',
+          '--load-mode','mmap','--fit','off','--n-gpu-layers','0','--cache-type-k','q8_0' if policy=='compact' else 'f16','--cache-type-v','q8_0' if policy=='compact' else 'f16',
           '--cache-ram','0','--no-context-shift','--no-warmup','--jinja','--metrics',
           '--flash-attn','on']
-    if policy in ('mapped','speculative'):args+=['--no-repack']
+    if policy in ('mapped','speculative','compact'):args+=['--no-repack']
     if slots:args+=['--slots','--slot-save-path',str(slots)+'/' ]
     if policy=='speculative':
         if not draft:raise ValueError('Modello draft non preparato.')

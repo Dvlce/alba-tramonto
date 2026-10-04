@@ -2,3 +2,5 @@
 @media(max-width:650px){.chart-box{overflow-x:auto}.chart-box svg{min-width:580px}}
 
 .lab-public-figure{overflow-x:auto}.lab-public-figure img{display:block;width:100%;min-width:700px;height:auto;background:#fff;border-radius:8px}
+
+.online-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#onlineForm label{display:block;color:var(--muted);font-size:13px}#onlineForm select,#onlineForm input,#onlinePrompt{width:100%;margin:6px 0 14px}#onlineForm input,#onlinePrompt{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px}#onlinePrompt{resize:none;height:120px;overflow-y:auto}.online-responses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.online-responses pre{white-space:pre-wrap;overflow-wrap:anywhere}.online-responses .card{min-width:0}.online-chart svg{min-width:580px}#onlineState{color:var(--accent)}@media(max-width:650px){.online-controls,.online-responses{grid-template-columns:1fr}}

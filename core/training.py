@@ -195,6 +195,7 @@ class Training:
                 self.core.store.execute("UPDATE core_training SET status='rejected',model=?,finished=?,detail=? WHERE id=?",
                     (name,time.time(),'Benchmark funzionale incompleto; checkpoint precedente conservato',row))
                 self.core.event('training','rejected',name);return
+            self.core.config['personal_previous_adapter']=self.core.config['personal_adapter']
             self.core.config['personal_model']=name;self.core.config['personal_adapter']=str(row);self.core.save()
             self.core.store.execute("UPDATE core_training SET status='ready',model=?,finished=?,detail=? WHERE id=?",
                   (name,time.time(),'LoRA verificato (4/4), disponibile nella chat personale; profilo principale conservato',row))
@@ -207,25 +208,44 @@ class Training:
             self.core.store.execute("UPDATE core_training SET status='error',finished=?,detail=? WHERE id=?",(time.time(),str(exc)[:1200],row))
             self.core.event('training','error',str(exc)[:1200])
         finally:
-            # Keep seven adapters and generated Ollama versions. Small provenance
-            # files remain readable for all cycles, including rejected candidates.
-            versions=self.core.store.rows("SELECT id,model FROM core_training WHERE model!='' AND status!='expired' ORDER BY id DESC")
-            for old in ([] if cancelled else versions[7:]):
-                if str(old['id'])==self.core.config['personal_adapter']:continue
-                model=old['model']
-                if re.fullmatch(r'notte-personal:\d{8}-\d+',model):
-                    try:
-                        async with self.core.engine.lock:
-                            await self.core.learning.bounded_process(['ollama','rm',model],30,{'PATH':'/usr/local/bin:/usr/bin:/bin','OLLAMA_HOST':self.core.settings.llm_url})
-                        adapter=self.root/'runs'/str(old['id'])/'adapter'
-                        if adapter.is_dir():shutil.rmtree(adapter)
-                        self.core.store.execute("UPDATE core_training SET status='expired' WHERE id=?",(old['id'],))
-                    except Exception:pass
+            if not cancelled:
+                await self.prune_versions()
             # Interrupted or failed conversion must not retain gigabytes per day.
             if (work/'merged').is_dir():shutil.rmtree(work/'merged')
             for path in (work/'candidate-f16.gguf',work/'candidate-q4.gguf'):
                 if path.exists():path.unlink()
             self.phase=''
+
+    async def prune_versions(self):
+        """Keep current and one verified rollback, never failed candidates."""
+        rows=self.core.store.rows('SELECT id,model,status FROM core_training ORDER BY id DESC')
+        active=str(self.core.config['personal_adapter'])
+        previous=str(self.core.config.get('personal_previous_adapter',''))
+        verified=[r for r in rows if r['status']=='ready' and str(r['id'])!=active]
+        if not any(str(r['id'])==previous for r in verified):
+            previous=str(verified[0]['id']) if verified else ''
+        self.core.config['personal_previous_adapter']=previous
+        self.core.save()
+        keep={active,previous}
+        for old in rows:
+            if str(old['id']) in keep or old['status'] in ('running','paused','evaluating'):continue
+            model=old['model']
+            # A DB row cannot authorize deleting an unrelated Ollama model.
+            if model and not re.fullmatch(r'notte-personal:\d{8}-\d+',model):continue
+            try:
+                if model and old['status']!='expired':
+                    async with self.core.engine.lock:
+                        rc,out=await self.core.learning.bounded_process(['ollama','rm',model],30,
+                            {'PATH':'/usr/local/bin:/usr/bin:/bin','OLLAMA_HOST':self.core.settings.llm_url})
+                    if rc:raise ValueError('Rimozione Ollama non completata')
+                adapter=self.root/'runs'/str(old['id'])/'adapter'
+                if adapter.is_dir() and not adapter.is_symlink() and adapter.resolve().is_relative_to(self.root.resolve()):
+                    shutil.rmtree(adapter)
+                if old['status']=='ready' or model:
+                    self.core.store.execute("UPDATE core_training SET status='expired' WHERE id=?",(old['id'],))
+                self.core.event('training','retention','Rimossi pesi/adapter del ciclo '+str(old['id'])+'; report e log conservati')
+            except Exception as exc:
+                self.core.event('training','retention_error','Ciclo '+str(old['id'])+': '+type(exc).__name__)
 
     def files(self,ident):
         if not str(ident).isdigit() or not self.core.store.rows('SELECT id FROM core_training WHERE id=?',(int(ident),)):raise ValueError('Ciclo non valido.')

@@ -48,7 +48,7 @@ async def main():
                 browser=await p.chromium.launch();context=await browser.new_context(viewport={'width':1440,'height':1100},accept_downloads=True)
                 await context.add_cookies([{'name':'session','value':cookie,'url':str(server.make_url('/'))}]);page=await context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 await page.goto(str(server.make_url('/notte')));await page.locator('#streamState').filter(has_text='In diretta').wait_for();await page.locator('#tab-lab').click();await page.locator('#labModel option').first.wait_for(state='attached')
-                await page.locator('#labPrompt').fill('PRIVATE_UNPUBLISHED_MARKER');await page.locator('#labRun').click();await page.locator('#labRuns article').first.wait_for();assert await page.locator('#labRuns svg').count()==2
+                await page.locator('#labPrompt').fill('PRIVATE_UNPUBLISHED_MARKER');await page.locator('#labRun').click();await page.locator('#labRuns article').first.wait_for();assert await page.locator('#labRuns svg').count()==4
                 assert await page.locator('#labPrompt').input_value()=='PRIVATE_UNPUBLISHED_MARKER';assert await page.locator('#labRuns').get_by_text('identità dei token non disponibile',exact=False).count()>0
                 async with page.expect_download() as download: await page.get_by_role('button',name='Report con grafici').click()
                 report=await download.value;path=await report.path();text=Path(path).read_text();assert '<svg' in text and 'PRIVATE_UNPUBLISHED_MARKER' in text
@@ -59,6 +59,16 @@ async def main():
                 await page.locator('#language').select_option('en');assert await page.get_by_role('heading',name='The measurements, including regressions.').count()==1
                 assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth');await page.screenshot(path=str(ROOT/'artifacts/optimization-mobile.png'),full_page=True)
                 public=await page.request.get(str(server.make_url('/optimization/data')));assert 'PRIVATE_UNPUBLISHED_MARKER' not in await public.text()
+                await page.locator('#language').select_option('it');await page.locator('#onlineActivate').click();await page.locator('#onlineForm').wait_for()
+                await page.locator('#onlinePrompt').fill('PRIVATE_ONLINE_PROBE');await page.locator('#onlinePolicy').select_option('warm');await page.locator('#onlineRun').click()
+                await page.locator('#onlineResults a').wait_for();assert await page.locator('#onlineResults svg').count()==4
+                assert await page.locator('#onlinePrompt').input_value()=='PRIVATE_ONLINE_PROBE'
+                saved=store.rows('SELECT config FROM core_lab_runs ORDER BY id DESC LIMIT 1')[0];assert json.loads(saved['config'])['mode']=='compare' and json.loads(saved['config'])['policy']=='warm'
+                async with page.expect_download() as downloaded:await page.get_by_role('button',name='Report e istogrammi').click()
+                saved_report=await downloaded.value;assert '<svg' in Path(await saved_report.path()).read_text()
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                public=await page.request.get(str(server.make_url('/optimization/data')));assert 'PRIVATE_ONLINE_PROBE' not in await public.text()
+
                 await context.clear_cookies();private=await page.request.get(str(server.make_url('/api/notte/lab')));assert private.status==403
                 assert not errors,errors;await browser.close()
         finally: await server.close();store.close()

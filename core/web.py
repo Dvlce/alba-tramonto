@@ -119,6 +119,7 @@ def setup_core(app, service):
             rows=core.store.rows("SELECT * FROM core_training WHERE id=? AND status='ready'",(ident,))
             if not rows or not (core.training.root/'runs'/str(ident)/'adapter').is_dir():raise ValueError('Checkpoint non disponibile.')
             if core.training.task and not core.training.task.done():raise ValueError('Ferma prima il training.')
+            core.config['personal_previous_adapter']=core.config['personal_adapter']
             core.config['personal_model']=rows[0]['model'];core.config['personal_adapter']=str(ident);core.save()
             core.event('training','rollback','Ripristinata versione '+str(ident))
         elif name=='stop':
