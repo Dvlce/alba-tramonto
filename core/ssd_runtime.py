@@ -286,8 +286,8 @@ class SSDRuntime:
             # Oversized dense weights need a bounded, complete probe rather
             # than many minutes of explanatory code per sample.
             output_budget=32
-            prompts=[('python','Solo codice: definisci unique(values) su una riga con list(dict.fromkeys(values)). Nessuna spiegazione.'),
-                     ('logic','Quanto fa 17+25? Rispondi solo con il numero.'),
+            prompts=[('logic','Quanto fa 17+25? Rispondi solo con il numero.'),
+                     ('python','Solo codice: definisci unique(values) su una riga con list(dict.fromkeys(values)). Nessuna spiegazione.'),
                      ('english','In at most six words: is SSD faster than RAM?')]
         # Stable non-repacked target is the token reference, including in the
         # speculative verifier. Repacking changes CPU kernels/rounding and can
@@ -325,13 +325,13 @@ class SSDRuntime:
                 metrics['first_token_ms']=None
                 metrics['token_match']=all(s.get('same_tokens',True) for s in metrics['samples'])
                 import re
-                code=metrics['samples'][0]['content'];fenced=re.search(r'```(?:python)?\s*\n(.*?)```',code,re.S)
+                code=next(s['content'] for s in metrics['samples'] if s['topic']=='python');fenced=re.search(r'```(?:python)?\s*\n(.*?)```',code,re.S)
                 rc,result=await self.core.learning.exercise(fenced[1] if fenced else code.strip(),
                     {'function':'unique','cases':[{'args':[[3,1,3,2,1]],'expected':[3,1,2]},
                                                  {'args':[[]],'expected':[]},{'args':[['a','A','a']],'expected':['a','A']}]})
                 metrics['test_passed']=rc==0;metrics['test_result']=result[:1800];status='ok'
             except asyncio.CancelledError:status='interrupted';metrics['error']='Interrotto per priorità chat';raise
-            except Exception as exc:metrics['error']=self.failure or str(exc)[:500]
+            except Exception as exc:metrics['error']=self.failure or str(exc)[:500] or type(exc).__name__
             finally:
                 metrics['peak']=dict(self.peak);await self.stop()
                 self.core.store.execute('INSERT INTO core_benchmarks(model,options,status,metrics,created) VALUES(?,?,?,?,?)',
