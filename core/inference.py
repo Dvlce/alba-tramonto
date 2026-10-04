@@ -58,7 +58,10 @@ class InferenceLab:
         for model in targets:
             details=next(m for m in installed if m['name']==model)
             if details.get('size',0)>6*1024**3:
-                self.core.event('activity','benchmark_skip',model+': oltre il budget di questa macchina');continue
+                if self.core.ssd.snapshot()['ready'] and model in self.core.ssd.catalog():
+                    await self.core.ssd.benchmark(model)
+                else:self.core.event('activity','benchmark_skip',model+': prepara il runtime SSD per modelli oltre 6 GiB')
+                continue
             for policy in policies:
                 for cache in ('cold','warm'):
                     if cache=='cold':
@@ -105,7 +108,14 @@ class InferenceLab:
                             (model,json.dumps(policy),status,json.dumps(metrics),time.time()))
                         self.core.event('activity','benchmark_result',json.dumps({'model':model,'options':policy,'status':status,'metrics':metrics},ensure_ascii=False))
 
+        # The existing web/native "all strategies" control also covers the
+        # prepared native runtime, without installing or replacing any model.
+        target=selected or self.core.config['advanced_code_model']
+        if (self.core.ssd.snapshot()['ready'] and target in self.core.ssd.catalog()
+                and next((m.get('size',0) for m in installed if m['name']==target),0)<=6*1024**3):
+            await self.core.ssd.benchmark(target)
+
     def recommended(self):
         # Report a measured winner; changing the user's model remains explicit.
-        rows=[r for r in self.snapshot() if r['status']=='ok' and r['metrics'].get('test_passed') and r['metrics'].get('cache')=='warm']
+        rows=[r for r in self.snapshot() if r['status']=='ok' and r['metrics'].get('test_passed') and r['metrics'].get('cache')=='warm' and r['metrics'].get('token_match',True)]
         return min(rows,key=lambda r:r['metrics']['wall_ms']) if rows else None

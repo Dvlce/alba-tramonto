@@ -64,6 +64,7 @@ class Core:
         defaults = {'model': os.getenv('CORE_MODEL','qwen2.5:1.5b'), 'chat_model': os.getenv('CORE_CHAT_MODEL',self.settings.model),
                     'code_model': os.getenv('CORE_CODE_MODEL','qwen2.5-coder:3b'), 'profile': 'fast', 'advanced_code_model': 'qwen2.5-coder:7b',
                     'training_enabled': True, 'training_hour': 3, 'personal_model': '', 'personal_adapter': '',
+                    'ssd_enabled': False, 'ssd_policy': 'auto',
                     'reddit_enabled': True, 'last_reddit': 0, 'language': 'auto', 'study_enabled': True, 'study_minutes': 30, 'last_study': 0,
                     'output_tokens':384, 'enabled': True, 'interval': 10, 'reflection_minutes': 10,
                     'initiative': .55, 'volatility': .45, 'web_enabled': True,
@@ -84,6 +85,8 @@ class Core:
         self.training = Training(self)
         from .inference import InferenceLab
         self.inference=InferenceLab(self)
+        from .ssd_runtime import SSDRuntime
+        self.ssd=SSDRuntime(self)
         self.save()
 
     def save(self):
@@ -129,10 +132,10 @@ class Core:
 
     def configure(self, value):
         allowed = {'enabled', 'interval', 'reflection_minutes', 'initiative', 'volatility',
-                   'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'matt_number', 'connectors', 'study_enabled', 'study_minutes', 'reddit_enabled', 'training_enabled', 'training_hour', 'language', 'profile', 'advanced_code_model'}
+                   'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'matt_number', 'connectors', 'study_enabled', 'study_minutes', 'reddit_enabled', 'training_enabled', 'training_hour', 'language', 'profile', 'advanced_code_model', 'ssd_enabled', 'ssd_policy'}
         if not isinstance(value, dict) or set(value)-allowed: raise ValueError('Impostazioni non valide.')
         updated = dict(self.config)
-        for key in ('enabled', 'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'study_enabled', 'reddit_enabled', 'training_enabled'):
+        for key in ('enabled', 'web_enabled', 'whatsapp_enabled', 'telegram_enabled', 'study_enabled', 'reddit_enabled', 'training_enabled', 'ssd_enabled'):
             if key in value:
                 if type(value[key]) is not bool: raise ValueError('Interruttore non valido.')
                 updated[key] = value[key]
@@ -150,6 +153,9 @@ class Core:
         if 'profile' in value:
             if value['profile'] not in ('fast','quality','advanced'):raise ValueError('Profilo non valido.')
             updated['profile']=value['profile']
+        if 'ssd_policy' in value:
+            if value['ssd_policy'] not in ('auto','native','mapped','speculative'):raise ValueError('Policy SSD non valida.')
+            updated['ssd_policy']=value['ssd_policy']
         if 'language' in value:
             if value['language'] not in ('auto','it','en'): raise ValueError('Lingua non valida.')
             updated['language']=value['language']
@@ -216,6 +222,13 @@ class Core:
         maximum=384 if fast and coding else 256 if fast else 768
         from .inference import context_size
         resource['context_tokens']=context_size(messages,maximum,resource['context_tokens'])
+        if self.config['ssd_enabled'] and self.config['profile']=='advanced' and not personal:
+            # The chosen target is mandatory. A resource failure is visible;
+            # there is no hidden fallback to a smaller model.
+            await self.ssd.chat(model,messages,maximum,resource['context_tokens'])
+            self.event('chat','assistant',self.partial)
+            self.update_emotions({'curiosità':.01},'conversazione')
+            return
         started=time.monotonic();first_token=None;final_usage={}
         try:
             async with self.engine.session.post(self.settings.llm_url+'/api/chat',json={
@@ -492,7 +505,7 @@ class Core:
                 if previous:await asyncio.gather(previous,return_exceptions=True)
                 await self.work(mode,text)
             self.task=asyncio.create_task(after_training(),name='core-chat-follow');return
-        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark'):
+        if mode in ('chat','personal_chat') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark'):
             self.task.cancel()
             # Schedule after cancellation has released the inference lock.
             previous=self.task
@@ -502,7 +515,7 @@ class Core:
             self.task=asyncio.create_task(follow_chat(),name='core-chat-follow');return
         if self.task and not self.task.done(): raise ValueError('Un ciclo è già in corso.')
         if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark'): raise ValueError('Ciclo non valido.')
+        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark'): raise ValueError('Ciclo non valido.')
         if mode=='personal_chat' and not self.config['personal_model']:raise ValueError('Modello personale non disponibile.')
         if mode=='repository':
             from .learning import repo_name
@@ -525,6 +538,7 @@ class Core:
                 elif mode=='study': await self.learning.study()
                 elif mode=='reddit': await self.learning.reddit()
                 elif mode=='benchmark':await self.inference.run(text)
+                elif mode=='ssd_benchmark':await self.ssd.benchmark(text or self.config['advanced_code_model'])
                 elif mode=='repository': await self.learning.repository(text)
                 elif mode=='tool': await self.learning.install_tool(text)
                 else:
@@ -585,7 +599,7 @@ class Core:
         if legacy['total'] is not None: totals.append({'category':'alba','total':legacy['total'],'unknown':legacy['unknown']})
         legacy_lifetime = self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM token_usage')[0]['n']
         return {'name':'ALBA-CORE','mood':self.mood(),'emotions':self.emotions,'config':self.config,
-                'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),'training':self.training.snapshot(),'benchmarks':self.inference.snapshot(),'recommended':self.inference.recommended(),
+                'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),'training':self.training.snapshot(),'benchmarks':self.inference.snapshot(),'recommended':self.inference.recommended(),'ssd_runtime':self.ssd.snapshot(),
                 'error':self.error,'resources':self.resources(),'connectors':connectors,
                 'tokens':totals,'lifetime_tokens':self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM core_tokens')[0]['n']+legacy_lifetime,
                 'history':self.store.rows("SELECT strftime('%Y-%m-%d',created,'unixepoch') day,sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)) total FROM (SELECT created,input_tokens,output_tokens FROM core_tokens UNION ALL SELECT timestamp created,input_tokens,output_tokens FROM token_usage) WHERE created>=? GROUP BY day ORDER BY day DESC LIMIT 30",(max(since,time.time()-30*86400),)),

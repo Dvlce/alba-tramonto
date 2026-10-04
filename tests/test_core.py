@@ -69,13 +69,23 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         return await self.client.request(method,path,headers=self.headers[uid],json=data)
 
     async def test_admin_access_csrf_and_untrusted_config(self):
-        for path in ('/api/notte/status','/api/notte/events','/api/notte/export','/api/notte/stream','/api/notte/diary'):
+        for path in ('/api/notte/status','/api/notte/events','/api/notte/export','/api/notte/stream','/api/notte/diary','/api/notte/ssd-plan'):
             response=await self.req(path,uid=2);self.assertEqual(response.status,403)
         response=await self.client.post('/api/notte/action',json={'action':'reflection'},headers={'Cookie':self.headers[1]['Cookie']})
         self.assertEqual(response.status,403)
         response=await self.req('/api/notte/action','POST',{'action':'config','config':{'telegram_matt_id':2}})
         self.assertEqual(response.status,403)
         response=await self.req('/api/notte/status');self.assertEqual(response.status,200)
+
+    async def test_advanced_ssd_failure_never_substitutes_smaller_model(self):
+        self.core.configure({'profile':'advanced','ssd_enabled':True,'advanced_code_model':'qwen2.5-coder:14b'})
+        self.core.ssd.chat=AsyncMock(side_effect=ValueError('Memoria insufficiente'))
+        await self.core.work('chat','Ciao')
+        self.assertIn('Memoria insufficiente',self.core.error)
+        self.assertEqual(self.core.ssd.chat.call_args.args[0],'qwen2.5-coder:14b')
+        self.assertFalse(any(url.endswith('/api/chat') for url,_ in self.model.calls))
+        self.assertTrue(self.store.rows("SELECT * FROM core_events WHERE role='user' AND content='Ciao'"))
+        self.assertFalse(self.store.rows("SELECT * FROM core_events WHERE role='assistant'"))
 
     async def test_emotions_survive_restart_and_clamp(self):
         self.core.update_emotions({'rabbia':200,'curiosità':-200},'test')
