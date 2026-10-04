@@ -1,11 +1,16 @@
-# Alba · Tramonto · Notte — Native Android 1.4
+# Alba · Tramonto · Notte — Native Android 1.5
 
 The dropdown includes Test Lab and Project & evolution. Test Lab selects an
-installed model, the normal Ollama path or SSD path, and a same-prompt comparison.
-Results use native Canvas bar charts; JSON and standalone HTML/SVG reports can
+installed model and seven strategies: Notte SSD, ARM, KV8, Draft, Warm, CPU2 and
+Flux. Comparison always runs standard first, then the selected strategy.
+Results use four native Canvas bar charts (first token, total wait, decode speed
+and output tokens); JSON and standalone HTML/SVG reports can
 be exported. Live polling preserves the prompt field. Project news/history are
 native cards with an explicit external link to the public IT/EN information site.
 See [the lab protocol and measurement limits](../docs/TEST_LAB.md).
+See [adaptive budgets and model retention](../docs/ADAPTIVE_RUNTIME.md).
+Warm comparisons reuse residency; Flux changes response budgets and instructions;
+KV8 reduces cache precision. These conditions are displayed in reports.
 
 The Android app uses Java and Android Views. It contains **no WebView, Javascript engine or browser UI**. Chat is the main screen; a dropdown contains Alba, Tramonto notebooks, memory, topic diary, all activity, personal-model training, token statistics, emotions, hardware and settings.
 

@@ -30,7 +30,7 @@ class NativeApi {
         try{
             connection.setInstanceFollowRedirects(false);connection.setConnectTimeout(15000);connection.setReadTimeout(30000);
             connection.setRequestMethod(method);connection.setRequestProperty("Accept","application/json");
-            connection.setRequestProperty("User-Agent","Alba-Native-Android/1.4");connection.setRequestProperty("Origin",origin);
+            connection.setRequestProperty("User-Agent","Alba-Native-Android/1.5");connection.setRequestProperty("Origin",origin);
             if(!cookie.isEmpty())connection.setRequestProperty("Cookie","session="+cookie);
             if(!"GET".equals(method)){
                 connection.setRequestProperty("X-CSRF-Token",csrf);connection.setRequestProperty("Content-Type","application/json");

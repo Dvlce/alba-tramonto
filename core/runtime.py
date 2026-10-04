@@ -555,6 +555,8 @@ class Core:
             self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
             log.warning('Ciclo core fallito (%s)',type(exc).__name__)
         finally:
+            if mode in ('chat','personal_chat'):
+                self.foreground_until = time.time()+120
             self.event('activity','error' if self.error else 'finished',mode+(': '+self.error if self.error else ''))
             self.running = False
             self.mode = None

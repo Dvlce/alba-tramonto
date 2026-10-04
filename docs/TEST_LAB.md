@@ -2,7 +2,7 @@
 
 The public project site is `/optimization`, with information, repository-curated
 news, measured benchmarks, IT/EN text and a dated evolution timeline. It reads
-only `docs/OPTIMIZATION_HISTORY.json` and `docs/SSD_RUNTIME_RESULTS.json`.
+only explicitly curated history and measured-result JSON files in `docs/`.
 It never reads the private Test Lab database, personal chat, diary or credentials.
 Public report/figure downloads use a fixed filename allowlist. News means actual
 documented project changes, not generated external headlines.
@@ -14,7 +14,8 @@ Notte's **Test Lab** tab and Android's native **Test Lab** menu provide:
 * Normal Ollama, optimized SSD or a sequential comparison. Normal means the
   existing Ollama chat API without custom SSD runtime, checkpoint restore or
   draft. Its built-in kernels and existing model quantization remain.
-* Mapped, verified draft or native CPU policies with the SSD runtime's RAM,
+* Seven named policies ([details](ADAPTIVE_RUNTIME.md)): SSD, ARM, KV8, Draft,
+  Warm, CPU2 and Flux. Native CPU policies with the SSD runtime's RAM,
   temperature, swap, deadline and process cleanup guards. The regular Ollama
   model above 6 GiB is refused on the existing 8 GB Pi; use SSD-only for explicit
   oversized experiments. Model downloads/builds require the documented admin
@@ -22,11 +23,12 @@ Notte's **Test Lab** tab and Android's native **Test Lab** menu provide:
 * The actual generated responses, first-token latency including startup,
   total execution duration, declared token counts/decode rate, before/after
   system metrics and optimized-process peak metrics. Missing data stays missing.
-* Automatic bar charts, private JSON export and a standalone HTML report with
+* Four automatic bar charts (first token, total wait, decode and output), private JSON export and a standalone HTML report with
   embedded SVG charts. Errors and interrupted partial responses are retained.
 
-The installed tag's `/api/show` GGUF SHA must equal the registered SSD SHA before
-an optimized/comparison run starts. A retagged Ollama model must be registered
+For native SSD policies, the installed tag's `/api/show` GGUF SHA must equal the
+registered SSD SHA before an optimized/comparison run starts. Ollama-only
+Warm/CPU2/Flux verify the installed target identity without requiring SSD registration. A retagged Ollama model must be registered
 again. No smaller-model substitution occurs. Inputs and outputs are stored in
 `core_lab_runs`, separate from chat/RAG/training examples. Activity logs contain
 run identifiers and status, not private lab prompt bodies. Production profile,
@@ -77,7 +79,7 @@ samples and the 30 most recent runs. Private exports retrieve a saved run by ID.
 SQLite rows and private exports are included in the existing encrypted backups;
 no web account or external telemetry service is required.
 
-## Native Android 1.4
+## Native Android 1.5
 
 Android uses Views, Spinners and a Canvas bar-chart view, with Italian/English
 labels, JSON exports and HTML/SVG report export. Polling updates result views
@@ -106,3 +108,5 @@ Follow [the reporting convention](TESTING_REPORTS.md) for every test campaign.
 Hardware test results for this new lab are recorded in
 [the measured comparison report](TEST_LAB_RESULTS.md), separately from the
 [previous controlled SSD experiments](SSD_RUNTIME_RESULTS.md).
+
+New seven-strategy and long-input results: [Notte 1.5 campaign](ADAPTIVE_RESULTS.md).

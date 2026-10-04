@@ -1,0 +1,647 @@
+{
+  "date": "2026-10-04T21:24:48.387497+00:00",
+  "model": "qwen2.5-coder:7b",
+  "hardware": "Raspberry Pi 5 / 8 GB / NVMe / CPU",
+  "protocol": "Sequential standard first then selected policy. One repetition per condition. Startup included, OS file cache not evicted; warm and CPU2 benefit from the preceding standard request. Flux changes instructions/budgets; KV8 quantizes KV. No personal context. No model substitution.",
+  "results": [
+    {
+      "topic": "coding",
+      "technology": "Notte SSD",
+      "policy": "mapped",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 21908,
+          "load_ms": 16688,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.55515674921375,
+          "output_limit_reached": false,
+          "wall_ms": 39518,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "mapped",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 16977,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 55,
+            "prompt_ms": 7736.956,
+            "prompt_per_token_ms": 140.6719272727273,
+            "prompt_per_second": 7.108738889041116,
+            "predicted_n": 45,
+            "predicted_ms": 16003.555,
+            "predicted_per_token_ms": 363.7171590909091,
+            "predicted_per_second": 2.7493891201048766
+          },
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.7493891201048766,
+          "output_limit_reached": false,
+          "wall_ms": 32981,
+          "peak": {
+            "rss_bytes": 4820713472,
+            "anonymous_bytes": 130842624,
+            "swap_bytes": 0,
+            "minimum_available_bytes": 7372046336,
+            "disk_read_bytes": 3168423936,
+            "temperature_c": 51.25
+          },
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "mapped",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 72621
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte ARM",
+      "policy": "native",
+      "status": "error",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 19568,
+          "load_ms": 14186,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.4399367546704864,
+          "output_limit_reached": false,
+          "wall_ms": 38011,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "",
+          "status": "error",
+          "error": "Repacking richiederebbe una seconda copia completa dei pesi: usa mapped.",
+          "wall_ms": 84
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "native",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 38096
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte KV8",
+      "policy": "compact",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 21982,
+          "load_ms": 17205,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.7008301271478805,
+          "output_limit_reached": false,
+          "wall_ms": 38641,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "compact",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 15330,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 55,
+            "prompt_ms": 7735.81,
+            "prompt_per_token_ms": 140.65109090909093,
+            "prompt_per_second": 7.109791993340064,
+            "predicted_n": 45,
+            "predicted_ms": 16282.499,
+            "predicted_per_token_ms": 370.05679545454547,
+            "predicted_per_second": 2.7022878981905665
+          },
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.7022878981905665,
+          "output_limit_reached": false,
+          "wall_ms": 31615,
+          "peak": {
+            "rss_bytes": 4792483840,
+            "anonymous_bytes": 102612992,
+            "swap_bytes": 0,
+            "minimum_available_bytes": 7545962496,
+            "disk_read_bytes": 2274013184,
+            "temperature_c": 52.35
+          },
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "compact",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 70383
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte Draft",
+      "policy": "speculative",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 17217,
+          "load_ms": 12195,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.5887289731927337,
+          "output_limit_reached": false,
+          "wall_ms": 34593,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "speculative",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 17512,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 55,
+            "prompt_ms": 8415.9,
+            "prompt_per_token_ms": 153.01636363636362,
+            "prompt_per_second": 6.535248755332169,
+            "predicted_n": 45,
+            "predicted_ms": 11249.092,
+            "predicted_per_token_ms": 255.66118181818183,
+            "predicted_per_second": 3.9114268067147107,
+            "draft_n": 40,
+            "draft_n_accepted": 34
+          },
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 3.9114268067147107,
+          "output_limit_reached": false,
+          "wall_ms": 28762,
+          "peak": {
+            "rss_bytes": 5282398208,
+            "anonymous_bytes": 203964416,
+            "swap_bytes": 0,
+            "minimum_available_bytes": 7472250880,
+            "disk_read_bytes": 2466873344,
+            "temperature_c": 55.1
+          },
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "speculative",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 63556
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte Warm",
+      "policy": "warm",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 17315,
+          "load_ms": 11919,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.4141352446846778,
+          "output_limit_reached": false,
+          "wall_ms": 35957,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "warm",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 438,
+          "load_ms": 3,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.398943697111288,
+          "output_limit_reached": false,
+          "wall_ms": 19195,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "warm",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 55153
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte CPU2",
+      "policy": "cpu2",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 20979,
+          "load_ms": 15781,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.4984143396990706,
+          "output_limit_reached": false,
+          "wall_ms": 38988,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "cpu2",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 23118,
+          "load_ms": 16246,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.9584697900130736,
+          "output_limit_reached": false,
+          "wall_ms": 38329,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "cpu2",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 77317
+    },
+    {
+      "topic": "coding",
+      "technology": "Notte Flux",
+      "policy": "adaptive",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "first_token_ms": 21600,
+          "load_ms": 16780,
+          "prompt_tokens": 55,
+          "output_tokens": 45,
+          "tokens_per_second": 2.6419367299975263,
+          "output_limit_reached": false,
+          "wall_ms": 38638,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "```python\ndef unique(values):\n    seen = set()\n    result = []\n    for value in values:\n        if value not in seen:\n            seen.add(value)\n            result.append(value)\n    return result\n```",
+          "status": "ok",
+          "policy": "adaptive",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "generation": {
+            "estimated_input_tokens": 428,
+            "history_turns": 0,
+            "memories": 0,
+            "history_omitted": 0,
+            "context_tokens": 1024,
+            "output_tokens": 96,
+            "kind": "brief"
+          },
+          "first_token_ms": 33749,
+          "load_ms": 15282,
+          "prompt_tokens": 218,
+          "output_tokens": 45,
+          "tokens_per_second": 2.5711517685753145,
+          "output_limit_reached": false,
+          "wall_ms": 51257,
+          "function_check": {
+            "passed": true,
+            "cases": 3,
+            "output": "PASS: 3 casi indipendenti\n"
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Scrivi solo la funzione Python unique(values): rimuovi duplicati mantenendo ordine. Nessuna spiegazione.",
+        "mode": "compare",
+        "policy": "adaptive",
+        "context": 1024,
+        "output": 96
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 89897
+    },
+    {
+      "topic": "long_wait",
+      "technology": "Notte SSD",
+      "policy": "mapped",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "first_token_ms": 68740,
+          "load_ms": 15282,
+          "prompt_tokens": 643,
+          "output_tokens": 3,
+          "tokens_per_second": 3.703132232680142,
+          "output_limit_reached": false,
+          "wall_ms": 69551,
+          "arithmetic_check": {
+            "passed": true
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "policy": "mapped",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 98553,
+          "timings": {
+            "cache_n": 0,
+            "prompt_n": 643,
+            "prompt_ms": 91351.711,
+            "prompt_per_token_ms": 142.0710902021773,
+            "prompt_per_second": 7.038729685095882,
+            "predicted_n": 3,
+            "predicted_ms": 786.096,
+            "predicted_per_token_ms": 393.048,
+            "predicted_per_second": 2.54421851784006
+          },
+          "prompt_tokens": 643,
+          "output_tokens": 3,
+          "tokens_per_second": 2.54421851784006,
+          "output_limit_reached": false,
+          "wall_ms": 99342,
+          "peak": {
+            "rss_bytes": 4902420480,
+            "anonymous_bytes": 212451328,
+            "swap_bytes": 0,
+            "minimum_available_bytes": 7534297088,
+            "disk_read_bytes": 2120916992,
+            "temperature_c": 60.05
+          },
+          "arithmetic_check": {
+            "passed": true
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Riferimento pubblico sintetico per misurare un input lungo: dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. \nQuanto fa 17+25? Rispondi solo con il numero.",
+        "mode": "compare",
+        "policy": "mapped",
+        "context": 2048,
+        "output": 48
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 169024
+    },
+    {
+      "topic": "long_wait",
+      "technology": "Notte Warm",
+      "policy": "warm",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "first_token_ms": 65783,
+          "load_ms": 11663,
+          "prompt_tokens": 643,
+          "output_tokens": 3,
+          "tokens_per_second": 3.5961305635136593,
+          "output_limit_reached": false,
+          "wall_ms": 66621,
+          "arithmetic_check": {
+            "passed": true
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "policy": "warm",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "first_token_ms": 422,
+          "load_ms": 4,
+          "prompt_tokens": 643,
+          "output_tokens": 3,
+          "tokens_per_second": 3.73345612255692,
+          "output_limit_reached": false,
+          "wall_ms": 1221,
+          "arithmetic_check": {
+            "passed": true
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Riferimento pubblico sintetico per misurare un input lungo: dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. \nQuanto fa 17+25? Rispondi solo con il numero.",
+        "mode": "compare",
+        "policy": "warm",
+        "context": 2048,
+        "output": 48
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 67845
+    },
+    {
+      "topic": "long_wait",
+      "technology": "Notte Flux",
+      "policy": "adaptive",
+      "status": "ok",
+      "samples": [
+        {
+          "backend": "normal",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "first_token_ms": 70734,
+          "load_ms": 16526,
+          "prompt_tokens": 643,
+          "output_tokens": 3,
+          "tokens_per_second": 3.6578139440744635,
+          "output_limit_reached": false,
+          "wall_ms": 71555,
+          "arithmetic_check": {
+            "passed": true
+          }
+        },
+        {
+          "backend": "optimized",
+          "model": "qwen2.5-coder:7b",
+          "content": "42",
+          "status": "ok",
+          "policy": "adaptive",
+          "sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+          "generation": {
+            "estimated_input_tokens": 1196,
+            "history_turns": 0,
+            "memories": 0,
+            "history_omitted": 0,
+            "context_tokens": 2048,
+            "output_tokens": 48,
+            "kind": "balanced"
+          },
+          "first_token_ms": 87799,
+          "load_ms": 17051,
+          "prompt_tokens": 810,
+          "output_tokens": 3,
+          "tokens_per_second": 3.597312088407542,
+          "output_limit_reached": false,
+          "wall_ms": 88637,
+          "arithmetic_check": {
+            "passed": true
+          }
+        }
+      ],
+      "config": {
+        "model": "qwen2.5-coder:7b",
+        "prompt": "Riferimento pubblico sintetico per misurare un input lungo: dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. dato=17; altro=25; la risposta va alla fine. \nQuanto fa 17+25? Rispondi solo con il numero.",
+        "mode": "compare",
+        "policy": "adaptive",
+        "context": 2048,
+        "output": 48
+      },
+      "weights_sha256": "60e05f2100071479f596b964f89f510f057ce397ea22f2833a0cfe029bfc2463",
+      "conditions": "Sequential, normal first; startup included; OS file cache not cleared; no personal history. Warm/CPU2 retain standard model for the second run. Flux changes prompt instructions and output/context budgets. KV8 changes KV precision, not weights.",
+      "elapsed_ms": 160193
+    }
+  ],
+  "elapsed_seconds": 875
+}

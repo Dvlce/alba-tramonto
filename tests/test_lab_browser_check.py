@@ -30,7 +30,7 @@ async def main():
             shutil.copy2(ROOT/name,root/name)
         shutil.copytree(ROOT/'vendor',root/'vendor')
         (root/'docs').mkdir()
-        for name in ('OPTIMIZATION_HISTORY.json','SSD_RUNTIME_RESULTS.json','TEST_LAB_RESULTS.json'):
+        for name in ('OPTIMIZATION_HISTORY.json','SSD_RUNTIME_RESULTS.json','TEST_LAB_RESULTS.json','ADAPTIVE_RESULTS.json'):
             shutil.copy2(ROOT/'docs'/name,root/'docs'/name)
         shutil.copytree(ROOT/'docs/ssd-results',root/'docs/ssd-results')
         settings=Settings(root=root,admins=(1,),allowed=(2,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'))
@@ -49,6 +49,7 @@ async def main():
                 await context.add_cookies([{'name':'session','value':cookie,'url':str(server.make_url('/'))}]);page=await context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 await page.goto(str(server.make_url('/notte')));await page.locator('#streamState').filter(has_text='In diretta').wait_for();await page.locator('#tab-lab').click();await page.locator('#labModel option').first.wait_for(state='attached')
                 await page.locator('#labPrompt').fill('PRIVATE_UNPUBLISHED_MARKER');await page.locator('#labRun').click();await page.locator('#labRuns article').first.wait_for();assert await page.locator('#labRuns svg').count()==4
+                assert await page.evaluate("labGraph([{backend:'optimized',status:'error',wall_ms:84}],'wall_ms','Wait','ms').querySelectorAll('rect').length===0")
                 assert await page.locator('#labPrompt').input_value()=='PRIVATE_UNPUBLISHED_MARKER';assert await page.locator('#labRuns').get_by_text('identità dei token non disponibile',exact=False).count()>0
                 async with page.expect_download() as download: await page.get_by_role('button',name='Report con grafici').click()
                 report=await download.value;path=await report.path();text=Path(path).read_text();assert '<svg' in text and 'PRIVATE_UNPUBLISHED_MARKER' in text
@@ -62,6 +63,7 @@ async def main():
                 await page.locator('#language').select_option('it');await page.locator('#onlineActivate').click();await page.locator('#onlineForm').wait_for()
                 await page.locator('#onlinePrompt').fill('PRIVATE_ONLINE_PROBE');await page.locator('#onlinePolicy').select_option('warm');await page.locator('#onlineRun').click()
                 await page.locator('#onlineResults a').wait_for();assert await page.locator('#onlineResults svg').count()==4
+                assert await page.evaluate("onlineGraph([{backend:'optimized',status:'error',wall_ms:84}],'wall_ms','Wait','ms').querySelectorAll('rect').length===0")
                 assert await page.locator('#onlinePrompt').input_value()=='PRIVATE_ONLINE_PROBE'
                 saved=store.rows('SELECT config FROM core_lab_runs ORDER BY id DESC LIMIT 1')[0];assert json.loads(saved['config'])['mode']=='compare' and json.loads(saved['config'])['policy']=='warm'
                 async with page.expect_download() as downloaded:await page.get_by_role('button',name='Report e istogrammi').click()

@@ -13,4 +13,5 @@ def project_data(root):
     return {'history': read('OPTIMIZATION_HISTORY.json', {'entries': []}),
             'measurements': read('SSD_RUNTIME_RESULTS.json', {'results': []}),
             'lab_measurements': read('TEST_LAB_RESULTS.json', {'samples': []}),
+            'adaptive_measurements': read('ADAPTIVE_RESULTS.json', {'results': []}),
             'privacy': 'Only repository-published probes and aggregate metadata. Private Test Lab prompts and outputs are excluded.'}
