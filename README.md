@@ -6,6 +6,8 @@ Local conversational AI for Telegram and the web, with persistent memory. **Alba
 
 All three web spaces share the same dropdown navigation: existing brand icons, consistent labels and sizing, a current-space indicator, keyboard navigation, and mobile support. Short entrance and navigation animations follow the selected theme and palette. Tramonto uses abstract warm horizon light with its existing ◒ mark, Alba uses its intertwined symbol, and Notte uses its crescent. Reduced motion and the animation preference are respected. Leaving Tramonto waits for notebook changes to save; a failed save keeps the editor open.
 
+[ALBA SSD Runtime](docs/SSD_RUNTIME.md): esecuzione del GGUF scelto, kernel ARM nativi, mmap senza copie complete per i modelli grandi, confronto del decoding speculativo e controllo RAM/temperatura. Integrato nella chat avanzata di Notte, con identità del modello e benchmark verificabili. Non promette inferenza fluida oltre la RAM né implementa la cache esperti universale di Colibri.
+
 ![Tramonto](docs/tramonto.png)
 
 ## Features

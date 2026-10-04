@@ -33,6 +33,12 @@ def setup_core(app, service):
         admin(request)
         return web.json_response({'models':await core.inference.models()})
 
+    async def ssd_plan(request):
+        admin(request)
+        try:context=int(request.query.get('context','1024'))
+        except ValueError:raise ValueError('Contesto non valido.')
+        return web.json_response(core.ssd.planning(request.query.get('model',core.config['advanced_code_model']),context))
+
     async def events(request):
         admin(request)
         category = request.query.get('category','chat')
@@ -58,7 +64,7 @@ def setup_core(app, service):
         if not isinstance(value,dict): raise ValueError('Azione non valida.')
         name = value.get('action')
         if name=='config': core.configure(value.get('config'))
-        elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark'): core.start(name,value.get('text',''))
+        elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'): core.start(name,value.get('text',''))
         elif name=='train': core.training.start()
         elif name=='stop_training': await core.training.stop()
         elif name=='personal_chat': core.start(name,value.get('text',''))
@@ -81,7 +87,7 @@ def setup_core(app, service):
             core.event('files','document',text)
         else: raise ValueError('Azione non valida.')
         core.store.audit(uid,'core_'+name,uid)
-        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark') else 200)
+        return web.json_response({'ok':True},status=202 if name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe') else 200)
 
     async def diary(request):
         admin(request)
@@ -125,6 +131,7 @@ def setup_core(app, service):
         if core.task and not core.task.done():
             core.task.cancel()
             await asyncio.gather(core.task,return_exceptions=True)
+        await core.ssd.stop()
     app.on_cleanup.append(cleanup)
 
     async def assetlinks(request):
@@ -133,6 +140,6 @@ def setup_core(app, service):
         return web.FileResponse(path,headers={'Content-Type':'application/json'})
 
     app.add_routes([web.get('/notte',page),web.get('/notte-assets/{name}',asset),
-        web.get('/api/notte/status',status),web.get('/api/notte/models',models),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),web.get('/api/notte/training/{id}',training_files),
+        web.get('/api/notte/status',status),web.get('/api/notte/models',models),web.get('/api/notte/ssd-plan',ssd_plan),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),web.get('/api/notte/training/{id}',training_files),
         web.post('/api/notte/action',action),web.get('/api/notte/export',export),
         web.get('/api/notte/stream',stream),web.get('/.well-known/assetlinks.json',assetlinks)])
