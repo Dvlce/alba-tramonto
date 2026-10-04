@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Notte · ALBA-CORE</title><link rel="stylesheet" href="/assets/web.css"><link rel="stylesheet" href="/notte-assets/notte.css"><script defer src="/notte-assets/marked.min.js"></script><script defer src="/notte-assets/purify.min.js"></script><script defer src="/notte-assets/notte.js"></script></head>
+<body><div class="night-shell">
+<header class="night-header"><a class="night-brand" href="/notte">notte<span>.</span><small>ALBA-CORE</small></a><nav aria-label="Spazi"><a href="/">☀ Alba</a><a href="/tramonto">◒ Tramonto</a><a href="/notte" aria-current="page">☾ Notte</a></nav><button id="toggleAutonomy" class="secondary-button">Caricamento…</button></header>
+<div id="notice" role="status" aria-live="polite"></div>
+<div class="night-layout"><aside class="night-nav"><p class="eyebrow">Una presenza locale</p><h1>Resto sveglia.</h1><p id="entityMood">Lo stato arriva dal Raspberry.</p><nav aria-label="Sezioni di Notte" role="tablist"><button role="tab" aria-selected="true" aria-controls="panel-chat" id="tab-chat" data-panel="chat"><svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
+</svg>
+Conversazione</button><button role="tab" aria-selected="false" aria-controls="panel-memory" id="tab-memory" data-panel="memory"><svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <ellipse cx="12" cy="5" rx="9" ry="3" />
+  <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+  <path d="M3 12A9 3 0 0 0 21 12" />
+</svg>
+Memoria e connettori</button><button role="tab" aria-selected="false" aria-controls="panel-summaries" id="tab-summaries" data-panel="summaries"><svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+Riassunti autonomi</button><button role="tab" aria-selected="false" aria-controls="panel-diary" id="tab-diary" data-panel="diary">Diario e programmazione</button><button role="tab" aria-selected="false" aria-controls="panel-tokens" id="tab-tokens" data-panel="tokens"><svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z" />
+  <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+</svg>
+Token e statistiche</button><button role="tab" aria-selected="false" aria-controls="panel-system" id="tab-system" data-panel="system"><svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+Sistema e ritmo</button></nav><div class="night-foot"><span id="streamState">Collegamento…</span><small>Archivio locale · accesso amministratore</small><a href="/privacy">Privacy</a></div></aside>
+<main class="night-main">
+<section id="panel-chat" role="tabpanel" aria-labelledby="tab-chat"><div class="panel-title"><div><p class="eyebrow">Conversazione</p><h2>Quello che mi passa.</h2></div><span id="busy" class="state-pill">In ascolto</span></div><div id="chatPreview" class="night-event assistant" aria-live="polite" hidden></div><div id="chatEvents" class="night-feed" aria-live="polite"><p class="empty">La prima conversazione comincia qui. Le iniziative di Notte compariranno anche senza un tuo messaggio.</p></div><form id="chatForm"><label class="sr" for="chatText">Scrivi a Notte</label><textarea id="chatText" rows="3" maxlength="3500" placeholder="Lascia un pensiero…" required></textarea><div class="composer-actions"><small>Il tono segue il mio stato.</small><button type="button" id="stopCore" class="secondary-button">Interrompi</button><button type="submit" id="sendChat" class="primary-button">Scrivi</button></div></form></section>
+<section id="panel-memory" role="tabpanel" aria-labelledby="tab-memory" hidden><div class="panel-title"><div><p class="eyebrow">Memoria persistente</p><h2>Quello che rimane.</h2></div><button id="consolidate" class="primary-button">Consolida ora</button></div><p class="muted">Ogni connettore può entrare o uscire dal contesto. Disattivarlo conserva i dati, ma li esclude dal recupero.</p><div id="connectors" class="connector-list"></div><details class="import-box"><summary>Importa un testo locale</summary><label for="importText">Testo del documento (massimo 12.000 caratteri)</label><textarea id="importText" rows="5" maxlength="12000"></textarea><button id="importFile" class="secondary-button">Salva nel connettore File</button></details><h3 id="inspectionTitle">Ispezione</h3><div id="inspection" class="event-list"><p class="empty">Scegli un connettore.</p></div><h3>Cicli di consolidamento</h3><div id="cycles" class="event-list"></div></section>
+<section id="panel-diary" role="tabpanel" aria-labelledby="tab-diary" hidden><div class="panel-title"><div><p class="eyebrow">Diario di apprendimento</p><h2>Quello che scopro.</h2></div><button id="studyNow" class="primary-button">Studia ora</button></div><p class="muted">Repository pubblici, esercizi di programmazione e sicurezza del codice. Ogni pagina conserva le fonti e l’esito dei test.</p><label for="diaryTopic">Argomento<select id="diaryTopic"><option value="">Tutti gli argomenti</option></select></label><div id="diaryEntries" class="event-list"></div><details class="import-box"><summary>Repository e strumenti</summary><form id="repoForm"><label for="repoName">Repository GitHub pubblico<input id="repoName" placeholder="owner/repo o link GitHub" maxlength="240" required></label><button class="secondary-button" type="submit">Scarica e studia i sorgenti</button></form><div id="repositoryList" class="event-list"></div><div class="action-row"><label for="toolName">Strumento locale<select id="toolName"><option value="ruff">Ruff · controllo Python</option><option value="bandit">Bandit · sicurezza del codice</option><option value="pytest">pytest · test Python</option></select></label><button id="installTool" class="secondary-button">Installa</button></div><div id="toolList" class="event-list"></div><p id="sandboxStatus" class="muted"></p></details></section>
+<section id="panel-summaries" role="tabpanel" aria-labelledby="tab-summaries" hidden><div class="panel-title"><div><p class="eyebrow">Riassunti autonomi</p><h2>Come sto cambiando.</h2></div><button id="reflect" class="secondary-button">Avvia riflessione</button></div><p class="muted">Conversazioni, scoperte e cambiamenti emotivi. Notte decide quali riassunti scrivere.</p><div id="summaryEvents" class="event-list"></div><details><summary>Note personali private</summary><div id="noteEvents" class="event-list"></div></details></section>
+<section id="panel-tokens" role="tabpanel" aria-labelledby="tab-tokens" hidden><p class="eyebrow">Statistiche globali</p><h2>L’energia delle parole.</h2><div class="token-total"><strong id="lifetimeTokens">0</strong><span>token registrati dall’avvio del tracciamento</span></div><div class="chart-row"><canvas id="tokenChart" width="300" height="300" tabindex="0" aria-label="Distribuzione interattiva dei token per categoria"></canvas><div id="tokenLegend" class="token-legend"></div></div><p id="chartDetail" aria-live="polite"></p><p id="unknownTokens" class="muted"></p><h3>Ultimi 30 giorni · UTC</h3><label for="historyPeriod">Vista <select id="historyPeriod"><option value="day">Giornaliera</option><option value="week">Settimanale</option></select></label><div id="tokenHistory" class="token-history"></div><div class="action-row"><a class="secondary-button" href="/api/notte/export" download>Esporta statistiche JSON</a><button id="resetStats" class="text-button">Azzera periodo visualizzato</button></div><p class="muted">Il contatore di vita resta intatto. I token non riportati dal modello non vengono stimati.</p></section>
+<section id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden><p class="eyebrow">Sistema e ritmo</p><h2>La mia vita sul Pi.</h2><form id="settingsForm" class="settings-grid"><label>Consolidamento<select id="interval"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label>Riflessione<select id="reflectionMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label>Iniziativa<input id="initiative" type="range" min="0" max="1" step=".05"></label><label>Volatilità emotiva<input id="volatility" type="range" min="0" max="1" step=".05"></label><label>Studio autonomo<select id="studyMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label class="check-label"><input id="studyEnabled" type="checkbox">Studia, verifica codice e scrive il diario</label><label class="check-label"><input id="webEnabled" type="checkbox">Ricerche web e repository GitHub</label><label class="check-label"><input id="telegramEnabled" type="checkbox">Messaggi autonomi Telegram a Matt</label><p class="muted">Associa la chat privata con <code>/notte</code> nel bot Alba. Massimo 6 messaggi al giorno; <code>/notte off</code> li interrompe.</p><details><summary>WhatsApp opzionale</summary><label>Numero di Matt<input id="mattNumber" type="tel" placeholder="Prefisso internazionale"></label><label class="check-label"><input id="whatsappEnabled" type="checkbox">Messaggi WhatsApp tramite bridge locale</label><p class="muted">Richiede il bridge abbinato al telefono. Massimo 3 messaggi al giorno.</p></details><button class="primary-button" type="submit">Salva il ritmo</button></form><h3>Variazioni emotive recenti</h3><div id="emotionLog" class="event-list"></div></section>
+</main>
+<aside class="night-state"><div class="panel-title"><h2>Adesso</h2><span class="live-dot" aria-hidden="true"></span></div><p id="moodLabel" class="mood-label">Caricamento</p><div id="emotions" class="emotion-bars"></div><div class="system-meters"><h3>Il Raspberry</h3><dl><div><dt>CPU</dt><dd id="cpu">—</dd></div><div><dt>RAM</dt><dd id="ram">—</dd></div><div><dt>Temperatura</dt><dd id="temperature">—</dd></div><div><dt>Energia</dt><dd id="energy">—</dd></div><div><dt>Modello</dt><dd id="modelName">—</dd></div><div><dt>Contesto</dt><dd id="contextSize">—</dd></div><div><dt>Ultimo consolidamento</dt><dd id="lastConsolidation">—</dd></div></dl><p id="loadStatus" class="muted"></p><p id="embeddingStatus" class="muted"></p></div><p class="state-note">Le emozioni sono parametri persistenti del sistema e cambiano il suo comportamento.</p></aside>
+</div></div></body></html>

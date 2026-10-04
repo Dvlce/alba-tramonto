@@ -1,6 +1,6 @@
 'use strict';
 let incomingWebKey = new URLSearchParams(location.hash.slice(1)).get('web_key');
-if (incomingWebKey !== null) history.replaceState(null,'',location.pathname);
+if (incomingWebKey !== null) history.replaceState(null,'',location.pathname + location.search);
 window.addEventListener('hashchange', () => { if (new URLSearchParams(location.hash.slice(1)).has('web_key')) location.reload(); });
 let csrf = '', loggedIn = false, usageSequence = 0, lastUsage = null, selectedDay = null;
 let currentJob = null, isAdmin = false, adminData = null, loginMethod = 'password', currentUserId = null;
@@ -19,9 +19,12 @@ $('iconAnimation').value = preference('animation','auto');
 if (!$('iconAnimation').value) $('iconAnimation').value = 'auto';
 function motionChanged() { document.documentElement.classList.toggle('motion-off',!motionAllowed); document.dispatchEvent(new Event('alba-motion-update')); }
 motionChanged();
-function setSurfaceStyle(value) { const style = ['classic','neo','glass'].includes(value) ? value : 'classic'; document.documentElement.dataset.style = style; $('surfaceStyle').value = style; savePreference('surfaceStyle',style); }
+function setSurfaceStyle(value) { const style = ['classic','neo','glass','clay','cyber','brutal','scrap','surreal'].includes(value) ? value : 'classic'; document.documentElement.dataset.style = style; $('surfaceStyle').value = style; savePreference('surfaceStyle',style); }
 setSurfaceStyle(preference('surfaceStyle','classic'));
 $('surfaceStyle').addEventListener('change',() => setSurfaceStyle($('surfaceStyle').value));
+function setPalette(value) { const palette = ['sage','graphite','ocean','violet','rose','amber'].includes(value) ? value : 'sage'; document.documentElement.dataset.palette = palette; $('appearancePalette').value = palette; savePreference('palette',palette); }
+setPalette(preference('palette','sage'));
+$('appearancePalette').addEventListener('change',() => setPalette($('appearancePalette').value));
 $('motionEnabled').addEventListener('change', () => { motionAllowed = $('motionEnabled').checked; savePreference('motion',motionAllowed ? 'on' : 'off'); motionChanged(); });
 $('iconAnimation').addEventListener('change', () => { savePreference('animation',$('iconAnimation').value); document.dispatchEvent(new Event('alba-icon-preview')); });
 $('mascotEnabled').checked = preference('mascot','on') !== 'off';
@@ -40,18 +43,25 @@ $('mascotButton').addEventListener('click', () => {
   const item = states[mascotTurn++ % states.length]; mascotState(item[0],item[1]);
 });
 $('mascotButton').addEventListener('mouseenter', () => { if (!currentJob) mascotState('hello','Ciao, sono Albi. Un’albicocca!'); });
-document.addEventListener('click', event => { if (!$('motionSettings').contains(event.target)) $('motionSettings').open = false; });
+document.addEventListener('click', event => { for (const id of ['motionSettings','appearanceSettings']) if (!$(id).contains(event.target)) $(id).open = false; });
+for (const id of ['motionSettings','appearanceSettings']) $(id).addEventListener('toggle',() => { if ($(id).open) $(id === 'motionSettings' ? 'appearanceSettings' : 'motionSettings').open = false; });
+document.addEventListener('keydown',event => { if (event.key === 'Escape') for (const id of ['motionSettings','appearanceSettings']) if ($(id).open) { $(id).open = false; $(id).querySelector('summary').focus(); } });
 let manualTheme = null;
 try { manualTheme = localStorage.getItem('alba.theme'); } catch (_) {}
 function setTheme(theme) {
+  theme = ['light','dark','gray','black'].includes(theme) ? theme : (osTheme.matches ? 'dark' : 'light');
   document.documentElement.dataset.theme = theme;
-  $('themeToggle').setAttribute('aria-pressed', String(theme === 'dark'));
-  $('themeToggle').setAttribute('aria-label', theme === 'dark' ? 'Attiva la modalità chiara' : 'Attiva la modalità scura');
-  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#111c18' : '#f4f5ee';
+  const dark = theme === 'dark' || theme === 'black';
+  $('appearanceTheme').value = theme;
+  $('themeToggle').setAttribute('aria-pressed', String(dark));
+  $('themeToggle').setAttribute('aria-label', dark ? 'Attiva la modalità chiara' : 'Attiva la modalità scura');
+  document.querySelector('meta[name="theme-color"]').content = {light:'#f4f5ee',dark:'#12171b',gray:'#dfe2e6',black:'#000000'}[theme];
 }
-setTheme(['light', 'dark'].includes(manualTheme) ? manualTheme : (osTheme.matches ? 'dark' : 'light'));
+if (!['light','dark','gray','black'].includes(manualTheme)) manualTheme = null;
+setTheme(manualTheme || (osTheme.matches ? 'dark' : 'light'));
+$('appearanceTheme').addEventListener('change',() => { manualTheme = $('appearanceTheme').value; setTheme(manualTheme); savePreference('theme',manualTheme); });
 $('themeToggle').addEventListener('click', () => {
-  manualTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  manualTheme = ['dark','black'].includes(document.documentElement.dataset.theme) ? 'light' : 'dark';
   setTheme(manualTheme); try { localStorage.setItem('alba.theme', manualTheme); } catch (_) {}
 });
 osTheme.addEventListener('change', () => { if (!manualTheme) setTheme(osTheme.matches ? 'dark' : 'light'); });
@@ -93,8 +103,9 @@ async function ready() {
   arrangeAccount();
   $('scopeControl').hidden = !me.is_admin; $('usageScope').value = me.is_admin ? 'bot' : 'self';
   isAdmin = me.is_admin; $('dashboardTabs').hidden = !isAdmin;
-  $('devicesButton').hidden = false; $('tramontoLink').hidden = !isAdmin; $('portalAccessNote').hidden = isAdmin;
+  $('devicesButton').hidden = false; $('tramontoLink').hidden = !isAdmin; $('notteLink').hidden = !isAdmin; $('portalAccessNote').hidden = isAdmin;
   if (isAdmin && new URLSearchParams(location.search).get('next') === 'tramonto') { location.replace('/tramonto'); return; }
+  if (isAdmin && new URLSearchParams(location.search).get('next') === 'notte') { location.replace('/notte'); return; }
   document.querySelector('.welcome').appendChild($('companion')); mascotState('hello','Bentornato.');
   $('greeting').textContent = 'Prendiamoci un momento, ' + name + '.';
   $('messages').replaceChildren(); historyCursor = 0; const history = await api('/api/history');
@@ -574,7 +585,7 @@ async function loadIdentityConfigs(){const data=await api('/api/admin/identity')
 function fillIdentityConfig(){if(!identityConfigs)return;const id=$('identityProvider').value,config=identityConfigs.find(p=>p.id===id),phone=id==='phone';$('identityClientId').value=config.client_id;$('identitySecret').value='';$('identitySecret').placeholder=config.has_secret?'Segreto già salvato · lascia vuoto per conservarlo':'Inserisci il segreto dal portale ufficiale';$('identityIdLabel').textContent=phone?'Twilio Account SID (AC…)':'Client ID';$('identityService').value=config.service_sid;$('identityService').hidden=!phone;$('identityServiceLabel').hidden=!phone;$('identityCallback').value=config.callback||'SMS verificati con Twilio Verify';$('identityEnabled').checked=config.enabled;$('identityInstructions').href=officialIdentity[id];}
 $('identityProvider').addEventListener('change',fillIdentityConfig);$('identityConfigForm').addEventListener('submit',async e=>{e.preventDefault();try{const data=await api('/api/admin/identity',{provider:$('identityProvider').value,client_id:$('identityClientId').value.trim(),client_secret:$('identitySecret').value,service_sid:$('identityService').value.trim(),enabled:$('identityEnabled').checked});$('identitySecret').value='';$('identityConfigMessage').textContent=data.message;await loadIdentityConfigs();await loadIdentityOptions();}catch(error){$('identityConfigMessage').textContent=error.message;}});
 loadIdentityOptions().catch(()=>{$('identityMessage').textContent='Metodi esterni temporaneamente non disponibili.';});
-if(new URLSearchParams(location.search).has('auth_error')){$('identityMessage').textContent='Verifica non completata oppure account in attesa di autorizzazione. Riprova o contatta il gestore.';history.replaceState(null,'',location.pathname);}
+if(new URLSearchParams(location.search).has('auth_error')){$('identityMessage').textContent='Verifica non completata oppure account in attesa di autorizzazione. Riprova o contatta il gestore.';history.replaceState(null,'',location.pathname + location.search);}
 
 $('messages').addEventListener('click',async event=>{const button=event.target.closest('[data-feedback]');if(!button)return;try{await api('/api/feedback',{label:button.dataset.feedback,message_id:Number(button.closest('[data-message-id]').dataset.messageId)});button.parentNode.textContent='Feedback salvato · grazie.';}catch(error){$('error').textContent=error.message;}});
 const feedbackObserver=new MutationObserver(()=>{for(const el of $('messages').querySelectorAll('.assistant[data-message-id]')){if(el.querySelector('.reply-feedback'))continue;const box=node('div',undefined,'reply-feedback');for(const [label,text]of [['utile','Utile'],['ripetitiva','Ripetitiva'],['fuori_tema','Fuori tema'],['piu_concreta','Più concreta']]){const b=node('button',text);b.type='button';b.dataset.feedback=label;box.appendChild(b);}el.appendChild(box);}});feedbackObserver.observe($('messages'),{childList:true,subtree:true,attributes:true,attributeFilter:['data-message-id']});

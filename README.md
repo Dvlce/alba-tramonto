@@ -1,6 +1,6 @@
-# Alba + Tramonto
+# Alba + Tramonto + Notte
 
-AI conversazionale locale, Telegram e web, con memoria nel tempo. Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
+AI conversazionale locale, Telegram e web, con memoria nel tempo. **Notte / ALBA-CORE** aggiunge una personalità autonoma con emozioni persistenti, memoria vettoriale locale, riflessione, riassunti, ricerca Wikipedia e messaggi Telegram a Matt. [Architettura, configurazione e limiti di ALBA-CORE](docs/ALBA_CORE.md). Tramonto è il quaderno riservato all’amministratore: pagine A4, immagini nel testo, matematica, disegno, circuiti ngspice e reti didattiche.
 
 ![Tramonto](docs/tramonto.png)
 
@@ -9,10 +9,11 @@ AI conversazionale locale, Telegram e web, con memoria nel tempo. Tramonto è il
 - Chiavi web monouso e password personali, browser ricordati e revocabili. Accessi opzionali Google/GitHub/Discord/Twilio Verify configurabili con segreti cifrati. Nessuna fusione automatica per email.
 - 20 utenti autorizzati, 5 persone attive, coda, Stop, limiti mensili di token, calendario di utilizzo, CPU/RAM/disco ogni 2 secondi, audit e backup cifrati con retention.
 - Tema chiaro/scuro, classico/neomorfismo/vetro, logo animato e Albi, mascotte albicocca originale.
-- Tramonto: raccolta quaderni, otto stili di carta, quattro font, tabelle e modelli. Pagine A4 numerate, continuazione del testo lungo e ripristino della pagina/posizione. Immagini incollate/caricate, trascinabili e ridimensionabili, con testo a fianco. Laboratori inseribili nella pagina come immagini PNG.
+- Tramonto: raccolta quaderni, otto stili di carta, quattro font, tabelle e modelli. Pagine A4 numerate, continuazione del testo lungo e ripristino della pagina/posizione. Immagini incollate/caricate, trascinabili e ridimensionabili, con testo a fianco. Formule, grafici e laboratori inseribili nella pagina come immagini PNG, con selezione, maniglia di ridimensionamento, larghezza, allineamento e spostamento nel testo. Comandi raggruppati, impostazioni dell’oggetto accanto al foglio e stampa della sola pagina A4.
+- Aspetto di Alba e Tramonto: Classico, Neomorfismo, Vetro, Claymorphism, Cybercore, Neobrutalism, Scrapbook e Surrealism. Luminosità chiara/scura/grigia/nera e sei palette indipendenti, conservate sul dispositivo. Menu Aspetto su Alba, anche prima del login; stampa A4 di Tramonto bianca senza decorazioni. Icone Lucide locali con licenza inclusa.
 - Matematica: LaTeX/KaTeX, tre curve, funzioni trigonometriche/iperboliche, limiti numerici, derivate simboliche, integrali e zeri numerici. Le stime numeriche non sostituiscono dimostrazioni.
 - Elettronica: 28 dispositivi, generatore di funzioni, strumenti, fili, rotazione/undo; ngspice locale isolato per DC, transitorio, sweep AC e DC, grafici/CSV/netlist. Modelli generici didattici, non una replica di Multisim.
-- Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato simulato, console show e CIDR. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
+- Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato e traceroute didattici, controllo IP/gateway/collegamenti, duplicazione e disposizione a griglia. CIDR con intervallo host/wildcard, suddivisione uniforme e VLSM, rapporti e tabelle inseribili nel quaderno. Selezione multipla con Maiusc/clic, pressione prolungata o area, spostamento del gruppo, Canc/Delete e Annulla nei circuiti e nelle topologie. Console show/diagnose/traceroute. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
 
 ## Installazione Linux / Raspberry Pi
 
@@ -66,7 +67,7 @@ Restore: ferma il servizio, poi `maintenance.py restore FILE --service-stopped`;
 
 ## Android e integrazione
 
-APK in [Releases](https://github.com/Dvlce/alba-tramonto/releases), oppure `/download/alba-albi.apk` se il gestore lo ha installato sul server. Usa il browser con sessioni sicure; non incorpora dati personali o un LLM e richiede connessione al server. Il server HTTPS si può cambiare dall’app. [Sorgenti e build Android](android/README.md).
+APK in [Releases](https://github.com/Dvlce/alba-tramonto/releases), oppure `/download/alba-albi.apk` se il gestore lo ha installato sul server. La versione 1.2.0 apre Alba, Tramonto e Notte al suo interno, senza lanciare il browser. Include Android App Links verificati per i link personali Telegram. Invia `/notte` nella chat privata admin di Alba per associare Matt ai messaggi autonomi. Supporta immagini, esportazione e PDF A4; non incorpora dati personali o un LLM e richiede connessione al server. Il server HTTPS si può cambiare dall’app. [Sorgenti e build Android](android/README.md).
 
 Per integrare il motore in un sistema esistente: [alba-local-kit](https://github.com/Dvlce/alba-local-kit), package Python con adapter, Telegram e chiavi web/CLI.
 
@@ -76,7 +77,7 @@ Per integrare il motore in un sistema esistente: [alba-local-kit](https://github
 .venv/bin/python -m unittest discover -s tests
 ```
 
-314 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
+331 scenari/test sul Raspberry di riferimento, inclusi quattro circuiti eseguiti realmente in ngspice isolato. I test del simulatore richiedono Linux, ngspice, bubblewrap e namespace utente disponibili. Test browser separati con Playwright: `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/appearance_network_check.py`, `tests/alba_appearance_check.py` (installare Playwright e Chromium nell’ambiente di test). Database temporanei, nessuna chiamata LLM necessaria. Verificano anche privato→gruppo, export altrui negato, immagini, A4, reload, simulazioni, account, CSRF, revoche e backup/restore.
 
 Alba è un supporto alla riflessione e ai problemi quotidiani, non un servizio clinico o di emergenza. I controlli di provenienza riducono gli errori, ma un modello può ancora produrre risposte inesatte. Il gestore configura privacy, contatti, accessi e manutenzione.
 

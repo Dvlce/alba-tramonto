@@ -48,7 +48,7 @@ async def main():
                 await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")'); await page.reload(); await page.locator('#noteEditor').wait_for(state='visible')
                 assert await page.locator('#noteTitle').input_value()=='Funzioni e circuiti'; assert await page.locator('#noteFont').input_value()=='mono'; assert 'Seno e coseno' in await page.locator('#richEditor').inner_text()
                 await page.locator('[data-pane=math]').click(); await page.get_by_role('button',name='Limite',exact=True).click(); assert await page.locator('#formulaPreview .katex').count()==1
-                await page.locator('#addFormula').click(); assert await page.locator('#formulaList .katex').count()==1
+                await page.locator('#addFormula').click(); await page.locator('#formulaList .katex').wait_for(state='attached'); assert await page.locator('#richEditor img').count()==1; await page.locator('[data-pane=math]').click(); assert await page.locator('#formulaList .katex').count()==1
                 await page.locator('#plotGraph').click(); assert await page.locator('#plotSvg [data-curve]').count()==2
                 assert abs(await page.evaluate('TramontoTools.expressionFunction("sin(x)")(Math.PI/2)')-1)<1e-10
                 for expression in ('import("bad")','x=2','[1,2,3]','x.constructor','evaluate("2")'):
@@ -72,11 +72,11 @@ async def main():
                 await page.locator('#wireCircuit').click(); await page.locator('#circuitSvg [data-component-id]').first.locator('[data-port="1"]').click(); await page.locator('#circuitSvg [data-component-id]').last.locator('[data-port="0"]').click()
                 assert await page.locator('#circuitSvg path[data-wire]').count()==2
                 await page.evaluate('TramontoTools.saveDoc()'); circuit=json.loads(store.rows('SELECT content FROM notes')[0]['content'])['circuit']; assert len(circuit['wires'])==1; assert circuit['components'][1]['rotation']==90
-                await page.locator('[data-pane=images]').click(); await page.locator('#imageInput').set_input_files({'name':'figura.png','mimeType':'image/png','buffer':PNG}); await page.locator('.image-card img').wait_for(); await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")')
-                assert len(store.rows('SELECT id FROM note_images'))==1; assert await page.locator('.image-card img').evaluate('(image)=>image.complete && image.naturalWidth===1')
+                await page.locator('[data-pane=images]').click(); await page.locator('#imageInput').set_input_files({'name':'figura.png','mimeType':'image/png','buffer':PNG}); await page.locator('.image-card img').last.wait_for(); await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")')
+                assert len(store.rows('SELECT id FROM note_images'))==2; assert await page.locator('.image-card img').last.evaluate('(image)=>image.complete && image.naturalWidth===1')
                 async with page.expect_download() as download:
                     await page.locator('#exportNote').click()
-                path=await (await download.value).path(); exported=json.loads(Path(path).read_text()); assert exported['format']=='tramonto-note-v1'; assert len(exported['images'])==1; assert len(exported['content']['drawing']['strokes'])==1
+                path=await (await download.value).path(); exported=json.loads(Path(path).read_text()); assert exported['format']=='tramonto-note-v1'; assert len(exported['images'])==2; assert len(exported['content']['drawing']['strokes'])==1
                 await page.evaluate('window.print=()=>{window.didPrint=true}'); await page.locator('#printNote').click(); assert await page.evaluate('window.didPrint')
                 for style in ('neo','glass'):
                     await page.locator('#notesStyle').select_option(style); await page.locator('#notesTheme').select_option('dark'); await page.wait_for_timeout(550); assert (await page.locator('.notes-workspace').bounding_box())['width']>950; await page.screenshot(path=str(ROOT/'artifacts'/('tramonto-'+style+'.png')),full_page=True)

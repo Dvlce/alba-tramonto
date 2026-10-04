@@ -13,5 +13,54 @@
     "version": "15.2.0",
     "integrity": "sha512-UAQzSVob9rNLdGpqcFMYmSu9dkuLYy7Lr2hBEQS5SHQdknA9VppJz3cy2KkpMzTODunad6V6cNv+5kOLsePLow==",
     "source": "https://registry.npmjs.org/mathjs/-/mathjs-15.2.0.tgz"
+  },
+  "html2canvas": {
+    "version": "1.4.1",
+    "source": "https://github.com/niklasvh/html2canvas/releases/download/v1.4.1/html2canvas.min.js",
+    "upstream_sha256": "e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb",
+    "sha256": "f22d755c983dd17c4a1d246d3e733245eae59c735183efa37c50eecab4fdda72",
+    "local_patch": "Clone pseudo-element reset uses external html2canvas-pseudo.css instead of inline style, compatible with existing CSP."
+  },
+  "lucide": {
+    "source": "https://github.com/lucide-icons/lucide",
+    "commit": "e8a2c60b75354c1648a6b6a547896b7a9cfde98e",
+    "icons": [
+      "router",
+      "network",
+      "monitor",
+      "server",
+      "laptop",
+      "wifi",
+      "shield",
+      "cloud",
+      "printer",
+      "notebook-pen",
+      "sigma",
+      "pencil-ruler",
+      "circuit-board",
+      "image",
+      "mouse-pointer-2",
+      "cable",
+      "trash",
+      "undo-2",
+      "copy",
+      "layout-grid",
+      "route",
+      "scan-search",
+      "palette",
+      "message-square",
+      "database",
+      "file-text",
+      "chart-pie",
+      "settings"
+    ],
+    "license": "LUCIDE_LICENSE",
+    "bundle": "tramonto-icons.js",
+    "sha256": "5d0fc9a4d54bb7a85d5efce44f18251a1cf8385e57418c74978fc7b4795684eb"
+  },
+  "marked": {
+    "version": "15.0.12",
+    "source": "https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
+    "sha256": "3e7e7d7feb3e5d58cb6c804f68ab5c24cc7e5eb6270fd6e5cbb9124739217d0c"
   }
 }

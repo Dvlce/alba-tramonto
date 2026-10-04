@@ -259,7 +259,7 @@ class ControlsTests(unittest.IsolatedAsyncioTestCase):
         telegram=Telegram(self.service,None,'synthetic-token')
         telegram.bot={'first_name':'Alba'}
         self.store.set_setting('telegram_identity_configured',1)
-        self.store.set_setting('telegram_commands_version','consent-20260930')
+        self.store.set_setting('telegram_commands_version','notte-20261004')
         methods=[]
         async def api(method,payload=None): methods.append(method); return True
         telegram.api=api; await telegram.configure_bot()

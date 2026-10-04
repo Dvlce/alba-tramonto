@@ -1,0 +1,3 @@
+/* html2canvas 1.4.1 clone-only pseudo element reset, served as external CSS for CSP. */
+.___html2canvas___pseudoelement_before:before,
+.___html2canvas___pseudoelement_after:after { content: "" !important; display: none !important; }

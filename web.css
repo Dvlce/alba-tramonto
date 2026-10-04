@@ -36,3 +36,49 @@
 @media(max-width:740px){.welcome{flex-wrap:wrap}.welcome>.mobile-account{display:flex;flex:0 0 100%;order:4;margin-top:13px;padding-top:11px;border-top:1px solid var(--line);font-size:11px}.mobile-account #accountName{max-width:250px}.mobile-account .telegram-badge{display:flex;font-size:9px}.mobile-account .avatar{width:30px;height:30px}.mobile-account #accountRole{font-size:9px}}
 .external-login{margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}.identity-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.identity-buttons button{flex:1;min-width:90px}.external-login details{padding:10px 0;font-size:12px}.external-login form{display:flex;gap:8px;align-items:end;margin:15px 0;flex-wrap:wrap}.external-login form label{display:grid;gap:6px;flex:1}.external-login input:not([type=checkbox]){width:100%;border:1px solid var(--line);border-radius:9px;background:var(--bg);padding:11px;font-size:13px}#identityConfigForm select{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px}#identityInstructions{font-size:12px}#linkedAccounts{font-size:12px;color:var(--muted)}
 .reply-feedback{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;opacity:.75}.reply-feedback button{background:transparent;color:var(--muted);font:10px inherit;border:1px solid var(--line);border-radius:7px;padding:4px 7px}.reply-feedback button:hover{color:var(--accent);border-color:var(--accent)}
+
+/* The approved luminosity and palette tokens are shared with Tramonto. */
+:root[data-palette][data-theme]{--bg:var(--tone-bg);--surface:var(--tone-surface);--surface-alt:var(--tone-alt);--text:var(--tone-text);--muted:var(--tone-muted);--line:var(--tone-line);--accent:var(--palette-light);--accent-text:#fff;--shadow:0 8px 28px #0000000d;color-scheme:light}
+:root[data-theme=light]{--tone-bg:#f4f5ee;--tone-surface:#fffef9;--tone-alt:#edf1e7;--tone-text:#263c31;--tone-muted:#626d60;--tone-line:#d3dacb}
+:root[data-theme=gray]{--tone-bg:#dfe2e6;--tone-surface:#f3f4f6;--tone-alt:#e6e8ec;--tone-text:#242a33;--tone-muted:#586173;--tone-line:#bec4ce}
+:root[data-theme=dark]{--tone-bg:#12171b;--tone-surface:#1c2329;--tone-alt:#252e36;--tone-text:#e8edf2;--tone-muted:#b1bdc8;--tone-line:#48545f}
+:root[data-theme=black]{--tone-bg:#000;--tone-surface:#0a0a0a;--tone-alt:#181818;--tone-text:#f2f3f5;--tone-muted:#b3b6bf;--tone-line:#45454d}
+:root[data-palette=sage]{--palette-light:#456b43;--palette-dark:#b6d69d}
+:root[data-palette=graphite]{--palette-light:#4b5563;--palette-dark:#c8cdd5}
+:root[data-palette=ocean]{--palette-light:#075f97;--palette-dark:#8acdfa}
+:root[data-palette=violet]{--palette-light:#7141b7;--palette-dark:#c8aff9}
+:root[data-palette=rose]{--palette-light:#a52d55;--palette-dark:#f7a6c2}
+:root[data-palette=amber]{--palette-light:#94500d;--palette-dark:#f4c77b}
+:root[data-palette][data-theme=dark],:root[data-palette][data-theme=black]{--accent:var(--palette-dark);--accent-text:#101318;--shadow:0 8px 28px #0005;color-scheme:dark}
+
+:root[data-palette][data-theme]{--snake1:var(--accent);--snake2:var(--palette-dark);--heat0:var(--surface-alt);--heat1:color-mix(in srgb,var(--accent) 15%,var(--surface));--heat2:color-mix(in srgb,var(--accent) 40%,var(--surface));--heat3:color-mix(in srgb,var(--accent) 95%,var(--surface));--heat4:var(--accent);--heat-text:var(--accent-text)}
+:root[data-theme=black] .sun-icon{display:block}
+:root[data-theme=black] .moon-icon{display:none}
+.appearance-settings{position:relative}
+.appearance-settings>summary{display:flex;align-items:center;justify-content:center;min-height:34px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:12px;cursor:pointer;list-style:none}
+.appearance-settings>summary::-webkit-details-marker{display:none}
+.appearance-settings[open]>summary{border-color:var(--accent);color:var(--accent)}
+.appearance-popover{width:280px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px);overflow-y:auto}
+.appearance-popover select{font-size:13px;min-height:38px;color:var(--text)}
+.alba-app .header-actions{flex-wrap:wrap;justify-content:flex-end;gap:12px}
+:root[data-style=clay] .alba-app :is(.panel,.login-card,.motion-popover,.memory-dialog,.devices-dialog,.system-bar,.cookie-note){border-radius:26px;box-shadow:8px 8px 18px #00000012,inset 3px 3px 6px #ffffff30,inset -3px -3px 6px #00000010}
+:root[data-style=clay] .alba-app :is(.secondary-button,.primary-button,.send-button,.appearance-settings>summary){border-radius:15px;box-shadow:3px 3px 7px #00000016,inset 2px 2px 4px #ffffff26,inset -2px -2px 4px #00000012}
+:root[data-style=clay] .alba-app :is(.bubble,#chatForm){border-radius:18px}
+:root[data-style=cyber] .alba-app :is(.panel,.login-card,.motion-popover,.memory-dialog,.devices-dialog,.system-bar,.cookie-note,.portal-menu){border-radius:3px;border-color:var(--accent);box-shadow:0 0 0 1px var(--line),0 5px 20px #00000016}
+:root[data-style=cyber] .alba-app :is(.primary-button,.secondary-button,.appearance-settings>summary,.bubble){border-radius:2px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+:root[data-style=cyber] .alba-app :is(.eyebrow,.motion-popover>label){color:var(--accent);letter-spacing:1px}
+:root[data-style=cyber] .alba-app .chat-panel{background-image:linear-gradient(#5482a00a 1px,transparent 1px),linear-gradient(90deg,#5482a00a 1px,transparent 1px);background-size:20px 20px}
+:root[data-style=brutal] .alba-app :is(.panel,.login-card,.motion-popover,.memory-dialog,.devices-dialog,.system-bar,.cookie-note,.portal-menu){border:2px solid var(--text);border-radius:2px;box-shadow:5px 5px 0 var(--text)}
+:root[data-style=brutal] .alba-app :is(.primary-button,.secondary-button,.send-button,.appearance-settings>summary){border:2px solid var(--text);border-radius:2px;box-shadow:3px 3px 0 var(--text);font-weight:700;transform:none}
+:root[data-style=brutal] .alba-app :is(.primary-button,.secondary-button,.send-button):active{box-shadow:1px 1px 0 var(--text);transform:translate(2px,2px)}
+:root[data-style=brutal] .alba-app .bubble{border:2px solid var(--text);border-radius:2px}
+:root[data-style=scrap] .alba-app :is(.panel,.login-card,.motion-popover,.system-bar,.cookie-note){border-radius:4px 13px 7px 4px;box-shadow:3px 5px 0 #0000000a}
+:root[data-style=scrap] .alba-app :is(.panel,.login-card){position:relative}
+:root[data-style=scrap] .alba-app :is(.panel,.login-card)::before{content:'';position:absolute;top:-8px;right:26px;width:58px;height:16px;background:#d6b99088;border:1px solid #b79e7930;pointer-events:none;transform:rotate(6deg)}
+:root[data-style=scrap] .alba-app .dashboard-tabs button{border:1px solid var(--line);border-bottom-width:3px;border-radius:9px 9px 0 0;background:var(--surface-alt)}
+:root[data-style=surreal] .alba-app{background:radial-gradient(ellipse at 0 15%,#9585c820,transparent 45%),radial-gradient(ellipse at 100% 70%,#c99d8024,transparent 45%),var(--bg);background-attachment:fixed}
+:root[data-style=surreal] .alba-app :is(.panel,.login-card,.motion-popover,.memory-dialog,.devices-dialog,.system-bar){border-radius:30px 13px 30px 16px}
+:root[data-style=surreal] .alba-app .bubble{border-radius:22px 8px 22px 12px}
+:root[data-style=neo] .alba-app :is(.panel,.login-card,.secondary-button){box-shadow:6px 6px 16px #00000018,-6px -6px 16px #ffffff25}
+@media(max-width:500px){.alba-app .header-actions{gap:8px}.appearance-settings>summary{font-size:11px;padding:7px 9px}.appearance-popover{position:fixed;top:88px;left:16px;right:16px;width:auto;max-width:none;max-height:calc(100dvh - 110px);z-index:45}:root[data-style=brutal] .alba-app :is(.panel,.login-card){box-shadow:3px 3px 0 var(--text)}}
+@media print{.alba-app .appearance-settings{display:none!important}.alba-app :is(.panel,.login-card)::before{display:none!important}}
