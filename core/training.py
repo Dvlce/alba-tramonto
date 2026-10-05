@@ -235,9 +235,15 @@ class Training:
             try:
                 if model and old['status']!='expired':
                     async with self.core.engine.lock:
-                        rc,out=await self.core.learning.bounded_process(['ollama','rm',model],30,
-                            {'PATH':'/usr/local/bin:/usr/bin:/bin','OLLAMA_HOST':self.core.settings.llm_url})
-                    if rc:raise ValueError('Rimozione Ollama non completata')
+                        # The service's bounded CLI environment has no HOME;
+                        # Ollama's CLI panics there before contacting the server.
+                        # Use the existing local client, and accept already absent
+                        # tags when a previous cleanup removed their shared alias.
+                        async with self.core.engine.session.delete(
+                            self.core.settings.llm_url+'/api/delete',json={'model':model},timeout=30) as response:
+                            if response.status not in (200,404):
+                                raise ValueError('Rimozione Ollama non completata: HTTP '+str(response.status))
+                            await response.read()
                 adapter=self.root/'runs'/str(old['id'])/'adapter'
                 if adapter.is_dir() and not adapter.is_symlink() and adapter.resolve().is_relative_to(self.root.resolve()):
                     shutil.rmtree(adapter)
