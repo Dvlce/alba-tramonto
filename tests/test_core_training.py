@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 import unittest
-from unittest.mock import AsyncMock,patch
+from unittest.mock import AsyncMock,Mock,patch
 import test_core
 from core.learning import reddit_entries,LESSONS
 from core.training_data import examples,HOLDOUT
@@ -104,15 +104,28 @@ class RetentionTests(unittest.IsolatedAsyncioTestCase):
             self.store.execute('INSERT INTO core_training(id,day,started,status,model) VALUES(?,?,?,?,?)',(ident,'2026-10-04',1,status,name))
             adapter=root/'runs'/str(ident)/'adapter';adapter.mkdir(parents=True);(adapter/'weights').write_text('data')
         self.core.config['personal_adapter']='3';self.core.config['personal_model']='notte-personal:20261004-3'
-        self.core.learning.bounded_process=AsyncMock(return_value=(0,''))
+        deleted=test_core.Response({});deleted.read=AsyncMock(return_value=b'')
+        self.model.delete=Mock(return_value=deleted)
         await self.core.training.prune_versions()
         self.assertTrue((root/'runs/3/adapter/weights').exists());self.assertTrue((root/'runs/2/adapter/weights').exists())
         self.assertFalse((root/'runs/1/adapter').exists());self.assertFalse((root/'runs/4/adapter').exists())
         self.assertEqual(self.core.config['personal_previous_adapter'],'2')
         self.assertEqual(len(self.store.rows('SELECT id FROM core_training')),4)
+        self.assertEqual({call.kwargs['json']['model'] for call in self.model.delete.call_args_list},
+                         {'notte-personal:20261004-1','notte-personal:20261004-4'})
     async def test_failed_model_deletion_preserves_adapter_and_status(self):
         self.store.execute('INSERT INTO core_training(id,day,started,status,model) VALUES(?,?,?,?,?)',(1,'x',1,'rejected','notte-personal:20261004-1'))
         adapter=self.core.training.root/'runs/1/adapter';adapter.mkdir(parents=True)
-        self.core.learning.bounded_process=AsyncMock(return_value=(1,'busy'))
+        failed=test_core.Response({});failed.status=503;failed.read=AsyncMock(return_value=b'')
+        self.model.delete=Mock(return_value=failed)
         await self.core.training.prune_versions();self.assertTrue(adapter.exists())
         self.assertEqual(self.store.rows('SELECT status FROM core_training')[0]['status'],'rejected')
+    async def test_already_removed_tag_does_not_leave_rejected_adapter_forever(self):
+        self.store.execute('INSERT INTO core_training(id,day,started,status,model) VALUES(?,?,?,?,?)',
+                           (1,'x',1,'rejected','notte-personal:20261004-1'))
+        adapter=self.core.training.root/'runs/1/adapter';adapter.mkdir(parents=True)
+        absent=test_core.Response({});absent.status=404;absent.read=AsyncMock(return_value=b'')
+        self.model.delete=Mock(return_value=absent)
+        await self.core.training.prune_versions()
+        self.assertFalse(adapter.exists())
+        self.assertEqual(self.store.rows('SELECT status FROM core_training')[0]['status'],'expired')

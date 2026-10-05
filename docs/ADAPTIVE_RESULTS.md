@@ -84,7 +84,7 @@ directions are documented separately in [runtime research](ADAPTIVE_RUNTIME.md).
 * Backend: the 378-test campaign suite passes on Pi/Python 3.13, zero skips; Mac/Python 3.9 also
   passes with five platform-dependent skips. A final regression test additionally
   covers hiding embedding dependencies when Ollama tags omit capabilities
-  (379 tests in the final suite). Fixture outputs are not hardware measurements.
+  (380 tests in the final suite). Fixture outputs are not hardware measurements.
 * Browser: Test Lab and Notte checks pass for private/public separation,
   standard-first chosen-policy submission, four charts, report exports,
   fixed input height, preserved drafts, IT/EN and mobile layout. Failed
@@ -136,3 +136,14 @@ Measured filesystem free space changed from 176,896,315,392 to
 (18.40 GiB). This is filesystem measurement, not a sum of shared alias sizes.
 Alba restarted and passed its health check. A private environment/config backup
 and the application's encrypted database backup were created before migration.
+
+## Retention regression found during final verification
+
+The next daily candidate (`20261005-10`) was correctly rejected, but its tag
+remained installed. The bounded service CLI environment lacked HOME and Ollama
+exited with `panic: $HOME is not defined` before deletion. Retention now uses
+the existing local Ollama DELETE API under the inference lock. HTTP 404 means
+already removed; other failures preserve the adapter and log an error. Tests
+verify only obsolete candidates are deleted, protected checkpoints survive,
+server failure preserves data, and a missing tag does not leave its adapter
+forever. Production cleanup is verified after applying this correction.
