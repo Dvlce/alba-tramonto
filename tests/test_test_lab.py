@@ -77,6 +77,17 @@ class LabTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.core.config, {'profile': 'fast'}); self.assertIsNone(self.lab.active)
         self.assertEqual(self.store.rows("SELECT name FROM sqlite_master WHERE name='core_events'"), [])
 
+    async def test_adaptive_comparison_uses_same_ollama_target_in_explicit_order(self):
+        self.session.normal=[(json.dumps(p)+'\n').encode() for p in ({'message':{'content':'42'}},{'done':True,'prompt_eval_count':10,'eval_count':2,'eval_duration':1000000000})]
+        await self.lab.run({**CONFIG,'policy':'adaptive','context':1024})
+        samples=self.lab.snapshot()['runs'][0]['result']['samples']
+        self.assertEqual([s['backend'] for s in samples],['normal','optimized'])
+        self.assertTrue(all(s['status']=='ok' for s in samples))
+        requests=[body for url,body in self.session.calls if url.endswith('/api/chat')]
+        self.assertEqual([r['model'] for r in requests],[CONFIG['model']]*2)
+        self.ssd.start.assert_not_awaited()
+        self.assertIn('generation',samples[1]);self.assertEqual(samples[1]['sha256'],SHA)
+
     async def test_changed_weight_identity_rejects_before_any_model_execution(self):
         self.lab.identity = AsyncMock(return_value='b'*64); self.lab.sample = AsyncMock()
         with self.assertRaises(ValueError): await self.lab.run(CONFIG)
@@ -155,6 +166,15 @@ class LabWebTests(unittest.IsolatedAsyncioTestCase):
             cookie, csrf = self.keys.create_session(uid, True)
             self.headers[uid] = {'Cookie': 'session='+cookie, 'X-CSRF-Token': csrf}
     async def asyncTearDown(self): await self.client.close(); self.store.close(); self.tmp.cleanup()
+
+    async def test_embedding_dependency_is_hidden_even_without_tag_capabilities(self):
+        self.service.core.inference.models=AsyncMock(return_value=[
+            {'name':'notte:latest'},{'name':self.service.core.config['embedding_model']+':latest'},
+            {'name':'other-embedding:latest','capabilities':['embedding']},
+            {'name':'notte-coding:latest'}])
+        response=await self.client.get('/api/notte/models',headers=self.headers[1])
+        self.assertEqual([m['name'] for m in (await response.json())['models']],
+                         ['notte:latest','notte-coding:latest'])
 
     async def test_public_site_and_data_are_available_but_private_runs_are_admin_only(self):
         for path in ('/optimization', '/optimization/data', '/optimization/assets/optimization.js'):

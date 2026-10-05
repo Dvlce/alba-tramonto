@@ -131,7 +131,7 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         chat_call=next(payload for url,payload in self.model.calls if url.endswith('/api/chat'))
         self.assertTrue(chat_call['stream']);self.assertNotIn('format',chat_call)
         self.assertEqual(chat_call['model'],self.core.config['model'])
-        self.assertEqual(chat_call['options']['num_predict'],256)
+        self.assertEqual(chat_call['options']['num_predict'],224)
 
     async def test_telegram_private_pairing_target_without_daily_cap(self):
         event=Incoming(1,'Matt',1,'private','/notte')

@@ -4,6 +4,16 @@
   "entries": [
     {
       "date": "2026-10-04",
+      "version": "1.5.0 · Notte Flux",
+      "title_it": "Sette strategie, token adattivi e attesa completa",
+      "title_en": "Seven strategies, adaptive tokens and full waiting time",
+      "body_it": "Dieci confronti sequenziali sul Coder 7B reale: SSD, ARM, KV8, Draft, Warm, CPU2 e Flux. Istogrammi di primo token, attesa totale, decode e output; controlli Python e aritmetici, regressioni e limiti RAM inclusi. Test online standard → ottimizzazione scelta, app Android nativa, famiglia Notte/Notte Coding e limite di due checkpoint personali: corrente e precedente verificato.",
+      "body_en": "Ten sequential comparisons on the actual Coder 7B: SSD, ARM, KV8, Draft, Warm, CPU2 and Flux. First-token, total-wait, decode and output bar charts; Python/arithmetic checks, regressions and RAM limits included. Online standard → selected optimization, native Android, Notte/Notte Coding family and a two-checkpoint personal retention limit: active and verified previous.",
+      "status": "measured",
+      "report": "ADAPTIVE_RESULTS.md"
+    },
+    {
+      "date": "2026-10-04",
       "version": "Test Lab",
       "title_it": "Un banco di prova, due percorsi reali",
       "title_en": "One test bench, two actual runtimes",

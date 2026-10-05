@@ -92,6 +92,9 @@ class PlannerTests(unittest.TestCase):
             with self.assertRaises(ValueError):register(runtime,ollama,'qwen2:7b')
 
     def test_policy_never_requantizes_and_rejects_arbitrary_flags(self):
+        compact=command('llama-server','target.gguf','compact',1024,'server.key')
+        self.assertEqual(compact[compact.index('--cache-type-k')+1],'q8_0')
+        self.assertIn('--no-repack',compact)
         args=command('llama-server','target.gguf','mapped',1024,'server.key')
         self.assertIn('--no-repack',args);self.assertIn('--no-context-shift',args)
         self.assertEqual(args[args.index('--cache-type-k')+1],'f16')

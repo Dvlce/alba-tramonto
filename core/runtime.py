@@ -43,6 +43,8 @@ class Core:
         self.error = ''
         self.partial = ''
         self.embedding_cache = OrderedDict()
+        self.foreground_until = 0
+        self.last_generation = {}
         self.store.db.executescript('''
           CREATE TABLE IF NOT EXISTS core_events(id INTEGER PRIMARY KEY AUTOINCREMENT,
             category TEXT NOT NULL,role TEXT NOT NULL,content TEXT NOT NULL,
@@ -126,10 +128,10 @@ class Core:
         cpu = sample.get('cpu_percent') or 0
         temp = sample.get('temperature_c') or 0
         overloaded = ram > 85 or temp >= 78 or cpu > 95
-        context = 1536 if self.config['profile']=='fast' else 2048 if ram > 70 or temp > 70 else min(4096, self.settings.context_tokens)
+        context = 2048 if ram > 70 or self.config['profile'] in ('fast','coding') else min(4096, self.settings.context_tokens)
         return {**sample, 'overloaded': overloaded, 'context_tokens': context,
                 'energy': round(max(0, 100-max(ram, cpu*.65, max(0, temp-45)*2))),
-                'model_busy': self.engine.lock.locked(), 'model': self.config['model'] if self.config['profile']=='fast' else self.config['advanced_code_model'] if self.config['profile']=='advanced' else self.config['chat_model'],
+                'model_busy': self.engine.lock.locked(), 'model': self.config['code_model'] if self.config['profile']=='coding' else self.config['model'] if self.config['profile']=='fast' else self.config['advanced_code_model'] if self.config['profile']=='advanced' else self.config['chat_model'],
                 'background_model': self.config['model'], 'code_model':self.config['code_model']}
 
     def configure(self, value):
@@ -153,7 +155,7 @@ class Core:
             if type(value['training_hour']) is not int or not 0<=value['training_hour']<=23: raise ValueError('Ora non valida.')
             updated['training_hour']=value['training_hour']
         if 'profile' in value:
-            if value['profile'] not in ('fast','quality','advanced'):raise ValueError('Profilo non valido.')
+            if value['profile'] not in ('fast','coding','quality','advanced'):raise ValueError('Profilo non valido.')
             updated['profile']=value['profile']
         if 'ssd_policy' in value:
             if value['ssd_policy'] not in ('auto','native','mapped','speculative'):raise ValueError('Policy SSD non valida.')
@@ -188,49 +190,30 @@ class Core:
         # is cancelled, its stale CPU peak must not reject a foreground reply.
         if (resource.get('ram',{}).get('percent') or 0)>85 or (resource.get('temperature_c') or 0)>=78:
             raise ValueError('Risorse alte: riprova quando il Raspberry si raffredda.')
-        prompt=self.chat_prompt
-        if self.config['profile']=='fast':
-            from .inference import FAST_PROMPT
-            prompt=FAST_PROMPT
-        memories = await self.retrieve(query,prefer_lexical=self.config['profile']=='fast')
-        if self.config['profile']=='fast':memories=[{**r,'content':r['content'][:300]} for r in memories[:2]]
-        context_fields={'mood':self.mood()}
-        if self.config['profile']=='fast':context_fields['emotion']=max(self.emotions,key=self.emotions.get)
-        else:context_fields['emotions']=self.emotions
+        from .generation_policy import plan, assemble
+        from .inference import FAST_PROMPT
+        # Lexical retrieval keeps the active generator resident; consolidation
+        # still builds vectors in the background. No memory records are deleted.
+        memories = await self.retrieve(query, prefer_lexical=True)
+        ceiling = 2048 if (resource.get('ram', {}).get('percent') or 0)>70 else 4096
+        policy = plan(query, ceiling=ceiling)
+        history = list(reversed(self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT 32"))) if self.config['connectors']['chat'] else []
+        language = {'auto':'rispondi nella lingua del messaggio','en':'English','it':'italiano'}[self.config['language']]
+        messages, budget = assemble(FAST_PROMPT+'\nLingua: '+language, query, history, memories,
+                                   {'mood':self.mood()}, policy)
+        self.last_generation = budget
+        self.foreground_until = time.time()+120
         ssd_chat_active=self.config['ssd_enabled'] and self.config['profile']=='advanced' and not personal
-        def chat_state():
-            # Stable retrieved data first, volatile emotional weights last.
-            value={'memories':memories,**context_fields} if ssd_chat_active else {**context_fields,'memories':memories}
-            return json.dumps(value,ensure_ascii=False)
-        context=chat_state()
-        history_limit=128 if ssd_chat_active else 8
-        recent = self.store.rows("SELECT role,content FROM core_events WHERE category='chat' AND role IN ('user','assistant') ORDER BY id DESC LIMIT ?",(history_limit,)) if self.config['connectors']['chat'] else []
-        messages = [{'role':'system','content':prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context[:6500]}]
-        # The current user event is already in the log; include it exactly once.
-        history = list(reversed(recent))
-        if history and history[-1]['role']=='user' and history[-1]['content']==query: history.pop()
-        budget=max(1000,(resource['context_tokens']-900)*2-len(prompt)-len(query))
-        while len(context)+sum(len(r['content']) for r in history)>budget and history: history.pop(0)
-        while len(context)>budget and memories:
-            memories.pop()
-            context=chat_state()
-        messages[0]['content']=prompt+'\nLingua: '+{'auto':'rispondi nella lingua usata dal messaggio','en':'English','it':'italiano'}[self.config['language']]+'\nSTATO E MEMORIA:\n'+context
-        messages.extend({'role':r['role'],'content':r['content']} for r in history)
-        messages.append({'role':'user','content':query})
         if self.settings.backend!='ollama':
             # Existing llama.cpp remains usable through its structured generator.
             await self.accept(await self.generate(query,'chat'),'chat');return
         recorded=False
-        coding=bool(re.search(r'\bcode\b|\bfunction\b|python|programm|codice|script|javascript|typescript|\bsql\b|hacking|vulnerab|debug|algoritm|linux',query,re.I))
-        fast=self.config['profile']=='fast'
-        # The Pi benchmark found 1.5B unable to preserve order in a basic coding
-        # task, while 3B passed. Keep the small general model, but route code to 3B.
-        model=self.config['personal_model'] if personal else (self.config['code_model'] if coding else self.config['model']) if fast else (self.config['code_model'] if coding else self.config['chat_model'])
+        coding=policy['coding'] or self.config['profile']=='coding'
+        fast=self.config['profile'] in ('fast','coding')
+        model=self.config['personal_model'] if personal else self.config['code_model'] if coding else self.config['model'] if fast else self.config['chat_model']
         if not personal and self.config['profile']=='advanced':model=self.config['advanced_code_model']
-        maximum=384 if fast and coding else 256 if fast else 768
-        from .inference import context_size,cache_friendly_messages
-        if ssd_chat_active:messages=cache_friendly_messages(messages)
-        resource['context_tokens']=context_size(messages,maximum,resource['context_tokens'])
+        maximum=policy['output_tokens']
+        resource['context_tokens']=policy['context_tokens']
         if ssd_chat_active:
             # The chosen target is mandatory. A resource failure is visible;
             # there is no hidden fallback to a smaller model.
@@ -242,7 +225,7 @@ class Core:
         try:
             async with self.engine.session.post(self.settings.llm_url+'/api/chat',json={
                  'model':model,'messages':messages,'stream':True,'think':False,'keep_alive':'10m' if fast else '2m',
-                 'options':{'num_ctx':resource['context_tokens'],'num_predict':maximum,'num_thread':4 if fast else 3,'use_mmap':True,'temperature':.65,'repeat_penalty':1.1}},timeout=480) as response:
+                 'options':{'num_ctx':resource['context_tokens'],'num_predict':maximum,'num_thread':4,'use_mmap':True,'temperature':.65,'repeat_penalty':1.1}},timeout=480) as response:
                 if response.status!=200: raise ValueError('Modello chat locale non disponibile.')
                 done=False
                 async for line in response.content:
@@ -257,7 +240,7 @@ class Core:
                         self.tokens('chat',part.get('prompt_eval_count'),part.get('eval_count'));recorded=True;done=True;final_usage=part
                 if not done or not self.partial.strip(): raise ValueError('Risposta interrotta prima del completamento.')
             duration=final_usage.get('eval_duration',0)/1e9
-            self.event('activity','latency',json.dumps({'model':model,'profile':self.config['profile'],'first_token_ms':round((first_token-started)*1000) if first_token else None,'total_ms':round((time.monotonic()-started)*1000),'tokens_per_second':round(final_usage.get('eval_count',0)/duration,2) if duration else None,'mmap':True}))
+            self.event('activity','latency',json.dumps({'model':model,'profile':self.config['profile'],'first_token_ms':round((first_token-started)*1000) if first_token else None,'total_ms':round((time.monotonic()-started)*1000),'tokens_per_second':round(final_usage.get('eval_count',0)/duration,2) if duration else None,'mmap':True,'prompt_tokens':final_usage.get('prompt_eval_count'),'output_tokens':final_usage.get('eval_count'),'load_ms':round(final_usage.get('load_duration',0)/1e6),'prompt_ms':round(final_usage.get('prompt_eval_duration',0)/1e6),'output_limit_reached':final_usage.get('done_reason')=='length',**budget}))
             blocks=re.findall(r'```(?:python|py)\s*\n(.*?)```',self.partial,re.S)
             for code in blocks[:1]:
                 if len(code)>6000 or not re.search(r'\b(print|assert)\s*\(',code) or not self.learning.snapshot()['sandbox_available']: continue
@@ -572,6 +555,8 @@ class Core:
             self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
             log.warning('Ciclo core fallito (%s)',type(exc).__name__)
         finally:
+            if mode in ('chat','personal_chat'):
+                self.foreground_until = time.time()+120
             self.event('activity','error' if self.error else 'finished',mode+(': '+self.error if self.error else ''))
             self.running = False
             self.mode = None
@@ -582,6 +567,7 @@ class Core:
         try:
             while True:
                 await asyncio.sleep(15)
+                if time.time()<self.foreground_until: continue
                 if self.config['enabled'] and self.store.setting('bot_paused')!='1' and self.training.due() and not (self.training.task and not self.training.task.done()):
                     self.training.start()
                 if self.training.task and not self.training.task.done(): continue
@@ -616,7 +602,7 @@ class Core:
         legacy_lifetime = self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM token_usage')[0]['n']
         return {'name':'ALBA-CORE','mood':self.mood(),'emotions':self.emotions,'config':self.config,
                 'running':self.running,'mode':self.mode,'partial':self.partial,'learning':self.learning.snapshot(),'training':self.training.snapshot(),'benchmarks':self.inference.snapshot(),'recommended':self.inference.recommended(),'ssd_runtime':self.ssd.snapshot(),
-                'error':self.error,'resources':self.resources(),'connectors':connectors,'test_lab':self.test_lab.snapshot(),
+                'error':self.error,'generation':self.last_generation,'resources':self.resources(),'connectors':connectors,'test_lab':self.test_lab.snapshot(),
                 'tokens':totals,'lifetime_tokens':self.store.rows('SELECT coalesce(sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)),0) n FROM core_tokens')[0]['n']+legacy_lifetime,
                 'history':self.store.rows("SELECT strftime('%Y-%m-%d',created,'unixepoch') day,sum(coalesce(input_tokens,0)+coalesce(output_tokens,0)) total FROM (SELECT created,input_tokens,output_tokens FROM core_tokens UNION ALL SELECT timestamp created,input_tokens,output_tokens FROM token_usage) WHERE created>=? GROUP BY day ORDER BY day DESC LIMIT 30",(max(since,time.time()-30*86400),)),
                 'cycles':self.store.rows('SELECT * FROM core_cycles ORDER BY id DESC LIMIT 20'),

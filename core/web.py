@@ -32,7 +32,10 @@ def setup_core(app, service):
 
     async def models(request):
         admin(request)
-        return web.json_response({'models':await core.inference.models()})
+        embedding=core.config['embedding_model'].removesuffix(':latest')
+        return web.json_response({'models':[m for m in await core.inference.models()
+            if m['name'].removesuffix(':latest')!=embedding and
+            ('embedding' not in m.get('capabilities',[]) or 'completion' in m.get('capabilities',[]))]})
 
     async def ssd_plan(request):
         admin(request)
@@ -78,6 +81,7 @@ def setup_core(app, service):
         name=request.match_info['name']
         if name not in ('SSD_RUNTIME.md','SSD_RUNTIME_RESULTS.md','SSD_RUNTIME_RESULTS.json','TEST_LAB.md','TESTING_REPORTS.md',
                         'TEST_LAB_RESULTS.md','TEST_LAB_RESULTS.json','test-lab-comparison.png','test-lab-comparison.svg',
+                        'ADAPTIVE_RUNTIME.md','ADAPTIVE_RESULTS.md','ADAPTIVE_RESULTS.json','adaptive-coding.png','adaptive-coding.svg','adaptive-long-wait.png','adaptive-long-wait.svg',
                         '7b-decode.png','7b-decode.svg','checkpoint.png','checkpoint.svg','chat-latency.png','chat-latency.svg','14b-decode.png','14b-decode.svg'):
             raise web.HTTPNotFound()
         path=service.settings.root/'docs'/('ssd-results/'+name if name.endswith(('.png','.svg')) else name)
@@ -119,6 +123,7 @@ def setup_core(app, service):
             rows=core.store.rows("SELECT * FROM core_training WHERE id=? AND status='ready'",(ident,))
             if not rows or not (core.training.root/'runs'/str(ident)/'adapter').is_dir():raise ValueError('Checkpoint non disponibile.')
             if core.training.task and not core.training.task.done():raise ValueError('Ferma prima il training.')
+            core.config['personal_previous_adapter']=core.config['personal_adapter']
             core.config['personal_model']=rows[0]['model'];core.config['personal_adapter']=str(ident);core.save()
             core.event('training','rollback','Ripristinata versione '+str(ident))
         elif name=='stop':

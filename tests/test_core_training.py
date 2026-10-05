@@ -68,7 +68,7 @@ class SelfLearningTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.core.error,'')
         self.assertFalse(any(url.endswith('/api/embed') for url,body in self.model.calls))
         payload=next(body for url,body in self.model.calls if url.endswith('/api/chat'))
-        self.assertEqual(payload['model'],'qwen2.5:1.5b');self.assertLessEqual(payload['options']['num_ctx'],1536)
+        self.assertEqual(payload['model'],'qwen2.5:1.5b');self.assertLessEqual(payload['options']['num_ctx'],2048)
         self.assertTrue(payload['options']['use_mmap'])
         self.assertTrue(self.store.rows("SELECT * FROM core_events WHERE role='latency'"))
 
@@ -91,3 +91,28 @@ class SelfLearningTests(unittest.IsolatedAsyncioTestCase):
         self.core.learning.study=AsyncMock();value=output();value.update(action='study',wake_minutes=1)
         before=time.time();await self.core.accept(value,'reflection')
         self.core.learning.study.assert_awaited_once();self.assertAlmostEqual(self.core.config['next_reflection']-before,60,delta=2)
+
+class RetentionTests(unittest.IsolatedAsyncioTestCase):
+    asyncSetUp=test_core.CoreTests.asyncSetUp
+    asyncTearDown=test_core.CoreTests.asyncTearDown
+    async def test_only_active_and_previous_verified_adapter_survive(self):
+        from pathlib import Path
+        import tempfile
+        root=self.core.training.root
+        for ident,status in ((1,'ready'),(2,'ready'),(3,'ready'),(4,'rejected')):
+            name='notte-personal:20261004-'+str(ident)
+            self.store.execute('INSERT INTO core_training(id,day,started,status,model) VALUES(?,?,?,?,?)',(ident,'2026-10-04',1,status,name))
+            adapter=root/'runs'/str(ident)/'adapter';adapter.mkdir(parents=True);(adapter/'weights').write_text('data')
+        self.core.config['personal_adapter']='3';self.core.config['personal_model']='notte-personal:20261004-3'
+        self.core.learning.bounded_process=AsyncMock(return_value=(0,''))
+        await self.core.training.prune_versions()
+        self.assertTrue((root/'runs/3/adapter/weights').exists());self.assertTrue((root/'runs/2/adapter/weights').exists())
+        self.assertFalse((root/'runs/1/adapter').exists());self.assertFalse((root/'runs/4/adapter').exists())
+        self.assertEqual(self.core.config['personal_previous_adapter'],'2')
+        self.assertEqual(len(self.store.rows('SELECT id FROM core_training')),4)
+    async def test_failed_model_deletion_preserves_adapter_and_status(self):
+        self.store.execute('INSERT INTO core_training(id,day,started,status,model) VALUES(?,?,?,?,?)',(1,'x',1,'rejected','notte-personal:20261004-1'))
+        adapter=self.core.training.root/'runs/1/adapter';adapter.mkdir(parents=True)
+        self.core.learning.bounded_process=AsyncMock(return_value=(1,'busy'))
+        await self.core.training.prune_versions();self.assertTrue(adapter.exists())
+        self.assertEqual(self.store.rows('SELECT status FROM core_training')[0]['status'],'rejected')

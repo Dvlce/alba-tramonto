@@ -1,7 +1,7 @@
 """Same-GGUF CPU runtime: bounded mmap, native kernels and verified speculation.
 
 This is a llama.cpp integration, not a universal Colibri implementation. Dense
-weights are never skipped. Policies never requantize weights or the f16 KV.
+weights are never skipped. Weights are unchanged. The optional compact policy quantizes only KV to q8_0.
 """
 import asyncio
 import json
@@ -14,7 +14,7 @@ from aiohttp import ClientError
 from .gguf_plan import GIB, inspect_gguf, plan
 from .prepare_conversion import LLAMA_REVISION
 
-POLICIES=('native','mapped','speculative')
+POLICIES=('native','mapped','speculative','compact')
 
 
 def memory():
@@ -27,10 +27,10 @@ def command(binary,model,policy,context,key,port=8092,draft=None,slots=None):
     args=[str(binary),'--model',str(model),'--host','127.0.0.1','--port',str(port),
           '--api-key-file',str(key),'--threads','4','--threads-batch','4','--poll','0',
           '--ctx-size',str(context),'--parallel','1','--batch-size','128','--ubatch-size','128',
-          '--load-mode','mmap','--fit','off','--n-gpu-layers','0','--cache-type-k','f16','--cache-type-v','f16',
+          '--load-mode','mmap','--fit','off','--n-gpu-layers','0','--cache-type-k','q8_0' if policy=='compact' else 'f16','--cache-type-v','q8_0' if policy=='compact' else 'f16',
           '--cache-ram','0','--no-context-shift','--no-warmup','--jinja','--metrics',
           '--flash-attn','on']
-    if policy in ('mapped','speculative'):args+=['--no-repack']
+    if policy in ('mapped','speculative','compact'):args+=['--no-repack']
     if slots:args+=['--slots','--slot-save-path',str(slots)+'/' ]
     if policy=='speculative':
         if not draft:raise ValueError('Modello draft non preparato.')
@@ -43,7 +43,7 @@ class SSDRuntime:
     def __init__(self,core):
         self.core=core;self.root=core.settings.data/'core-inference'
         self.binary=self.root/'build/bin/llama-server';self.process=None;self.watch=None
-        self.peak={};self.failure='';self.key='';self.info_cache={}
+        self.peak={};self.failure='';self.key='';self.info_cache={};self.policy=''
         self.cache_dir=self.root/'kv-cache'
 
     def catalog(self):
@@ -66,7 +66,7 @@ class SSDRuntime:
     def snapshot(self):
         return {'ready':self.binary.is_file(),'revision':LLAMA_REVISION,'models':list(self.catalog()),
                 'running':bool(self.process and self.process.returncode is None),'peak':self.peak,
-                'failure':self.failure,'policies':list(POLICIES),'weights_changed':False,'kv_cache':'f16'}
+                'failure':self.failure,'policies':list(POLICIES),'weights_changed':False,'kv_cache':'q8_0' if self.policy=='compact' and self.process and self.process.returncode is None else 'f16','experimental_kv_policy':'compact:q8_0'}
 
     def planning(self,name,context=1024):
         path=self.model_path(name);stat=path.stat();key=(str(path),stat.st_size,stat.st_mtime_ns)
@@ -111,7 +111,7 @@ class SSDRuntime:
             await asyncio.sleep(.2)
 
     async def start(self,name,policy='native',context=1024,draft_name='qwen2.5-coder:0.5b'):
-        self.peak={};self.failure=''
+        self.peak={};self.failure='';self.policy=policy
         if not self.binary.is_file():raise ValueError('Runtime CPU SSD non preparato.')
         if self.process and self.process.returncode is None:raise ValueError('Runtime SSD già in corso.')
         target=self.model_path(name)
