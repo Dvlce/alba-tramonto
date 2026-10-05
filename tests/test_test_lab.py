@@ -167,6 +167,15 @@ class LabWebTests(unittest.IsolatedAsyncioTestCase):
             self.headers[uid] = {'Cookie': 'session='+cookie, 'X-CSRF-Token': csrf}
     async def asyncTearDown(self): await self.client.close(); self.store.close(); self.tmp.cleanup()
 
+    async def test_embedding_dependency_is_hidden_even_without_tag_capabilities(self):
+        self.service.core.inference.models=AsyncMock(return_value=[
+            {'name':'notte:latest'},{'name':self.service.core.config['embedding_model']+':latest'},
+            {'name':'other-embedding:latest','capabilities':['embedding']},
+            {'name':'notte-coding:latest'}])
+        response=await self.client.get('/api/notte/models',headers=self.headers[1])
+        self.assertEqual([m['name'] for m in (await response.json())['models']],
+                         ['notte:latest','notte-coding:latest'])
+
     async def test_public_site_and_data_are_available_but_private_runs_are_admin_only(self):
         for path in ('/optimization', '/optimization/data', '/optimization/assets/optimization.js'):
             self.assertEqual((await self.client.get(path)).status, 200)

@@ -32,7 +32,10 @@ def setup_core(app, service):
 
     async def models(request):
         admin(request)
-        return web.json_response({'models':[m for m in await core.inference.models() if 'embedding' not in m.get('capabilities',[]) or 'completion' in m.get('capabilities',[])]})
+        embedding=core.config['embedding_model'].removesuffix(':latest')
+        return web.json_response({'models':[m for m in await core.inference.models()
+            if m['name'].removesuffix(':latest')!=embedding and
+            ('embedding' not in m.get('capabilities',[]) or 'completion' in m.get('capabilities',[]))]})
 
     async def ssd_plan(request):
         admin(request)

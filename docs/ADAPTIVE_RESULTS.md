@@ -81,14 +81,16 @@ directions are documented separately in [runtime research](ADAPTIVE_RUNTIME.md).
 
 ## Engineering validation
 
-* Backend: 378 tests pass on Pi/Python 3.13, zero skips; Mac/Python 3.9 also
-  passes with five platform-dependent skips. Fixture outputs are not hardware measurements.
+* Backend: the 378-test campaign suite passes on Pi/Python 3.13, zero skips; Mac/Python 3.9 also
+  passes with five platform-dependent skips. A final regression test additionally
+  covers hiding embedding dependencies when Ollama tags omit capabilities
+  (379 tests in the final suite). Fixture outputs are not hardware measurements.
 * Browser: Test Lab and Notte checks pass for private/public separation,
   standard-first chosen-policy submission, four charts, report exports,
   fixed input height, preserved drafts, IT/EN and mobile layout. Failed
   runtimes are N/A rather than fake fast bars.
 * Android: native Canvas and Views, no WebView. Compilation and instrumentation
-  are required CI checks; the APK uses the established production certificate.
+  pass with 61 native UI checks in GitHub Actions; the APK uses the established production certificate.
 * Resource ownership: one inference lock; background study/reflection/training
   pauses during this campaign and its four flags are restored in `finally`.
   After chat completion, background work also observes a 120-second grace.
