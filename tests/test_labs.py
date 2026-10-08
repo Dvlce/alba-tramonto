@@ -35,7 +35,7 @@ class LabValidation(unittest.TestCase):
     def test_06_analyses(self):
         for name in ('op','tran','ac','dc'):self.assertEqual(build_netlist(divider(),{'analysis':name})['options']['analysis'],name)
     def test_07_limit_samples_and_time(self):
-        for options in [{'analysis':'tran','stop':101},{'analysis':'tran','samples':2001},{'analysis':'dc','dc_start':5,'dc_end':0},{'analysis':'ac','start':100,'end':1},{'analysis':['op']},{'netlist':'code'}]:
+        for options in [{'analysis':'tran','stop':101},{'analysis':'tran','samples':10001},{'analysis':'dc','dc_start':5,'dc_end':0},{'analysis':'ac','start':100,'end':1},{'analysis':['op']},{'netlist':'code'}]:
             with self.assertRaises(ValueError):simulation_settings(options)
     def test_08_every_device_can_be_saved(self):
         for kind in PORTS:

@@ -155,3 +155,246 @@
  .appearance-controls,.selection-marquee,.editor-desk::before,.editor-desk::after{display:none!important}
  :root[data-style] :is(.panel,.editor-desk,.object-inspector){border:0!important;border-radius:0!important;box-shadow:none!important;background:white!important}
 }
+
+/* Visual palettes: symbols remain visible alongside searchable Italian names. */
+#pane-circuit .component-palette,.visual-tool-palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:14px 0;max-height:340px;overflow:auto;padding:3px}
+#pane-circuit .component-palette button,.visual-tool-palette button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:76px;padding:9px 6px;border:1px solid var(--line);border-radius:10px;background:var(--surface-alt);color:var(--text);font-size:11px;text-align:center}
+#pane-circuit .component-palette button[hidden]{display:none}
+#pane-circuit .component-palette button.active,.visual-tool-palette button[aria-pressed=true]{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.component-symbol{width:64px;height:44px;flex:none;overflow:visible}
+.visual-tool-palette .ui-icon{width:25px;height:25px}
+.palette-search label{flex:1;min-width:170px}.palette-search input{width:100%}
+#circuitSvg .circuit-terminal:hover{fill:#d38651;stroke:#b0693d;stroke-width:3}
+#wireColor,#penColor{width:38px;height:32px;border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:3px;cursor:pointer}
+.drawing-examples{border-top:1px solid var(--line);margin-top:18px;padding-top:6px}.drawing-examples h4{font-size:15px;margin:12px 0}
+.fourier-settings{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.fourier-settings label{display:flex;gap:6px;align-items:center}.fourier-settings output{min-width:24px;font-variant-numeric:tabular-nums}
+[data-font=book] .rich-editor{font-family:'Tramonto Book',Palatino,'Palatino Linotype','Book Antiqua',serif}
+[data-font=classic] .rich-editor{font-family:'Tramonto Classic','Times New Roman',Times,serif}
+[data-font=humanist] .rich-editor{font-family:'Tramonto Humanist','Trebuchet MS',Verdana,sans-serif}
+[data-font=geometric] .rich-editor{font-family:'Tramonto Geometric','Century Gothic',Futura,'Avenir Next',sans-serif}
+[data-font=slab] .rich-editor{font-family:'Tramonto Slab',Rockwell,'Courier New',monospace}
+[data-font=hand] .rich-editor{font-family:'Tramonto Hand','Comic Sans MS',cursive}
+[data-font=script] .rich-editor{font-family:'Tramonto Script','Apple Chancery',cursive}
+[data-font=typewriter] .rich-editor{font-family:'Tramonto Typewriter','Courier New',Courier,monospace}
+@media(max-width:760px){#pane-circuit .component-palette,.visual-tool-palette{grid-template-columns:repeat(auto-fill,minmax(86px,1fr));max-height:300px}#pane-circuit .component-palette button,.visual-tool-palette button{font-size:10px}.tool-actions{gap:8px}}
+
+@font-face {
+  font-family: 'Tramonto Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/script-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/script-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Hand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/hand-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Hand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/hand-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Book';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/book-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Book';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/book-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Geometric';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/geometric-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Geometric';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/geometric-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Classic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/classic-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Classic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/classic-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Slab';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/slab-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Slab';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/slab-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Humanist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/humanist-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Humanist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/humanist-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Tramonto Typewriter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/typewriter-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Tramonto Typewriter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tramonto-assets/vendor/fonts/typewriter-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+.math-text-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:10px 0}
+.math-text-toolbar button{font-size:11px;padding:8px 10px}.math-text-toolbar .tool-note{margin:0 4px}
+.text-math-symbols{border:1px solid var(--line);border-radius:10px;background:var(--surface-alt);padding:10px 12px;margin:10px 0 14px}
+.text-math-symbols summary{font-size:12px;color:var(--accent);cursor:pointer;min-height:24px}
+.text-math-symbols>label:first-of-type{display:flex;align-items:center;gap:8px;margin:10px 0}.text-math-symbols input[type=search]{flex:1;min-width:100px}
+.text-symbol-group h4{margin:12px 0 6px;font-size:12px;color:var(--muted)}
+.text-symbol-grid{display:flex;flex-wrap:wrap;gap:5px}.text-symbol-grid button{min-width:38px;min-height:38px;padding:6px 8px;font-family:Georgia,serif;font-size:18px}
+.text-symbol-grid button[hidden],.text-symbol-group[hidden]{display:none}
+.a4-sheet .rich-editor sup,.a4-sheet .rich-editor sub{font-size:.75em;line-height:0;position:relative;vertical-align:baseline}
+.a4-sheet .rich-editor sup{top:-.55em}.a4-sheet .rich-editor sub{top:.3em}
+@media print{.math-text-toolbar,.text-math-symbols{display:none!important}}
+
+.circuit-workbench{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);margin:12px 0}
+.circuit-viewport-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px;background:var(--surface-alt);border-bottom:1px solid var(--line)}
+.circuit-viewport-toolbar button{font-size:10px;padding:7px 9px;display:inline-flex;align-items:center;gap:5px}.circuit-viewport-toolbar output{font-size:11px;min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
+#circuitCanvasSize{font-size:10px;color:var(--muted);margin-left:auto}
+.circuit-workbench #circuitSvg{border:0;border-radius:0;display:block;width:100%;height:auto;aspect-ratio:25/16}
+.circuit-workbench>.tool-note{padding:0 12px;margin:8px 0}.circuit-workbench.panning #circuitSvg{cursor:grab}.circuit-workbench.panning #circuitSvg:active{cursor:grabbing}
+.circuit-workbench:fullscreen,.circuit-workbench.expanded{width:100%;height:100%;display:flex;flex-direction:column;border-radius:0;background:var(--surface)}
+.circuit-workbench.expanded{position:fixed;inset:0;z-index:2000;margin:0}
+.circuit-workbench:fullscreen #circuitSvg,.circuit-workbench.expanded #circuitSvg{flex:1;min-height:0;height:0;aspect-ratio:auto}
+#pane-circuit .component-palette button{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:760px){.circuit-viewport-toolbar button span{display:none}.circuit-viewport-toolbar button{min-width:36px;min-height:36px;justify-content:center}}
+/* Classic laboratory instrument, inspired by the user's XSC1 references. */
+.oscilloscope-panel{--scope-paper:#ecece8;--scope-field:#fafaf7;--scope-line:#a9aaa2;--scope-ink:#242721;--scope-muted:#5d6258;--scope-a:#202620;--scope-b:#3159a4;container:scope / inline-size;border:1px solid #777b71;border-radius:3px;padding:0;background:var(--scope-paper);color:var(--scope-ink);margin:18px 0;box-shadow:0 1px 0 #fff inset,0 3px 12px #0000000c;font-family:Arial,sans-serif}
+.scope-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid #92978b;background:linear-gradient(#ecece9,#d6d8d0);box-shadow:0 1px 0 #fff inset}
+.scope-title{display:flex;align-items:center;gap:9px}.scope-glyph{width:34px;height:30px;flex:none}.scope-heading h3{font-family:Arial,sans-serif;font-size:16px;font-weight:600;letter-spacing:.01em;margin:0 0 2px;color:var(--scope-ink)}.scope-heading .eyebrow{font-size:8px;letter-spacing:.13em;color:var(--scope-muted)}.scope-heading>label{display:flex;align-items:center;gap:7px}.scope-heading select{max-width:180px}
+.scope-instrument-body{padding:10px 12px 12px}
+.oscilloscope-panel label{font-size:11px;color:var(--scope-muted)}
+#oscilloscopePanel input:not([type=checkbox]):not([type=range]),#oscilloscopePanel select{font-family:Arial,sans-serif;font-size:11px;color:var(--scope-ink);background:var(--scope-field);border:1px solid var(--scope-line);border-radius:2px;padding:5px 6px;min-height:28px;box-shadow:0 1px 2px #00000008 inset}
+#oscilloscopePanel input[type=checkbox]{padding:0;border:0;border-radius:0;min-height:0;width:13px;height:13px;margin:0;accent-color:var(--scope-a)}.scope-channel-b input[type=checkbox]{accent-color:var(--scope-b)}
+.oscilloscope-panel button{font-family:Arial,sans-serif;font-size:11px;font-weight:400;color:var(--scope-ink);border:1px solid #a3a69c;border-radius:2px;background:linear-gradient(#fff,#e3e4dd);box-shadow:0 1px 0 #fff inset;padding:6px 9px;min-height:29px}.oscilloscope-panel button:hover:not(:disabled){color:#111;background:#f7f8f2;border-color:#656d5a}.oscilloscope-panel button:disabled{opacity:.45}.oscilloscope-panel button:focus-visible,.oscilloscope-panel input:focus-visible,.oscilloscope-panel select:focus-visible{outline:2px solid var(--scope-b);outline-offset:2px}
+#scopePlay{border-color:#7c886d;background:linear-gradient(#eef4e7,#d5dfc9);min-width:90px}#scopePlay[aria-pressed=true]{background:#c6d6b7;box-shadow:0 1px 2px #0002 inset}
+#scopeStatus{font-size:11px;line-height:1.5;color:var(--scope-muted);margin:0 0 9px;display:flex;align-items:center;gap:7px}#scopeStatus::before{content:'';width:6px;height:6px;flex:none;border-radius:50%;background:#92958d;border:1px solid #74796b}.oscilloscope-panel[data-state=ready] #scopeStatus::before{background:#69884f}.oscilloscope-panel[data-state=error] #scopeStatus::before{background:#bd6657}.oscilloscope-panel[data-state=acquiring] #scopeStatus::before{background:#c3a755;animation:scope-acquire 1s ease-in-out infinite}
+@keyframes scope-acquire{50%{opacity:.3}}
+.scope-display{background:#c1c7b9;border:1px solid #777e6f;border-radius:1px;overflow:hidden;padding:5px;box-shadow:0 1px 0 #fff inset,0 1px 2px #0002 inset}
+#scopeCanvas{width:100%;height:auto;aspect-ratio:auto;display:block;background:#edf1e9;border:0;box-shadow:0 0 0 1px #868e7b;touch-action:none;cursor:crosshair;outline-offset:-3px}
+.scope-transport{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:9px 0 7px}.scope-transport label{display:flex;align-items:center;gap:5px;margin-left:3px}.scope-transport output{margin-left:auto;font:10px ui-monospace,monospace;color:var(--scope-muted);font-variant-numeric:tabular-nums}
+.scope-timeline{display:flex;align-items:center;gap:9px;margin-bottom:9px}.oscilloscope-panel .scope-timeline input{flex:1;min-width:0;width:100%;min-height:16px;padding:0;border:0;box-shadow:none;accent-color:#707c61;background:none}
+.scope-measurements{overflow-x:auto;background:var(--scope-field);border:1px solid var(--scope-line)}.scope-measurements table{width:100%;border-collapse:collapse;table-layout:auto;font-variant-numeric:tabular-nums;margin:0;color:var(--scope-ink)}.scope-measurements caption{text-align:left;font-size:10px;color:var(--scope-muted);padding:5px 7px;background:#e1e4db;border-bottom:1px solid var(--scope-line)}.scope-measurements th,.scope-measurements td{border:1px solid #c5c8bc;padding:5px 7px;text-align:right;white-space:nowrap;font-size:11px;background:none;color:var(--scope-ink)}.scope-measurements th:first-child{text-align:left;font-weight:400}.scope-measurements thead th{font-weight:400;background:#edf0e6}.scope-measurements td{font-family:ui-monospace,monospace}.scope-measurements tr:nth-child(2)>th{color:var(--scope-a)}.scope-measurements tr:nth-child(3)>th{color:var(--scope-b)}
+.scope-control-rack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:9px;margin-top:11px}.scope-control-group{border:1px solid var(--scope-line);border-radius:2px;min-width:0;margin:0;padding:9px 10px;display:flex;flex-direction:column;gap:8px;background:#e6e8e0}.scope-control-group legend{font-size:11px;color:var(--scope-ink);padding:0 5px;font-weight:600;letter-spacing:.02em}.scope-control-group label{display:flex;align-items:center;justify-content:space-between;gap:8px}.scope-control-group select,.scope-control-group input[type=number]{width:110px;max-width:60%;min-width:0}.scope-time-buttons{display:grid;grid-template-columns:1fr 1fr;gap:4px}.scope-time-buttons button{padding:4px;font-size:10px}
+.scope-channel-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;margin:0}.scope-channel-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--scope-a);margin-right:5px}.scope-channel-b .scope-channel-dot{background:var(--scope-b)}.scope-channel .scope-channel-visible{justify-content:flex-start;gap:6px}.scope-input-label{font-size:9px;color:var(--scope-muted);letter-spacing:.02em}.scope-channel output{font:9px ui-monospace,monospace;color:var(--scope-muted);overflow-wrap:anywhere}
+.scope-cursor-controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:10px 0 0}.scope-cursor-controls label{display:flex;align-items:center;gap:5px}.scope-cursor-controls input{width:125px;max-width:125px}.scope-cursor-controls button{margin-left:auto}#scopePrecision{font-size:10px;line-height:1.5;color:var(--scope-muted);margin:9px 0 0}
+.scope-floating{position:fixed;z-index:3000;inset:5vh 5vw auto;max-height:90vh;width:min(900px,90vw);min-width:min(320px,96vw);margin:0 auto;overflow:auto;box-shadow:0 12px 42px #0004;resize:both}.circuit-workbench>.scope-floating{position:absolute;width:auto;inset:4% 4% auto;max-height:92%;margin:0}#scopeClose{margin-left:auto;white-space:nowrap}.scope-floating .scope-heading{position:sticky;top:0;z-index:2}
+@container scope (max-width:620px){.scope-control-rack{grid-template-columns:1fr}.scope-scales{display:grid;grid-template-columns:1fr 1fr;align-items:center}.scope-scales>label{grid-column:1/-1}.scope-time-buttons{grid-column:1}.scope-transport output{margin-left:0;flex-basis:100%}.scope-cursor-controls button{margin-left:0}.scope-measurements th,.scope-measurements td{font-size:10px;padding:5px}.scope-heading>label{flex:1}.scope-heading select{max-width:100%;min-width:0;flex:1}.scope-cursor-controls input{width:100px;max-width:100px}}
+@container scope (max-width:380px){.scope-channel-controls{grid-template-columns:1fr}.scope-control-group label{justify-content:flex-start}.scope-control-group select,.scope-control-group input[type=number]{margin-left:auto}.scope-instrument-body{padding:8px}.scope-heading{padding:8px}.scope-cursor-controls{gap:6px}.scope-cursor-controls label:first-child{flex-basis:100%}}
+@media(max-width:760px){.scope-floating{inset:2vh 2vw auto;width:96vw;max-height:96vh;resize:none}.circuit-workbench>.scope-floating{inset:2% 2% auto;max-height:96%}}
+@media(prefers-reduced-motion:reduce){.oscilloscope-panel[data-state=acquiring] #scopeStatus::before{animation:none}}
+@media print{.circuit-viewport-toolbar,.circuit-workbench>.tool-note,.scope-transport,.scope-timeline,.scope-control-rack,.scope-cursor-controls{display:none!important}.oscilloscope-panel{break-inside:avoid}}
+
+.tool-deck{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start}.tool-stage{min-width:0}
+.editor-deck{grid-template-columns:minmax(0,1fr) 250px}
+.tool-dock{position:sticky;top:16px;max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain;min-width:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tool-dock-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}.tool-dock-header strong{font-size:12px}.tool-dock-header button{display:none;font-size:14px;padding:6px 10px}
+.tool-dock-toggle{display:none!important;margin:0 0 10px auto}
+.tool-dock .math-text-toolbar{margin:0 0 14px}.tool-dock .math-text-toolbar .tool-note{flex-basis:100%}
+.tool-dock .text-math-symbols{margin:0 0 14px;border:0;padding:0;background:transparent}.tool-dock .text-math-symbols>label:first-of-type{display:grid}
+.tool-dock .text-symbol-grid{gap:4px}.tool-dock .text-symbol-grid button{min-width:34px;min-height:34px}
+#pane-circuit .tool-dock .component-palette,.tool-dock .visual-tool-palette{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible;margin:12px 0}
+.tool-dock .palette-search{display:grid;margin:0;gap:10px}.tool-dock .palette-search label{display:grid;gap:5px}.tool-dock .palette-search input,.tool-dock .palette-search select{width:100%;min-width:0}
+.tool-dock .tool-actions,.tool-dock .component-properties,.tool-dock #sourceParams,.tool-dock #summerParams{display:flex;flex-direction:column;align-items:stretch;gap:10px}.tool-dock [hidden]{display:none!important}
+.tool-dock label{font-size:11px}.tool-dock input:not([type=checkbox]):not([type=color]),.tool-dock select,.tool-dock textarea{width:100%;max-width:100%;min-width:0}.tool-dock input[type=color]{width:100%;height:34px}
+.tool-dock .formula-snippets{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tool-dock .formula-snippets button{white-space:normal;font-size:11px}
+.tool-dock #networkPalette{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tool-dock #networkPalette button{display:flex;flex-direction:column;gap:4px;align-items:center;white-space:normal;font-size:11px}
+.tool-stage>.secondary-button:last-child{margin-top:16px}
+@media(max-width:1200px){.editor-deck,.tool-deck{grid-template-columns:minmax(0,1fr)}.tool-dock-toggle{display:flex!important;align-items:center;gap:6px}.tool-dock{display:none;position:fixed;inset:90px 12px 12px auto;width:min(300px,calc(100vw - 24px));max-height:none;z-index:1500;box-shadow:0 12px 50px #0004}.tool-dock.dock-open{display:block}.tool-dock-header button{display:block}.object-inspector.tool-dock{order:initial}.editor-desk{padding:12px}}
+@media print{.tool-dock,.tool-dock-toggle{display:none!important}.tool-deck{display:block}}
+.wire-color-presets{display:grid;grid-template-columns:1fr 1fr;gap:5px}.wire-color-presets button{font-size:10px;display:flex;align-items:center;gap:6px;padding:7px}.wire-color-presets button::before{content:'';width:17px;height:2px;background:var(--wire-swatch);flex-shrink:0}
+#circuitSvg[data-schematic-style=technical] .schematic-label{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+#circuitSvg .circuit-terminal:hover+.terminal-dot{stroke-width:2}
+
+@media(max-width:760px){.circuit-viewport-toolbar #circuitFit span{display:inline}}
+
+/* Import review stays in the existing right dock. */
+.circuit-import-panel{border-bottom:1px solid var(--line);padding:0 0 16px;margin:0 0 16px;min-width:0}
+.circuit-import-panel h4{margin:0 0 10px}.circuit-import-panel .tool-note{margin:10px 0;font-size:12px}
+#circuitImportStatus,#circuitImportSummary,#circuitImportWarnings{overflow-wrap:anywhere;font-size:12px}
+#circuitImportWarnings{padding-left:18px;line-height:1.5}#circuitImportWarnings li+li{margin-top:8px}
+#circuitImportPreview{padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px}
+
+/* Editable math stays above the source and the printable KaTeX preview. */
+#formulaVisual{display:block;width:100%;min-height:90px;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font-size:24px;overflow:auto;--caret-color:var(--accent);--selection-background-color:var(--surface-alt)}
+#formulaVisual:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.bracket-tools input{width:80px}.formula-card .formula-insert{margin-right:8px}.formula-card>div{cursor:pointer}
+#richEditor img[data-latex]{cursor:pointer}
+@media print{#formulaVisual,.bracket-tools,#formulaEditStatus,#cancelFormulaEdit{display:none!important}}
+[data-font=custom] .rich-editor{font-family:TramontoPersonal,Georgia,serif}
+.drawing-text-tools{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:14px 0;padding:15px;border:1px solid var(--line);border-radius:10px;background:var(--surface-alt)}
+.drawing-text-tools label{display:grid;gap:5px}.drawing-text-tools label:first-child{flex:1;min-width:180px}.drawing-text-tools textarea{min-height:65px}.drawing-text-tools p{flex-basis:100%;font-size:11px;color:var(--muted);margin:0}
+.font-workshop{margin:24px 0;border:1px solid var(--line);border-radius:12px;padding:16px}.font-workshop summary{cursor:pointer;font:22px Georgia,serif}.font-workshop-body{display:grid;gap:14px;margin-top:14px}.font-workshop p{font-size:12px;line-height:1.7}.font-workshop label{display:flex;align-items:center;gap:12px}.custom-font-alphabet{display:flex;gap:4px;flex-wrap:wrap}.custom-font-alphabet button{min-width:34px;min-height:34px;padding:5px}.custom-font-alphabet button[aria-pressed=true]{background:var(--accent);color:var(--accent-text)}.custom-font-alphabet .has-glyph{border-bottom:3px solid var(--accent)}
+#customGlyphCanvas{width:300px;height:auto;max-width:100%;touch-action:none;border:1px solid var(--line);border-radius:10px;cursor:crosshair}#customFontPreview{font-size:28px;min-height:70px;width:100%}
+@media print{.drawing-text-tools,.font-workshop{display:none!important}}

@@ -21,9 +21,7 @@ def main():
             if len(row)!=len(metadata)+1 or any(not math.isfinite(v) for v in row): raise ValueError('Risultati non finiti; controlla i valori e i collegamenti.')
             values.append(row)
     if not values: raise ValueError('Nessun campione ottenuto.')
-    stride=max(1,math.ceil(len(values)/2000)); selected=values[::stride]
-    if selected[-1]!=values[-1]: selected.append(values[-1])
-    return {'x':[row[0] for row in selected],'series':[{**description,'values':[row[i+1] for row in selected]} for i,description in enumerate(metadata)],'total_samples':len(values),'display_samples':len(selected)}
+    return {'x':[row[0] for row in values],'series':[{**description,'values':[row[i+1] for row in values]} for i,description in enumerate(metadata)],'total_samples':len(values),'display_samples':len(values),'downsampled':False}
 
 if __name__=='__main__':
     try: response=main()
