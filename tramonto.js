@@ -65,7 +65,7 @@ async function openNote(id,skipSave=false){
     $('plotExpressions').value=doc.content.graph.expressions.join('\n');
     for(const [id,key]of [['xMin','x_min'],['xMax','x_max'],['yMin','y_min'],['yMax','y_max']])$(id).value=doc.content.graph[key];
     $('limitExpression').value=doc.content.limit.expression;$('limitPoint').value=doc.content.limit.point;$('limitDirection').value=doc.content.limit.direction;
-    resetFormula();renderFormulas();renderImages();redrawDrawing();renderCircuit();if(activePane==='math')plot(false);window.TramontoFont?.load();await loadNotes();window.TramontoLab?.openNote();
+    resetFormula();renderFormulas();renderImages();redrawDrawing();renderCircuit();if(activePane==='math')plot(false);window.TramontoFont?.load();window.TramontoStudy?.load();await loadNotes();window.TramontoLab?.openNote();
   }catch(failure){error(failure.message);}finally{if(sequence===openSequence){opening=false;$('noteEditor').inert=false;}}
 }
 async function newNote(){
@@ -123,8 +123,8 @@ function renderFormulas(){
 }
 const FUNCTIONS=new Set(['sin','cos','tan','asin','acos','atan','sqrt','abs','log','log10','exp','floor','ceil','sign','sinh','cosh','tanh','asinh','acosh','atanh','atan2','cbrt','log2','min','max','pow']);
 function expressionFunction(expression){
-  if(typeof expression!=='string'||expression.length>250)throw new Error('Funzione troppo lunga.');
-  const tree=math.parse(expression);let nodes=0;
+  if(typeof expression!=='string'||expression.length>4000)throw new Error('Funzione troppo lunga.');
+  expression=TramontoMath.normalize(expression);const tree=math.parse(expression);let nodes=0;
   tree.traverse(part=>{if(++nodes>100)throw new Error('Funzione troppo complessa.');
     if(!['OperatorNode','ConstantNode','SymbolNode','FunctionNode','ParenthesisNode'].includes(part.type))throw new Error('Usa solo numeri, x e funzioni matematiche.');
     if(part.type==='ConstantNode'&&(typeof part.value!=='number'||!Number.isFinite(part.value)||Math.abs(part.value)>1e12))throw new Error('Costante non valida.');
@@ -135,7 +135,7 @@ function expressionFunction(expression){
   const compiled=tree.compile();return x=>{try{const value=compiled.evaluate({x,pi:Math.PI,e:Math.E});return typeof value==='number'&&Number.isFinite(value)?value:NaN;}catch(_){return NaN;}};
 }
 function graphSettings(){
-  const expressions=$('plotExpressions').value.split('\n').map(value=>value.trim()).filter(Boolean);
+  const expressions=$('plotExpressions').value.split('\n').map(value=>value.trim()).filter(Boolean).map(TramontoMath.normalize);
   const value={expressions};for(const [id,key]of [['xMin','x_min'],['xMax','x_max'],['yMin','y_min'],['yMax','y_max']])value[key]=Number($(id).value);
   if(!expressions.length||expressions.length>3||Object.values(value).slice(1).some(number=>!Number.isFinite(number)||Math.abs(number)>10000)||value.x_min>=value.x_max||value.y_min>=value.y_max)throw new Error('Inserisci fino a tre funzioni e intervalli crescenti tra −10000 e 10000.');
   return value;
@@ -154,15 +154,17 @@ function plot(save=true){
     }
     if(settings.x_min<=0&&settings.x_max>=0)svg.appendChild(svgNode('path',{d:'M'+px(0)+' '+top+'V'+(height-bottom),stroke:'#87927f','stroke-width':1}));
     if(settings.y_min<=0&&settings.y_max>=0)svg.appendChild(svgNode('path',{d:'M'+left+' '+py(0)+'H'+(width-right),stroke:'#87927f','stroke-width':1}));
+    window.TramontoStudy?.drawArea(settings,functions,svg,px,py,left,top,pw,ph);
     const colors=['#47846b','#d68b59','#7c70aa'];
     functions.forEach((fn,index)=>{let path='',previous=null;
       for(let step=0;step<=600;step++){const x=settings.x_min+(settings.x_max-settings.x_min)*step/600,y=fn(x),current=py(y);if(!Number.isFinite(y)||Math.abs(current)>1e6){previous=null;continue;}const join=previous!==null&&Math.abs(current-previous)<ph*.7;path+=(join?' L':' M')+px(x).toFixed(2)+' '+current.toFixed(2);previous=current;}
       svg.appendChild(svgNode('path',{d:path,stroke:colors[index],fill:'none','stroke-width':2.2,'clip-path':'url(#plotClip)','data-curve':index}));
       svg.appendChild(svgNode('text',{x:left+index*240,y:15,fill:colors[index],'font-size':11,'font-family':'sans-serif'},settings.expressions[index]));
     });
+    if(!functions.some(fn=>Array.from({length:301},(_,i)=>fn(settings.x_min+(settings.x_max-settings.x_min)*i/300)).some(Number.isFinite)))throw Error('Nessun punto reale in questo intervallo. Controlla il dominio o cambia x minimo e x massimo.');
     $('graphMessage').textContent='Trigonometriche in radianti · i tratti interrotti indicano campioni non finiti o possibili discontinuità.';
-    if(save){doc.content.graph=settings;changed();}return true;
-  }catch(failure){$('graphMessage').textContent=failure.message;return false;}
+    window.TramontoStudy?.onPlot(settings,functions,svg,px,py);if(save){if(window.TramontoStudy)settings.study=window.TramontoStudy.options();doc.content.graph=settings;changed();}return true;
+  }catch(failure){window.TramontoStudy?.clear();$('graphMessage').textContent=failure.message;return false;}
 }
 $('plotGraph').addEventListener('click',()=>plot(true));
 function estimateLimit(){
@@ -183,7 +185,7 @@ function estimateLimit(){
 $('estimateLimit').addEventListener('click',estimateLimit);
 function download(blob,name){const url=URL.createObjectURL(blob),link=node('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 function exportSvg(id,name){const svg=$(id).cloneNode(true);svg.setAttribute('xmlns',NS);download(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}),name);}
-$('exportGraph').addEventListener('click',()=>{plot(false);exportSvg('plotSvg','grafico.svg');});
+$('exportGraph').addEventListener('click',()=>{if(!plot(false))return;exportSvg('plotSvg','grafico.svg');});
 
 const canvas=$('drawingCanvas'),ctx=canvas.getContext('2d');
 function drawStroke(line){

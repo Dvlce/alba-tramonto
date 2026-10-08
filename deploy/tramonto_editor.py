@@ -11,7 +11,7 @@ import tarfile
 import urllib.request
 from pathlib import Path
 
-BASE={'tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto.py','lab.py','spice_worker.py','vendor/manifest.json','tramonto-font.js','vendor/opentype.min.js','vendor/OPENTYPE_LICENSE'}
+BASE={'tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto.py','lab.py','spice_worker.py','vendor/manifest.json','tramonto-font.js','tramonto-math.js','tramonto-study.js','vendor/opentype.min.js','vendor/OPENTYPE_LICENSE'}
 SLUGS={'book','classic','geometric','hand','humanist','script','slab','typewriter'}
 FONT_FILES={f'vendor/fonts/{name}-{subset}.woff2' for name in SLUGS for subset in ('latin','latin-ext')}
 LICENSES={'vendor/fonts/'+name for name in ('Caveat-OFL.txt','Kalam-OFL.txt','Lora-OFL.txt','Montserrat-OFL.txt','PlayfairDisplay-OFL.txt','SourceSans3-OFL.txt','RobotoSlab-LICENSE.txt','SpecialElite-LICENSE.txt')}

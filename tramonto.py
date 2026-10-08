@@ -29,7 +29,7 @@ class RichText(HTMLParser):
             if layout in ('inline','left','right','center'): safe.append(('data-layout',layout))
             formula=attributes.get('data-latex',self.formula_sources.get(int(match[1])))
             if formula is not None: safe.append(('data-latex',text(formula,4000)))
-        if tag in ('p','div','td','th') and attributes.get('align') in ('left','center','right','justify'): safe.append(('align',attributes['align']))
+        if tag in ('p','div','td','th','h1','h2','h3','h4','li','blockquote','pre') and attributes.get('align') in ('left','center','right','justify'): safe.append(('align',attributes['align']))
         self.output.append('<'+tag+''.join(' '+k+'="'+html.escape(v,quote=True)+'"' for k,v in safe)+'>')
     def handle_endtag(self,tag):
         if tag in TAGS and tag not in ('br','hr','img'): self.output.append('</'+tag+'>')
@@ -66,6 +66,11 @@ def content_data(data):
     result['graph']={'expressions':[text(value,250,False) for value in graph['expressions']]}
     for key in ('x_min','x_max','y_min','y_max'): result['graph'][key]=number(graph.get(key))
     if graph['x_min']>=graph['x_max'] or graph['y_min']>=graph['y_max']: raise ValueError('Gli intervalli del grafico devono essere crescenti.')
+    if 'study' in graph:
+        study=graph['study']
+        if not isinstance(study,dict) or type(study.get('show_area')) is not bool or type(study.get('show_derivative')) is not bool: raise ValueError('Studio del grafico non valido.')
+        result['graph']['study']={'show_area':study['show_area'],'show_derivative':study['show_derivative'],'area_from':number(study.get('area_from')),'area_to':number(study.get('area_to'))}
+        if result['graph']['study']['area_from']>=result['graph']['study']['area_to']: raise ValueError('Intervallo dell’area non valido.')
     limit=data.get('limit',{'expression':'sin(x)/x','point':'0','direction':'both'})
     if not isinstance(limit,dict) or limit.get('direction') not in ('left','right','both'): raise ValueError('Limite non valido.')
     result['limit']={'expression':text(limit.get('expression'),250),'point':text(limit.get('point'),40),'direction':limit['direction']}
@@ -105,6 +110,24 @@ def content_data(data):
                 if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font troppo dettagliato.')
                 glyphs[char].append([[number(p[0],0,300),number(p[1],0,300)] for p in line])
         result['custom_font']={'name':text(custom.get('name','Il mio font'),60),'glyphs':glyphs,'weight':number(custom.get('weight',10),2,24)}
+        if 'templates' in custom:
+            templates=custom['templates']
+            if not isinstance(templates,list) or len(templates)>20: raise ValueError('Troppe formule disegnate.')
+            clean=[]; ids=set()
+            for template in templates:
+                if not isinstance(template,dict): raise ValueError('Formula disegnata non valida.')
+                key=identifier(template.get('id'))
+                if key in ids: raise ValueError('Formula disegnata duplicata.')
+                ids.add(key); lines=template.get('strokes')
+                if not isinstance(lines,list) or not 1<=len(lines)<=100: raise ValueError('Tratti della formula non validi.')
+                strokes=[]
+                for line in lines:
+                    if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto della formula non valido.')
+                    count+=len(line)
+                    if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font e formule troppo dettagliati.')
+                    strokes.append([[number(p[0],0,600),number(p[1],0,220)] for p in line])
+                clean.append({'id':key,'name':text(template.get('name'),60,False),'strokes':strokes})
+            result['custom_font']['templates']=clean
 
     circuit=data.get('circuit',{'components':[],'wires':[]})
     if not isinstance(circuit,dict) or not isinstance(circuit.get('components'),list) or not isinstance(circuit.get('wires'),list) or len(circuit['components'])>100 or len(circuit['wires'])>200: raise ValueError('Schema non valido.')
@@ -176,7 +199,7 @@ def setup_tramonto(app,service):
         return web.FileResponse(service.settings.root/'tramonto.html')
     async def asset(request):
         admin(request); name=request.match_info['name']
-        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js','tramonto-font.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
+        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
         target=(service.settings.root/name).resolve()
         if '..' in Path(name).parts or not target.is_relative_to(service.settings.root.resolve()) or not target.is_file(): raise web.HTTPNotFound()
         return web.FileResponse(target)
