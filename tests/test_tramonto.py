@@ -170,6 +170,25 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
         for bad in (float('nan'),301,True):
             broken=copy.deepcopy(data);broken['custom_font']['glyphs']['A'][0][0][0]=bad
             with self.assertRaises(ValueError):content_data(broken)
+
         for key,bad in (('text_size',200),('text','A'*1001),('font','bad')):
             broken=copy.deepcopy(data);broken['drawing']['strokes'][0][key]=bad
+            with self.assertRaises(ValueError):content_data(broken)
+
+    def test_33_graph_study_and_handmade_formulas_roundtrip(self):
+        data=content_data({})
+        data['graph']['study']={'show_area':True,'show_derivative':True,'area_from':3,'area_to':6}
+        data['custom_font']={'name':'Simboli','weight':8,'glyphs':{'α':[[[40,70]]]},'templates':[{'id':'system_1','name':'Sistema','strokes':[[[0,0],[600,220]]]}]}
+        self.assertEqual(content_data(data),data)
+        for key,value in (('show_area',1),('area_from',float('nan')),('area_to',2)):
+            broken=copy.deepcopy(data);broken['graph']['study'][key]=value
+            with self.assertRaises(ValueError):content_data(broken)
+        for bad in (601,float('nan'),True):
+            broken=copy.deepcopy(data);broken['custom_font']['templates'][0]['strokes'][0][0][0]=bad
+            with self.assertRaises(ValueError):content_data(broken)
+        for mutation in ('duplicate','oversized','empty'):
+            broken=copy.deepcopy(data);templates=broken['custom_font']['templates']
+            if mutation=='duplicate':templates.append(templates[0])
+            elif mutation=='oversized':templates[0]['strokes']=[[[1,2]]*1000]*31
+            else:templates[0]['name']=''
             with self.assertRaises(ValueError):content_data(broken)
