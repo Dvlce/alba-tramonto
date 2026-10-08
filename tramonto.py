@@ -14,12 +14,12 @@ SUBJECTS={'generale','italiano','storia','matematica','telecomunicazioni','siste
 TAGS={'p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img'}
 
 class RichText(HTMLParser):
-    def __init__(self,images=()): super().__init__(convert_charrefs=True); self.output=[]; self.images=set(images)
+    def __init__(self,images=(),formula_sources=None): super().__init__(convert_charrefs=True); self.output=[]; self.images=set(images); self.formula_sources=formula_sources or {}
     def handle_starttag(self,tag,attrs):
         if tag not in TAGS: return
         attributes={k:v or '' for k,v in attrs}; safe=[]
         if tag=='img':
-            match=re.fullmatch(r'/api/tramonto/images/([0-9]+)',attributes.get('src',''))
+            match=re.fullmatch(r'/api/tramonto/images/([0-9]+)(?:\?v=[0-9]+)?',attributes.get('src',''))
             if not match or int(match[1]) not in self.images: return
             safe.append(('src',match[0]))
             width=attributes.get('width','400')
@@ -27,6 +27,8 @@ class RichText(HTMLParser):
             safe.append(('width',width)); safe.append(('alt',attributes.get('alt','Immagine')[:180]))
             layout=attributes.get('data-layout','inline')
             if layout in ('inline','left','right','center'): safe.append(('data-layout',layout))
+            formula=attributes.get('data-latex',self.formula_sources.get(int(match[1])))
+            if formula is not None: safe.append(('data-latex',text(formula,4000)))
         if tag in ('p','div','td','th') and attributes.get('align') in ('left','center','right','justify'): safe.append(('align',attributes['align']))
         self.output.append('<'+tag+''.join(' '+k+'="'+html.escape(v,quote=True)+'"' for k,v in safe)+'>')
     def handle_endtag(self,tag):
@@ -52,7 +54,7 @@ def content_data(data):
     if not isinstance(data,dict): raise ValueError('Appunto non valido.')
     if len(json.dumps(data).encode())>1000000: raise ValueError('Appunto troppo grande; suddividilo in più pagine.')
     result={'schema':1}
-    for key,choices,default in (('font',{'sans','serif','mono','round'},'serif'),('paper',{'plain','ruled','grid','dots','cornell','engineering','music','isometric'},'plain')):
+    for key,choices,default in (('font',{'custom','sans','serif','mono','round','book','classic','humanist','geometric','slab','hand','script','typewriter'},'serif'),('paper',{'plain','ruled','grid','dots','cornell','engineering','music','isometric'},'plain')):
         value=data.get(key,default)
         if not isinstance(value,str) or value not in choices: raise ValueError('Stile non valido.')
         result[key]=value
@@ -75,8 +77,35 @@ def content_data(data):
         points=stroke.get('points'); total+=len(points) if isinstance(points,list) else 50001
         if not isinstance(points,list) or not 1<=len(points)<=5000 or total>50000: raise ValueError('Disegno troppo dettagliato; crea un’altra pagina.')
         if any(not isinstance(point,list) or len(point)!=2 for point in points): raise ValueError('Punto non valido.')
-        strokes.append({'color':stroke['color'],'size':number(stroke.get('size'),1,30),'points':[[number(p[0],0,1000),number(p[1],0,640)] for p in points]})
+        clean_stroke={'color':stroke['color'],'size':number(stroke.get('size'),1,30),'points':[[number(p[0],0,1000),number(p[1],0,640)] for p in points]}
+        if 'tool' in stroke:
+            if stroke['tool'] not in ('pen','pencil','marker','highlighter','line','arrow','double-arrow','rectangle','ellipse','triangle','diamond','text'): raise ValueError('Strumento di disegno non valido.')
+            clean_stroke['tool']=stroke['tool']
+        if stroke.get('tool')=='text':
+            clean_stroke.update(text=text(stroke.get('text',''),1000),font=text(stroke.get('font','serif'),30),text_size=number(stroke.get('text_size',28),8,160))
+            if clean_stroke['font'] not in ('custom','serif','sans','mono','book','classic','humanist','geometric','slab','hand','script','typewriter'): raise ValueError('Font del testo non valido.')
+        if 'fill' in stroke:
+            if type(stroke['fill']) is not bool: raise ValueError('Riempimento non valido.')
+            clean_stroke['fill']=stroke['fill']
+        if 'dash' in stroke:
+            if type(stroke['dash']) is not bool: raise ValueError('Tratteggio non valido.')
+            clean_stroke['dash']=stroke['dash']
+        strokes.append(clean_stroke)
     result['drawing']={'strokes':strokes}
+    custom=data.get('custom_font')
+    if custom is not None:
+        if not isinstance(custom,dict) or not isinstance(custom.get('glyphs'),dict) or len(custom['glyphs'])>160: raise ValueError('Font personale non valido.')
+        glyphs={};count=0
+        for char,lines in custom['glyphs'].items():
+            if not isinstance(char,str) or len(char)!=1 or not isinstance(lines,list) or len(lines)>100: raise ValueError('Carattere non valido.')
+            glyphs[char]=[]
+            for line in lines:
+                if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto del carattere non valido.')
+                count+=len(line)
+                if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font troppo dettagliato.')
+                glyphs[char].append([[number(p[0],0,300),number(p[1],0,300)] for p in line])
+        result['custom_font']={'name':text(custom.get('name','Il mio font'),60),'glyphs':glyphs,'weight':number(custom.get('weight',10),2,24)}
+
     circuit=data.get('circuit',{'components':[],'wires':[]})
     if not isinstance(circuit,dict) or not isinstance(circuit.get('components'),list) or not isinstance(circuit.get('wires'),list) or len(circuit['components'])>100 or len(circuit['wires'])>200: raise ValueError('Schema non valido.')
     components=[]; ids={}
@@ -85,7 +114,7 @@ def content_data(data):
         key=identifier(part.get('id'))
         if key in ids: raise ValueError('Componente duplicato.')
         ids[key]=part['type']
-        components.append({'id':key,'type':part['type'],'x':number(part.get('x'),0,1000),'y':number(part.get('y'),0,640),'rotation':part['rotation'],'label':text(part.get('label',''),40),'value':text(part.get('value',''),40)})
+        components.append({'id':key,'type':part['type'],'x':number(part.get('x'),0,50000),'y':number(part.get('y'),0,50000),'rotation':part['rotation'],'label':text(part.get('label',''),40),'value':text(part.get('value',''),40)})
         if 'params' in part: components[-1]['params']=validate_params(part['params'])
     wires=[]; wire_ids=set()
     for wire in circuit['wires']:
@@ -97,8 +126,22 @@ def content_data(data):
             point=wire.get(end)
             if not isinstance(point,dict) or not isinstance(point.get('component'),str) or point.get('component') not in ids or type(point.get('port')) is not int or not 0<=point['port']<PORTS[ids[point['component']]]: raise ValueError('Collegamento non valido.')
             clean[end]={'component':point['component'],'port':point['port']}
+        if 'color' in wire:
+            if not isinstance(wire['color'],str) or not re.fullmatch(r'#[a-fA-F0-9]{6}',wire['color']): raise ValueError('Colore del collegamento non valido.')
+            clean['color']=wire['color']
+        if 'points' in wire:
+            points=wire['points']
+            if not isinstance(points,list) or len(points)>100: raise ValueError('Troppi punti di svolta.')
+            clean['points']=[]
+            for point in points:
+                if not isinstance(point,dict) or set(point)!={'x','y'}: raise ValueError('Punto di svolta non valido.')
+                clean['points'].append({'x':number(point['x'],0,50000),'y':number(point['y'],0,50000)})
         wires.append(clean)
     result['circuit']={'components':components,'wires':wires}
+    if 'canvas' in circuit:
+        bounds=circuit['canvas']
+        if not isinstance(bounds,dict) or set(bounds)!={'width','height'}: raise ValueError('Area dello schema non valida.')
+        result['circuit']['canvas']={'width':number(bounds['width'],1000,50000),'height':number(bounds['height'],640,50000)}
     images=data.get('images',[])
     if not isinstance(images,list) or len(images)>30 or any(type(item) is not int or item<=0 for item in images): raise ValueError('Immagini non valide.')
     result['images']=list(dict.fromkeys(images))
@@ -133,7 +176,7 @@ def setup_tramonto(app,service):
         return web.FileResponse(service.settings.root/'tramonto.html')
     async def asset(request):
         admin(request); name=request.match_info['name']
-        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
+        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js','tramonto-font.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
         target=(service.settings.root/name).resolve()
         if '..' in Path(name).parts or not target.is_relative_to(service.settings.root.resolve()) or not target.is_file(): raise web.HTTPNotFound()
         return web.FileResponse(target)
@@ -186,14 +229,23 @@ def setup_tramonto(app,service):
             for old,asset in mapping.items():
                 copied=store.execute('INSERT INTO note_images(user_id,note_id,name,mime,data,created) VALUES(?,?,?,?,?,?)',(uid,record,asset['name'],asset['mime'],asset['data'],now)).lastrowid
                 image_ids.append(copied)
-                html_value=re.sub(r'(/api/tramonto/images/)'+str(old)+r'(?=["\s>])',lambda m:m[1]+str(copied),html_value)
+                html_value=re.sub(r'(/api/tramonto/images/)'+str(old)+r'(?=["\s>?])',lambda m:m[1]+str(copied),html_value)
             content.update(images=image_ids,html=html_value); store.execute('UPDATE notes SET content=? WHERE id=?',(json.dumps(content,ensure_ascii=False),record))
         store.execute('UPDATE notebooks SET updated=? WHERE id=?',(now,book['id']))
         return web.json_response({'id':record,'version':1},status=201)
     async def note(request):
         uid=admin(request); record=owned('notes',request.match_info['id'],uid)
         if request.method=='GET':
-            record['content']=content_data(json.loads(record['content'])); record['page_number']=store.rows('SELECT count(*) AS n FROM notes WHERE user_id=? AND notebook_id=? AND id<=?',(uid,record['notebook_id'],record['id']))[0]['n']; record.pop('user_id'); return web.json_response(record)
+            record['content']=content_data(json.loads(record['content']))
+            # Recover original formula images only when their order is unambiguous.
+            content=record['content'];formulas=content['formulas'];assets=store.rows('SELECT id,name FROM note_images WHERE note_id=? AND user_id=? ORDER BY id',(record['id'],uid))
+            primary=[a for a in assets if a['name']=='formulaPreview.png'];sources={}
+            if len(primary)==len(formulas): sources={a['id']:formula for a,formula in zip(primary,formulas)}
+            for asset in assets:
+                saved=re.fullmatch(r'savedFormula([0-9]+)\.png',asset['name'])
+                if saved and int(saved[1])<len(formulas): sources[asset['id']]=formulas[int(saved[1])]
+            parser=RichText(content['images'],sources);parser.feed(content['html']);content['html']=''.join(parser.output)
+            record['page_number']=store.rows('SELECT count(*) AS n FROM notes WHERE user_id=? AND notebook_id=? AND id<=?',(uid,record['notebook_id'],record['id']))[0]['n']; record.pop('user_id'); return web.json_response(record)
         if request.method=='DELETE':
             with store.db:
                 store.db.execute('DELETE FROM note_images WHERE note_id=? AND user_id=?',(record['id'],uid))
@@ -218,8 +270,15 @@ def setup_tramonto(app,service):
         if len(data)>8*1024*1024: raise ValueError('Immagine troppo grande.')
         mime=('image/png' if data.startswith(b'\x89PNG\r\n\x1a\n') else 'image/jpeg' if data.startswith(b'\xff\xd8\xff') else 'image/gif' if data.startswith((b'GIF87a',b'GIF89a')) else 'image/webp' if data[:4]==b'RIFF' and data[8:12]==b'WEBP' else None)
         if not mime: raise ValueError('Usa PNG, JPEG, GIF o WebP.')
-        if store.rows('SELECT count(*) AS n FROM note_images WHERE note_id=?',(record['id'],))[0]['n']>=30: raise ValueError('Massimo trenta immagini per pagina.')
+        replacement=request.headers.get('X-Replace-Image')
+        if replacement:
+            previous=owned('note_images',replacement,uid)
+            if previous['note_id']!=record['id']: raise PermissionError()
+        if not replacement and store.rows('SELECT count(*) AS n FROM note_images WHERE note_id=?',(record['id'],))[0]['n']>=30: raise ValueError('Massimo trenta immagini per pagina.')
         name=text(unquote(request.headers.get('X-Image-Name','Immagine')),180)
+        if replacement:
+            store.execute('UPDATE note_images SET mime=?,data=? WHERE id=? AND user_id=?',(mime,data,previous['id'],uid))
+            return web.json_response({'id':previous['id'],'name':previous['name'],'mime':mime})
         record_id=store.execute('INSERT INTO note_images(user_id,note_id,name,mime,data,created) VALUES(?,?,?,?,?,?)',(uid,record['id'],name,mime,data,time.time())).lastrowid
         return web.json_response({'id':record_id,'name':name,'mime':mime},status=201)
     async def image(request):

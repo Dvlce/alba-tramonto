@@ -62,5 +62,150 @@
     "version": "15.0.12",
     "source": "https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js",
     "sha256": "3e7e7d7feb3e5d58cb6c804f68ab5c24cc7e5eb6270fd6e5cbb9124739217d0c"
+  },
+  "notebook_fonts": {
+    "files": {
+      "script-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9eIupYT5Kmgq3s84t.woff2",
+        "family": "Caveat",
+        "subset": "latin-ext",
+        "sha256": "7250dc9c98f0fbdb5aaa9922624ae188947bcbb56f12bf3c8d1a9d3e08bbdf03"
+      },
+      "script-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9eIWpYT5Kmgq3sw.woff2",
+        "family": "Caveat",
+        "subset": "latin",
+        "sha256": "7bd727afb3d294b5be1f3df1e47f875144e35d2ec9ba8f4c2484b885722dadb9"
+      },
+      "hand-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/kalam/v18/YA9dr0Wd4kDdMthfOCfhsCkAj7g.woff2",
+        "family": "Kalam",
+        "subset": "latin-ext",
+        "sha256": "409a1c973bba365895b897c14604383b7e3df4e400f43dfb07af64a77e973232"
+      },
+      "hand-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/kalam/v18/YA9dr0Wd4kDdMthROCfhsCkA.woff2",
+        "family": "Kalam",
+        "subset": "latin",
+        "sha256": "257f0129d54c60cda0f8856ad1de05e760a219c9365fb19cd50b0cc8fdb2c9d1"
+      },
+      "book-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787weuxJPkq18ndeYxZ2JTg.woff2",
+        "family": "Lora",
+        "subset": "latin-ext",
+        "sha256": "dede484815dc2119ac7d97a884457a21340e28b0ce1e00033287f5a2fda8139a"
+      },
+      "book-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkq18ndeYxZ0.woff2",
+        "family": "Lora",
+        "subset": "latin",
+        "sha256": "00f2871139726375cf37d101d88f5d32168e473492f389ad3a338ed5615b069b"
+      },
+      "geometric-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw3aXp-p7K4KLjztg.woff2",
+        "family": "Montserrat",
+        "subset": "latin-ext",
+        "sha256": "c920f1389308364a89cd61c6860acc63534c0e795fa6f29ca2a77755565e9ce3"
+      },
+      "geometric-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXp-p7K4KLg.woff2",
+        "family": "Montserrat",
+        "subset": "latin",
+        "sha256": "0f079e1dcf6151c20cb9d3f252432437af214f65997f293d927176528f6e37a7"
+      },
+      "classic-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDZbtPK-F2qC0usEw.woff2",
+        "family": "Playfair Display",
+        "subset": "latin-ext",
+        "sha256": "14a61a78daa9f1468784ac5c78e39c0883fd65beb3854a77b6fc307dcb279b52"
+      },
+      "classic-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKdFvXDXbtPK-F2qC0s.woff2",
+        "family": "Playfair Display",
+        "subset": "latin",
+        "sha256": "57edb864a5b79ea8143aa35b89212f99ef63d150052bb6dbb912827e67fa61ba"
+      },
+      "slab-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/robotoslab/v36/BngbUXZYTXPIvIBgJJSb6s3BzlRRfKOFbvjojISmYWRjV9Su1caiTVo.woff2",
+        "family": "Roboto Slab",
+        "subset": "latin-ext",
+        "sha256": "755233c7c40bd16602ef97e2fba463ebe76b40e4949ac988384f593d721189b7"
+      },
+      "slab-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/robotoslab/v36/BngbUXZYTXPIvIBgJJSb6s3BzlRRfKOFbvjojISmb2RjV9Su1cai.woff2",
+        "family": "Roboto Slab",
+        "subset": "latin",
+        "sha256": "708ef5b1a41bdd3b1e3c10fb33252a9ceadfedc1f7d14b4bfda8f7c9c6f40b8c"
+      },
+      "humanist-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/sourcesans3/v20/nwpBtKy2OAdR1K-IwhWudF-R9QMylBJAV3Bo8Ky462EE9CsYm4fA1Tvwvw.woff2",
+        "family": "Source Sans 3",
+        "subset": "latin-ext",
+        "sha256": "1ab63ce38a5437c1a2e60da6d7ccf96c69fa7fccbd941465f9099a93586847eb"
+      },
+      "humanist-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/sourcesans3/v20/nwpBtKy2OAdR1K-IwhWudF-R9QMylBJAV3Bo8Ky462EK9CsYm4fA1Ts.woff2",
+        "family": "Source Sans 3",
+        "subset": "latin",
+        "sha256": "70577c6e1610b21782d8a8412a6604c82f98f12fe4ff8c619b934a8c19022719"
+      },
+      "typewriter-latin-ext.woff2": {
+        "source": "https://fonts.gstatic.com/s/specialelite/v20/XLYgIZbkc4JPUL5CVArUVL0ntn4OSFNuQsI3GA.woff2",
+        "family": "Special Elite",
+        "subset": "latin-ext",
+        "sha256": "491120b4e13e635424c4d694ec7d92199c9737068bca45bd8c97bfd9553ac9ac"
+      },
+      "typewriter-latin.woff2": {
+        "source": "https://fonts.gstatic.com/s/specialelite/v20/XLYgIZbkc4JPUL5CVArUVL0ntnAOSFNuQsI.woff2",
+        "family": "Special Elite",
+        "subset": "latin",
+        "sha256": "3cf06771841c778db94dfc003a9239338613c07a9e8c8125d0641a1ba6e7977a"
+      }
+    },
+    "licenses": [
+      "Kalam-OFL.txt",
+      "SourceSans3-OFL.txt",
+      "Lora-OFL.txt",
+      "Montserrat-OFL.txt",
+      "SpecialElite-LICENSE.txt",
+      "Caveat-OFL.txt",
+      "PlayfairDisplay-OFL.txt",
+      "RobotoSlab-LICENSE.txt"
+    ]
+  },
+  "mathlive": {
+    "version": "0.111.0",
+    "source": "https://registry.npmjs.org/mathlive/-/mathlive-0.111.0.tgz",
+    "files": {
+      "mathlive/mathlive-fonts.css": "a6b6a47a5d29f78cacf0ea7a094d29a43f53def9f74ffc7146af04b47da5f641",
+      "mathlive/LICENSE.txt": "3caebd18611959ca725ab976a004d408017eb1d7093d6c9b9b09c5a4790eaff8",
+      "mathlive/mathlive.min.js": "ab9f6f16d549e88d6a11dfb7c909365fd37563f1ca0136474e7833d23a8bd2ee",
+      "mathlive/fonts/KaTeX_Typewriter-Regular.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+      "mathlive/fonts/KaTeX_AMS-Regular.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+      "mathlive/fonts/KaTeX_Size3-Regular.woff2": "73d591271b1604960cb10bb90fee021670af7297017e0e98480b332d11f51995",
+      "mathlive/fonts/KaTeX_Main-Regular.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+      "mathlive/fonts/KaTeX_Caligraphic-Bold.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+      "mathlive/fonts/KaTeX_SansSerif-Bold.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+      "mathlive/fonts/KaTeX_Math-Italic.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+      "mathlive/fonts/KaTeX_Size4-Regular.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+      "mathlive/fonts/KaTeX_Fraktur-Bold.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+      "mathlive/fonts/KaTeX_SansSerif-Italic.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+      "mathlive/fonts/KaTeX_Main-Bold.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+      "mathlive/fonts/KaTeX_SansSerif-Regular.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+      "mathlive/fonts/KaTeX_Main-BoldItalic.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+      "mathlive/fonts/KaTeX_Fraktur-Regular.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+      "mathlive/fonts/KaTeX_Script-Regular.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+      "mathlive/fonts/KaTeX_Math-BoldItalic.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+      "mathlive/fonts/KaTeX_Main-Italic.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+      "mathlive/fonts/KaTeX_Size1-Regular.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+      "mathlive/fonts/KaTeX_Size2-Regular.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+      "mathlive/fonts/KaTeX_Caligraphic-Regular.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+    }
+  },
+  "opentype.js": {
+    "version": "1.3.4",
+    "source": "https://registry.npmjs.org/opentype.js/-/opentype.js-1.3.4.tgz",
+    "sha256": "c0f9c7ca85e18075a8819e5fe2dee6e1d535f9a2269f5314f36cce94a183adba",
+    "license": "OPENTYPE_LICENSE"
   }
 }

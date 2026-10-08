@@ -150,3 +150,26 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
         data=content_data({}); data['circuit']['wires']=[{'id':'a','from':{'component':'missing','port':0},'to':{'component':'missing','port':1}}]
         with self.assertRaises(ValueError): content_data(data)
 
+
+    async def test_31_formula_replacement_keeps_image_id_and_checks_note_owner(self):
+        image=(await (await self.upload()).json())['id']
+        value=await self.document();value['content'].update(images=[image],html='<img src="/api/tramonto/images/'+str(image)+'?v=123" width="240" data-latex="x&lt;y" onerror="bad()">')
+        self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        stored=await self.document();self.assertIn('data-latex="x&lt;y"',stored['content']['html']);self.assertNotIn('onerror',stored['content']['html'])
+        response=await self.client.post('/api/tramonto/notes/'+str(self.note)+'/images',data=PNG,headers={**self.headers[1],'X-Replace-Image':str(image)})
+        self.assertEqual(response.status,200);self.assertEqual((await response.json())['id'],image);self.assertEqual(len(self.store.rows('SELECT id FROM note_images')),1)
+        other=(await (await self.req('/notes','POST',{'notebook_id':self.book})).json())['id']
+        for uid,note in ((4,self.note),(1,other)):
+            response=await self.client.post('/api/tramonto/notes/'+str(note)+'/images',data=PNG,headers={**self.headers[uid],'X-Replace-Image':str(image)})
+            self.assertEqual(response.status,403)
+
+    def test_32_custom_font_and_drawing_text_validation(self):
+        data=content_data({});data.update(font='custom',custom_font={'name':'Font di prova','weight':10,'glyphs':{'A':[[[10,240],[150,40],[280,240]]]}})
+        data['drawing']['strokes']=[{'tool':'text','color':'#123456','size':3,'points':[[10,20]],'text':'A\nseconda riga','font':'custom','text_size':32}]
+        self.assertEqual(content_data(data),data)
+        for bad in (float('nan'),301,True):
+            broken=copy.deepcopy(data);broken['custom_font']['glyphs']['A'][0][0][0]=bad
+            with self.assertRaises(ValueError):content_data(broken)
+        for key,bad in (('text_size',200),('text','A'*1001),('font','bad')):
+            broken=copy.deepcopy(data);broken['drawing']['strokes'][0][key]=bad
+            with self.assertRaises(ValueError):content_data(broken)

@@ -21,7 +21,7 @@ from test_tramonto import PNG
 async def main():
     with tempfile.TemporaryDirectory() as folder:
         root=Path(folder)
-        for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'): shutil.copy2(ROOT/name,root/name)
+        for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js'): shutil.copy2(ROOT/name,root/name)
         shutil.copytree(ROOT/'vendor',root/'vendor')
         settings=Settings(root=root,admins=(1,),allowed=(2,)); store=Store(settings.data/'alba.sqlite3'); keys=Keys(store,secret_file(settings.data/'auth.key'))
         service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings)); store.register(1,'Andrea'); store.register(2,'Alice')
@@ -73,7 +73,7 @@ async def main():
                 assert await page.locator('#circuitSvg path[data-wire]').count()==2
                 await page.evaluate('TramontoTools.saveDoc()'); circuit=json.loads(store.rows('SELECT content FROM notes')[0]['content'])['circuit']; assert len(circuit['wires'])==1; assert circuit['components'][1]['rotation']==90
                 await page.locator('[data-pane=images]').click(); await page.locator('#imageInput').set_input_files({'name':'figura.png','mimeType':'image/png','buffer':PNG}); await page.locator('.image-card img').last.wait_for(); await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")')
-                assert len(store.rows('SELECT id FROM note_images'))==2; assert await page.locator('.image-card img').last.evaluate('(image)=>image.complete && image.naturalWidth===1')
+                assert len(store.rows('SELECT id FROM note_images'))==2; await page.locator('.image-card img').last.evaluate('(image)=>image.decode()'); assert await page.locator('.image-card img').last.evaluate('(image)=>image.complete && image.naturalWidth===1')
                 async with page.expect_download() as download:
                     await page.locator('#exportNote').click()
                 path=await (await download.value).path(); exported=json.loads(Path(path).read_text()); assert exported['format']=='tramonto-note-v1'; assert len(exported['images'])==2; assert len(exported['content']['drawing']['strokes'])==1
