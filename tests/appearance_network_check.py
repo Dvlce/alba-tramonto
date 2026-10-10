@@ -15,23 +15,25 @@ from backups import Backups
 async def main():
  with tempfile.TemporaryDirectory() as folder:
   root=Path(folder)
-  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js'):shutil.copy2(ROOT/name,root/name)
+  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js'):shutil.copy2(ROOT/name,root/name)
   shutil.copytree(ROOT/'vendor',root/'vendor');settings=Settings(root=root,admins=(1,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'));service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings));store.register(1,'Admin');server=TestServer(web_app(service));await server.start_server();errors=[]
   try:
    async with async_playwright() as p:
     browser=await p.chromium.launch();page=await browser.new_page(viewport={'width':1600,'height':1100});page.on('pageerror',lambda e:errors.append(str(e)));page.on('console',lambda m:errors.append(m.text) if m.type=='error' else None)
+    async def appearance(control,value):
+     await page.locator('#appearanceButton').click();await page.locator(control).select_option(value);await page.locator('#appearanceSettingsClose').click()
     await page.goto(str(server.make_url('/'))+'#web_key='+keys.issue(1,1,'web'));await page.locator('#dashboard').wait_for(state='visible');await page.goto(str(server.make_url('/tramonto')));await page.locator('#newNote').click();await page.locator('#noteEditor').wait_for(state='visible');await page.locator('#richEditor').fill('Prova temi e laboratori');await page.evaluate('TramontoTools.saveDoc()')
     for theme in ('light','dark','gray','black'):
-     await page.locator('#notesTheme').select_option(theme)
+     await appearance('#notesTheme',theme)
      for palette in ('sage','graphite','ocean','violet','rose','amber'):
-      await page.locator('#notesPalette').select_option(palette)
+      await appearance('#notesPalette',palette)
       ratios=await page.evaluate('''()=>{const s=getComputedStyle(document.documentElement),rgb=v=>v.match(/[\\d.]+/g).slice(0,3).map(Number),luma=c=>rgb(c).map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4}).reduce((v,x,i)=>v+x*[.2126,.7152,.0722][i],0),color=k=>{const e=document.createElement('i');e.style.color=s.getPropertyValue(k);document.body.append(e);const c=getComputedStyle(e).color;e.remove();return c;},ratio=(a,b)=>{const x=luma(color(a)),y=luma(color(b));return(Math.max(x,y)+.05)/(Math.min(x,y)+.05);};return[ratio('--text','--surface'),ratio('--muted','--surface'),ratio('--accent','--accent-text')];}''')
       assert min(ratios)>=4.5,(theme,palette,ratios)
-    await page.locator('#notesTheme').select_option('gray');await page.locator('#notesPalette').select_option('graphite')
+    await appearance('#notesTheme','gray');await appearance('#notesPalette','graphite')
     for skin in ('clay','cyber','brutal','scrap','surreal'):
-     await page.locator('#notesStyle').select_option(skin);await page.set_viewport_size({'width':390,'height':844});assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),skin
+     await appearance('#notesStyle',skin);await page.set_viewport_size({'width':390,'height':844});assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),skin
      await page.set_viewport_size({'width':1600,'height':1100});await page.emulate_media(media='print');pdf=await page.pdf(prefer_css_page_size=True,print_background=True);assert len(re.findall(rb'/Type\s*/Page\b',pdf))==1,skin;assert await page.locator('#a4Sheet').evaluate('e=>getComputedStyle(e).backgroundColor')=='rgb(255, 255, 255)';await page.emulate_media(media='screen')
-    (ROOT/'artifacts').mkdir(exist_ok=True);await page.screenshot(path=str(ROOT/'artifacts/tramonto-surreal-gray.png'),full_page=True);await page.locator('#notesStyle').select_option('cyber');await page.locator('#notesTheme').select_option('black');await page.locator('#notesPalette').select_option('ocean');await page.reload();await page.locator('#noteEditor').wait_for(state='visible');assert await page.locator('#notesStyle').input_value()=='cyber';assert await page.locator('#notesTheme').input_value()=='black';assert await page.locator('#notesPalette').input_value()=='ocean';await page.screenshot(path=str(ROOT/'artifacts/tramonto-cyber-black.png'),full_page=True)
+    (ROOT/'artifacts').mkdir(exist_ok=True);await page.screenshot(path=str(ROOT/'artifacts/tramonto-surreal-gray.png'),full_page=True);await appearance('#notesStyle','cyber');await appearance('#notesTheme','black');await appearance('#notesPalette','ocean');await page.reload();await page.locator('#noteEditor').wait_for(state='visible');assert await page.locator('#notesStyle').input_value()=='cyber';assert await page.locator('#notesTheme').input_value()=='black';assert await page.locator('#notesPalette').input_value()=='ocean';await page.screenshot(path=str(ROOT/'artifacts/tramonto-cyber-black.png'),full_page=True)
     await page.locator('[data-pane=network]').click();await page.locator('#networkExample').click();assert await page.locator('#networkPalette svg').count()==9;assert await page.locator('#networkSvg [data-net-id] svg').count()==4
     await page.locator('#networkSelect').click();await page.locator('[data-net-id=PC1]').click();await page.locator('[data-net-id=PC2]').click(modifiers=['Shift']);assert '2 oggetti' in await page.locator('#networkSelectionStatus').inner_text()
     before=await page.locator('[data-net-id=PC1]').get_attribute('transform');other=await page.locator('[data-net-id=PC2]').get_attribute('transform');box=await page.locator('[data-net-id=PC1]').bounding_box();await page.mouse.move(box['x']+20,box['y']+20);await page.mouse.down();await page.mouse.move(box['x']+50,box['y']+50,steps=5);await page.mouse.up();assert before!=await page.locator('[data-net-id=PC1]').get_attribute('transform');assert other!=await page.locator('[data-net-id=PC2]').get_attribute('transform')

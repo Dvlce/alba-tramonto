@@ -44,20 +44,20 @@ async def main():
                 await page.locator('#albaSymbol').click(); await page.locator('#tramontoLink').click(); await page.wait_for_url('**/tramonto'); await page.locator('#bookList button').wait_for()
                 await page.locator('#newBookName').fill('Il mio quaderno di matematica'); await page.locator('#newBookForm button').click(); await page.wait_for_function('()=>document.querySelector("#bookList .active").textContent.includes("matematica")')
                 await page.locator('#newNote').click(); await page.locator('#noteEditor').wait_for(state='visible'); await page.locator('#noteTitle').fill('Funzioni e circuiti')
-                await page.locator('#noteList button').first.click(); await page.locator('#richEditor').fill('Seno e coseno, appunti della lezione.'); await page.locator('#noteFont').select_option('mono'); await page.locator('#notePaper').select_option('grid'); await page.locator('#noteSubject').select_option('matematica')
+                await page.locator('#noteList button').first.click(); await page.locator('#richEditor').fill('Seno e coseno, appunti della lezione.'); await page.locator('#pageSettingsButton').click(); await page.locator('#noteFont').select_option('mono'); await page.locator('#notePaper').select_option('grid'); await page.locator('#noteSubject').select_option('matematica'); await page.locator('#pageSettingsClose').click()
                 await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")'); await page.reload(); await page.locator('#noteEditor').wait_for(state='visible')
                 assert await page.locator('#noteTitle').input_value()=='Funzioni e circuiti'; assert await page.locator('#noteFont').input_value()=='mono'; assert 'Seno e coseno' in await page.locator('#richEditor').inner_text()
                 await page.locator('[data-pane=math]').click(); await page.get_by_role('button',name='Limite',exact=True).click(); assert await page.locator('#formulaPreview .katex').count()==1
                 await page.locator('#addFormula').click(); await page.locator('#formulaList .katex').wait_for(state='attached'); assert await page.locator('#richEditor img').count()==1; await page.locator('[data-pane=math]').click(); assert await page.locator('#formulaList .katex').count()==1
-                await page.locator('#plotGraph').click(); assert await page.locator('#plotSvg [data-curve]').count()==2
+                await page.evaluate("TramontoStudy.openTool('graph')"); await page.locator('#plotGraph').click(); assert await page.locator('#plotSvg [data-curve]').count()==2
                 assert abs(await page.evaluate('TramontoTools.expressionFunction("sin(x)")(Math.PI/2)')-1)<1e-10
                 for expression in ('import("bad")','x=2','[1,2,3]','x.constructor','evaluate("2")'):
                     assert await page.evaluate('(value)=>{try{TramontoTools.expressionFunction(value);return false}catch(_){return true}}',expression)
-                await page.locator('#estimateLimit').click(); assert 'Stima dai campioni: 1' in await page.locator('#limitResult').inner_text()
+                await page.evaluate("TramontoStudy.openTool('limits')"); await page.locator('#estimateLimit').click(); assert 'Stima dai campioni: 1' in await page.locator('#limitResult').inner_text()
                 await page.locator('#limitExpression').fill('1/x'); await page.locator('#estimateLimit').click(); assert 'non suggeriscono' in await page.locator('#limitResult').inner_text()
                 await page.locator('#limitExpression').fill('sin(x)/x'); await page.locator('#estimateLimit').click()
                 async with page.expect_download() as download:
-                    await page.locator('#exportGraph').click()
+                    await page.evaluate("TramontoStudy.openTool('graph')"); await page.locator('#exportGraph').click()
                 assert (await download.value).suggested_filename=='grafico.svg'
                 await page.locator('[data-pane=draw]').click(); canvas=page.locator('#drawingCanvas'); await canvas.scroll_into_view_if_needed(); box=await canvas.bounding_box()
                 await page.mouse.move(box['x']+70,box['y']+70); await page.mouse.down(); await page.mouse.move(box['x']+190,box['y']+170,steps=15); await page.mouse.up()
@@ -74,12 +74,13 @@ async def main():
                 await page.evaluate('TramontoTools.saveDoc()'); circuit=json.loads(store.rows('SELECT content FROM notes')[0]['content'])['circuit']; assert len(circuit['wires'])==1; assert circuit['components'][1]['rotation']==90
                 await page.locator('[data-pane=images]').click(); await page.locator('#imageInput').set_input_files({'name':'figura.png','mimeType':'image/png','buffer':PNG}); await page.locator('.image-card img').last.wait_for(); await page.wait_for_function('()=>document.querySelector("#saveStatus").textContent.startsWith("Salvato")')
                 assert len(store.rows('SELECT id FROM note_images'))==2; await page.locator('.image-card img').last.evaluate('(image)=>image.decode()'); assert await page.locator('.image-card img').last.evaluate('(image)=>image.complete && image.naturalWidth===1')
+                await page.locator('.page-more summary').click()
                 async with page.expect_download() as download:
                     await page.locator('#exportNote').click()
                 path=await (await download.value).path(); exported=json.loads(Path(path).read_text()); assert exported['format']=='tramonto-note-v1'; assert len(exported['images'])==2; assert len(exported['content']['drawing']['strokes'])==1
-                await page.evaluate('window.print=()=>{window.didPrint=true}'); await page.locator('#printNote').click(); assert await page.evaluate('window.didPrint')
+                await page.evaluate("window.print=()=>{window.didPrint=true;window.dispatchEvent(new Event('afterprint'))}"); await page.locator('#printNote').click(); await page.locator('#confirmPrint').click(); assert await page.evaluate('window.didPrint')
                 for style in ('neo','glass'):
-                    await page.locator('#notesStyle').select_option(style); await page.locator('#notesTheme').select_option('dark'); await page.wait_for_timeout(550); assert (await page.locator('.notes-workspace').bounding_box())['width']>950; await page.screenshot(path=str(ROOT/'artifacts'/('tramonto-'+style+'.png')),full_page=True)
+                    await page.locator('#appearanceButton').click(); await page.locator('#notesStyle').select_option(style); await page.locator('#notesTheme').select_option('dark'); await page.locator('#appearanceSettingsClose').click(); await page.wait_for_timeout(550); assert (await page.locator('.notes-workspace').bounding_box())['width']>950; await page.screenshot(path=str(ROOT/'artifacts'/('tramonto-'+style+'.png')),full_page=True)
                 await page.reload(); await page.locator('#noteEditor').wait_for(state='visible'); assert await page.evaluate('document.documentElement.dataset.style')=='glass'; assert await page.locator('#notePaper').input_value()=='grid'; assert await page.locator('#formulaList .katex').count()==1
                 await page.set_viewport_size({'width':390,'height':844}); assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth'); await page.locator('[data-pane=math]').click(); assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth'); await page.screenshot(path=str(ROOT/'artifacts'/'tramonto-mobile.png'),full_page=True)
                 state=await context.storage_state(); await context.close()

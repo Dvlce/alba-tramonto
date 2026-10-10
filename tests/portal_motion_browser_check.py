@@ -24,7 +24,7 @@ async def main():
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder)
         for name in ('web.html', 'web.css', 'web.js', 'portal-motion.js',
-                     'tramonto.html', 'tramonto.css', 'tramonto.js', 'tramonto-lab.js',
+                     'tramonto.html', 'tramonto.css', 'tramonto.js', 'tramonto-lab.js', 'tramonto-font.js', 'tramonto-math.js', 'tramonto-study.js',
                      'notte.html', 'notte.css', 'notte.js'):
             shutil.copy2(ROOT / name, root / name)
         shutil.copytree(ROOT / 'vendor', root / 'vendor')
@@ -104,12 +104,16 @@ async def main():
                 # A failed save must prevent navigation and leave the editor usable.
                 await page.route('**/api/tramonto/notes/*', lambda route: route.abort() if route.request.method == 'PUT' else route.continue_())
                 await page.locator('#richEditor').fill('Modifica con server non disponibile.')
-                await page.locator('.notes-account a[href="/"]').click()
+                if await page.locator('[data-portal-trigger]').get_attribute('aria-expanded')!='true':
+                    await page.locator('[data-portal-trigger]').click()
+                await page.locator('#siteMenu a[href="/"]').click()
                 await page.locator('#saveStatus').filter(has_text='Non salvato').wait_for()
                 assert page.url.endswith('/tramonto')
                 assert await page.locator('.portal-transition').count() == 0
                 await page.unroute('**/api/tramonto/notes/*')
-                await page.locator('.notes-account a[href="/"]').click()
+                if await page.locator('[data-portal-trigger]').get_attribute('aria-expanded')!='true':
+                    await page.locator('[data-portal-trigger]').click()
+                await page.locator('#siteMenu a[href="/"]').click()
                 await page.wait_for_url(str(server.make_url('/')))
                 await page.locator('.portal-transition').wait_for(state='detached')
                 # System and app preferences both suppress the shared animation.
@@ -121,7 +125,9 @@ async def main():
                 await page.locator('#noteEditor').wait_for(state='visible')
                 await page.emulate_media(reduced_motion='no-preference')
                 await page.evaluate("localStorage.setItem('alba.motion','off')")
-                await page.locator('.notes-account a[href="/"]').click()
+                if await page.locator('[data-portal-trigger]').get_attribute('aria-expanded')!='true':
+                    await page.locator('[data-portal-trigger]').click()
+                await page.locator('#siteMenu a[href="/"]').click()
                 await page.wait_for_url(str(server.make_url('/')))
                 assert await page.locator('.portal-transition').count() == 0
                 await page.evaluate("localStorage.setItem('alba.motion','on')")
@@ -130,8 +136,10 @@ async def main():
                 await page.locator('.portal-transition').wait_for(state='detached')
                 # Mobile dimensions, dark palette and print never leave a blocking layer.
                 await page.set_viewport_size({'width':390, 'height':844})
+                await page.locator('#appearanceButton').click()
                 await page.locator('#notesTheme').select_option('black')
                 await page.locator('#notesPalette').select_option('violet')
+                await page.locator('#appearanceSettingsClose').click()
                 await page.reload()
                 await page.locator('.portal-transition[data-theme=black][data-palette=violet]').wait_for()
                 await page.screenshot(path=str(artifacts / 'portal-tramonto-mobile.png'))
