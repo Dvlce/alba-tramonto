@@ -19,3 +19,7 @@ jobs:
       - run: python tests/test_lab_browser_check.py
       - run: python tests/math_font_browser_check.py
       - run: python tests/function_study_browser_check.py
+      - run: python tests/handwritten_math_browser_check.py
+      - run: python tests/notebook_editor_check.py
+      - run: python tests/notebook_pages_browser_check.py
+      - run: python tests/workspace_browser_check.py

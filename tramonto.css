@@ -397,8 +397,131 @@
 .drawing-text-tools label{display:grid;gap:5px}.drawing-text-tools label:first-child{flex:1;min-width:180px}.drawing-text-tools textarea{min-height:65px}.drawing-text-tools p{flex-basis:100%;font-size:11px;color:var(--muted);margin:0}
 .font-workshop{margin:24px 0;border:1px solid var(--line);border-radius:12px;padding:16px}.font-workshop summary{cursor:pointer;font:22px Georgia,serif}.font-workshop-body{display:grid;gap:14px;margin-top:14px}.font-workshop p{font-size:12px;line-height:1.7}.font-workshop label{display:flex;align-items:center;gap:12px}.custom-font-alphabet{display:flex;gap:4px;flex-wrap:wrap}.custom-font-alphabet button{min-width:34px;min-height:34px;padding:5px}.custom-font-alphabet button[aria-pressed=true]{background:var(--accent);color:var(--accent-text)}.custom-font-alphabet .has-glyph{border-bottom:3px solid var(--accent)}
 #customGlyphCanvas{width:300px;height:auto;max-width:100%;touch-action:none;border:1px solid var(--line);border-radius:10px;cursor:crosshair}#customFontPreview{font-size:28px;min-height:70px;width:100%}
+#customFontPresets{flex:1;min-width:0}#customFontSaveStatus{margin:0;color:var(--muted)}#customGlyphCanvas[data-tool=eraser]{cursor:cell}#customGlyphPen[aria-pressed=true],#customGlyphEraser[aria-pressed=true]{background:var(--accent);color:var(--accent-text)}
+.note-properties input[type=number]{width:72px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:12px;color:var(--text)}
+.a4-sheet .rich-editor{font-size:var(--note-font-size,16px);line-height:var(--note-line-height,28px);letter-spacing:var(--note-letter-spacing,0px)}
+.a4-sheet .rich-editor :is(p,div,blockquote,pre,ul,ol,li,table,td,th){line-height:var(--note-line-height,28px)}
+.a4-sheet .rich-editor :is(p,div){min-height:var(--note-line-height,28px)}
+.a4-sheet .rich-editor :is(h1,h2,h3,h4){line-height:calc(var(--note-line-height,28px)*2);letter-spacing:inherit}
+.a4-sheet .rich-editor h1{font-size:calc(var(--note-font-size,16px)*1.75)}.a4-sheet .rich-editor h2{font-size:calc(var(--note-font-size,16px)*1.5)}.a4-sheet .rich-editor h3{font-size:calc(var(--note-font-size,16px)*1.25)}.a4-sheet .rich-editor h4{font-size:calc(var(--note-font-size,16px)*1.125)}
+.a4-sheet .rich-editor:empty::before{font-size:inherit;line-height:inherit}
+[data-paper=ruled] .a4-sheet .rich-editor,[data-paper=cornell] .a4-sheet .rich-editor{background-image:linear-gradient(to bottom,transparent calc(var(--note-line-height,28px) - 1px),var(--line) calc(var(--note-line-height,28px) - 1px),var(--line) var(--note-line-height,28px));background-size:100% var(--note-line-height,28px)}
 @media print{.drawing-text-tools,.font-workshop{display:none!important}}
 
 /* Function study and handwriting collections. */
 .graph-study-controls{align-items:end;margin:16px 0}.graph-study-controls label{display:flex;align-items:center;gap:6px;font-size:12px}.graph-study-controls input[type=number]{width:92px}.graph-study-controls input[type=checkbox]{width:16px;min-height:16px}.graph-examples{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.graph-examples button{padding:6px 10px;font-size:11px}#graphNewExpression{flex:1;min-width:180px;max-width:100%}.function-study{margin-top:22px}.function-study h3,.function-study pre{overflow-wrap:anywhere;white-space:pre-wrap}.study-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.study-card{min-width:0;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface-alt)}.study-card h4{margin:0 0 8px;font:12px sans-serif;color:var(--muted)}.study-card p{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.quadrants-diagram{width:100px;height:100px;margin-top:12px}.function-study table{margin:10px 0 20px}.tool-note{font-size:11px;color:var(--muted);line-height:1.7}.hand-formula-workshop{border-top:1px solid var(--line);padding-top:18px;display:grid;gap:12px}#handFormulaCanvas{width:100%;max-width:600px;height:auto;border:1px solid var(--line);border-radius:10px;touch-action:none;cursor:crosshair}#handFormulaSvg{display:none}.font-workshop select{max-width:100%}#customFontProgress{margin:0;color:var(--muted)}.font-workshop input[type=text]{max-width:100%;min-width:0}.font-workshop label{flex-wrap:wrap}.custom-font-alphabet button{font-size:18px}.rich-editor [align=center]{text-align:center}.rich-editor [align=right]{text-align:right}.rich-editor [align=left]{text-align:left}.rich-editor [align=justify]{text-align:justify}
 @media(max-width:500px){.study-cards{grid-template-columns:1fr}.graph-study-controls{gap:10px}.graph-study-controls label{flex-wrap:wrap}.function-study .lab-table{font-size:11px}.function-study .lab-table td,.function-study .lab-table th{padding:6px}#graphNewExpression{min-width:0;width:100%;flex-basis:100%}}
+
+/* Compact mathematics: one expanded tool, bounded work area and local table scrolling. */
+#pane-math>.tool-deck{max-width:980px;margin-inline:auto;grid-template-columns:minmax(0,1fr) 180px;gap:12px}
+#pane-math .tool-stage{display:grid;gap:9px;min-width:0}
+.math-tool-panel{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.math-tool-panel>summary{padding:12px 14px;font-size:13px;font-weight:600;cursor:pointer;list-style-position:inside;min-height:44px}
+.math-tool-panel[open]>summary{border-bottom:1px solid var(--line);color:var(--accent);background:var(--surface-alt)}
+.math-tool-body{padding:14px;min-width:0}
+#pane-math .math-tool-body>.math-section{margin:0;padding:0;border:0}
+#pane-math .math-tool-body h3{font-size:20px;margin:8px 0 12px}
+#pane-math .math-tool-body p{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+#pane-math .math-tool-body input,#pane-math .math-tool-body select{min-width:0}
+#pane-math .graph-ranges{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#pane-math .tool-actions{gap:8px;margin:10px 0}
+#pane-math .function-study{margin-top:14px}
+#pane-math .study-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#pane-math .study-card{padding:10px}
+#pane-math .formula-preview{margin:8px 0;min-height:48px}
+#pane-math #formulaVisual{min-height:65px;padding:12px;font-size:22px}
+#signExpression{width:100%;display:block;margin-top:5px}
+#signCriticalValues{flex:1;width:180px}
+.sign-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;margin:12px 0}
+.manual-sign-table{width:100%;border-collapse:collapse;min-width:460px}
+.manual-sign-table th,.manual-sign-table td{text-align:center;white-space:nowrap;padding:6px!important;font-size:11px}
+.manual-sign-table td:first-child{min-width:130px;max-width:160px}
+.manual-sign-table td:first-child input,.manual-sign-table td:first-child select{width:100%;display:block;margin-bottom:5px;font-size:11px;padding:6px}
+.manual-sign-table td:first-child button{font-size:10px;padding:4px 7px}
+.manual-sign-table td:not(:first-child) select{width:48px;font-size:15px;padding:6px}
+#manualSignResult{font-weight:700;border-top:2px solid var(--accent)}
+.manual-sign-diagram{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0}
+@media(max-width:1200px){#pane-math>.tool-deck{grid-template-columns:minmax(0,1fr);max-width:760px}}
+@media(max-width:500px){.math-tool-body{padding:10px}#pane-math .study-cards{grid-template-columns:minmax(0,1fr)}#pane-math .tool-actions label{flex-wrap:wrap}#signCriticalValues{width:100%;max-width:100%}#pane-math .math-tool-body h3{font-size:18px}}
+
+.manual-sign-preview .manual-sign-diagram{min-width:600px;margin:0}
+#formulaApplyHandwriting{margin:8px 0 8px 8px}
+@media(max-width:500px){#formulaApplyHandwriting{margin:8px 0}}
+.format-toolbar label{display:flex;align-items:center;gap:6px;font-size:12px}
+.rich-editor span[style],.rich-editor mark{color:inherit;print-color-adjust:exact;-webkit-print-color-adjust:exact;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+
+/* A compact desk: writing stays visible, pages and tools have their own space. */
+@media screen{
+ html:has(.notes-app),body:has(.notes-app){height:100%;overflow:hidden}
+ .notes-app{height:100dvh;max-width:1800px;padding:0 22px;display:flex;flex-direction:column}
+ .notes-header{flex:none;padding:8px 0;gap:16px;min-height:62px}
+ .notes-header .symbol{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:14px}.notes-header .portal-name{font-size:30px}.notes-header .portal-switch-trigger>svg,.notes-header [data-portal-mark]{width:42px;height:42px}
+ .notes-header .brand p,.notes-account>.private-badge,.notes-account>a{display:none}
+ .notes-account{gap:8px;max-width:none;flex-wrap:nowrap}
+ .notes-layout{flex:1;min-height:0;grid-template-columns:230px minmax(0,1fr);gap:16px;margin:10px 0}
+ .notebooks-panel{position:static;min-height:0;height:100%;padding:16px;overflow:auto;overscroll-behavior:contain}
+ .notebooks-panel h2{font-size:19px;margin:6px 0}.notes-create{margin-top:12px}
+ .book-list{max-height:140px;overflow:auto}.note-search{margin-top:14px}
+ .note-list{max-height:none;margin:12px 0;gap:4px}.note-list button{padding:10px;transition:background 160ms,border-color 160ms}
+ .notes-local,.notes-footer{display:none}.notes-workspace{height:100%;min-height:0;padding:0;border:0;background:transparent;box-shadow:none;overflow:hidden}
+ #noteEditor{height:100%;display:flex;flex-direction:column;min-height:0;gap:6px}
+ #noteEditor[hidden],.tool-pane[hidden]{display:none!important}
+ .document-controls{padding:10px 14px;box-shadow:none;border-radius:12px;flex:none}
+ .note-heading{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}.note-title{flex:1;min-width:80px;width:auto;flex-basis:auto;font-size:23px;line-height:1.2}
+ .note-actions{flex:none;gap:6px;width:auto;margin:0;flex-wrap:nowrap}.note-actions #saveStatus{min-width:0;max-width:110px;font-size:10px;margin:0}
+ .note-actions .secondary-button{padding:7px 10px;min-height:36px;font-size:11px;white-space:nowrap}
+ .page-more{position:relative}.page-more summary{cursor:pointer;padding:8px;font-size:12px;list-style:none}.page-more[open]{z-index:30}
+ .page-more[open]::before{content:'';position:absolute;top:100%;right:0;width:165px;height:90px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+ .page-more>button{position:absolute;right:8px;top:calc(100% + 8px);width:150px}.page-more>button+button{top:calc(100% + 48px)}
+ .note-tabs{margin:0;flex:none;flex-wrap:nowrap;overflow-x:auto;gap:4px;border-bottom:0;scrollbar-width:none;min-height:38px}
+ .note-tabs button{white-space:nowrap;padding:8px 12px;min-height:38px;border-radius:8px;font-size:12px;flex:none}
+ .note-tabs button.active{background:var(--surface-alt);border-bottom-color:transparent}
+ #pane-text{display:flex;flex:1;min-height:0;flex-direction:column;gap:8px;overflow:hidden}
+ .editor-ribbon{flex:none;position:static;padding:5px 8px;gap:6px;flex-wrap:nowrap;height:46px;min-height:46px;z-index:15}
+ .format-toolbar{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;margin:0;gap:4px}
+ .format-toolbar>*{flex:none;white-space:nowrap}.format-toolbar strong{display:none}.format-toolbar button{min-height:32px;padding:5px 8px;font-size:11px}
+ .format-toolbar label{display:flex;align-items:center;font-size:10px;gap:5px}
+ .format-toolbar select{min-height:32px;height:32px;padding:4px;font-size:11px}
+ .insert-menu{width:auto}.insert-menu-body{max-height:65dvh;overflow:auto}.insert-menu>summary{white-space:nowrap}
+ #writingFocus,#pane-text .tool-dock-toggle{min-height:34px;padding:6px 9px;font-size:11px;white-space:nowrap;flex:none}
+ .editor-deck{display:block;flex:1;min-height:0;position:relative;overflow:hidden}
+ .editor-desk{height:100%;overflow:auto;overscroll-behavior:contain;padding:14px;border-radius:12px;scrollbar-gutter:stable}
+ #pane-textTools{display:none;position:absolute;inset:8px 8px 8px auto;width:min(290px,calc(100% - 16px));max-height:none;z-index:25;overflow:auto;box-shadow:0 12px 35px #0003}
+ #pane-textTools.dock-open,#pane-textTools:has(#imageInspector:not([hidden])){display:block}
+ #pane-text .tool-dock-toggle,#pane-textTools .tool-dock-header button{display:flex!important}
+ .page-navigation{flex:none;margin:0;padding:6px 10px;min-height:46px;background:var(--surface);border:1px solid var(--line);border-radius:10px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;gap:6px}
+ .page-navigation>*{flex:none;white-space:nowrap}.page-navigation span{font-size:11px}.page-navigation button{padding:6px 8px;min-height:32px}.page-navigation #splitPages{margin:0}
+ #pageJump{max-width:170px;min-width:90px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font-size:11px}
+ #pageHint{display:none}.tool-pane:not(#pane-text){flex:1;min-height:0;overflow:auto;padding:16px}
+ #bookCollection{height:100%;overflow:auto;padding:24px}.note-empty{min-height:0;height:100%}
+ .writing-focus .notes-header,.writing-focus .notebooks-panel,.writing-focus .document-controls,.writing-focus .note-tabs{display:none}
+ .writing-focus .notes-layout{grid-template-columns:1fr;margin-top:10px}
+ .writing-focus #writingFocus{background:var(--accent);color:var(--accent-text)}
+ #notesError:not(:empty){position:fixed;bottom:70px;right:24px;max-width:min(480px,calc(100vw - 48px));padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;z-index:2000}
+ #noteEditor[data-opened] .a4-frame{animation:workspace-enter 160ms ease-out}
+ .notes-app button:active{transform:translateY(1px)}
+ @media(max-width:760px){
+  .notes-app{padding:0 8px}.notes-header{min-height:52px;padding:6px 4px;flex-wrap:nowrap}.portal-brand-copy .portal-name{font-size:24px}.notes-header .symbol{width:36px;height:36px}.notes-account{gap:4px}.notes-account>#notesIdentity{display:none}#showCollection{font-size:10px;padding:6px}#appearanceButton{font-size:10px;padding:6px}
+  .writing-focus .notes-layout{margin-top:6px}.writing-focus .a4-sheet{width:100%;height:auto;min-height:1123px;transform:none!important;padding:32px 24px 60px}.writing-focus .a4-frame{height:auto!important;max-width:none}.writing-focus .a4-sheet .rich-editor{width:100%;height:auto;min-height:960px;font-size:var(--note-font-size,16px);overflow:visible}.writing-focus .sheet-title{left:24px;right:24px;top:8px}
+  .notes-layout{display:flex;flex-direction:column;margin:6px 0;gap:6px}.notebooks-panel{height:auto;max-height:50dvh;padding:0 10px;flex:none}.notebooks-panel:has(#notebookDrawer[open]){overflow:auto}.notebooks-panel #notebookDrawer>summary{padding:9px 0;font-size:12px}.book-list{margin:8px 0}.note-list{display:grid;grid-template-columns:1fr;max-height:200px}.notes-workspace{flex:1;min-height:0}
+  #noteEditor{gap:5px}.document-controls{padding:7px 9px}.note-heading{gap:6px}.note-title{font-size:18px;flex-basis:auto}.note-actions{gap:2px}.note-actions #saveStatus{display:none}.note-actions .secondary-button{font-size:10px;padding:6px;min-height:34px}.page-more summary{padding:6px;font-size:10px}
+  .note-tabs{min-height:34px}.note-tabs button{padding:6px 10px;min-height:34px;font-size:11px}.editor-ribbon{padding:4px;height:42px;min-height:42px}.format-toolbar{flex-basis:auto}.format-toolbar button{min-height:32px}.insert-menu>summary{font-size:11px;padding:6px;min-height:32px}#writingFocus{font-size:0;width:34px;padding:0}#writingFocus::after{content:'⛶';font-size:18px}#pane-text .tool-dock-toggle{font-size:0;width:34px;padding:5px}.editor-desk{padding:8px}.page-navigation{padding:5px;min-height:42px}#pageNumber{display:none}#pageJump{max-width:120px}.page-navigation button{font-size:10px}#notesError:not(:empty){right:12px;bottom:60px}
+ }
+}
+.workspace-dialog{width:min(540px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 24px 90px #0004}
+.workspace-dialog::backdrop{background:#15281e66;backdrop-filter:blur(3px)}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.dialog-heading h2{font:23px Georgia,serif;margin:0}.dialog-heading button{min-height:40px}
+.workspace-dialog .note-properties{display:grid;grid-template-columns:1fr 1fr;border:0;margin:0;padding:0;gap:16px}.workspace-dialog .note-properties label{display:flex;flex-wrap:wrap;font-size:12px;gap:6px}.workspace-dialog select{max-width:100%;color:var(--text)}
+.workspace-dialog .appearance-controls{display:flex;flex-direction:column;align-items:stretch;gap:14px}.print-options{display:grid;grid-template-columns:1fr 1fr;gap:16px}.print-options label{font-size:13px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}.print-options select{width:100%;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}.print-options input[type=checkbox]{width:18px;height:18px}.workspace-dialog p{font-size:12px;line-height:1.6;color:var(--muted)}#confirmPrint{width:100%;min-height:44px}
+#printDocument{position:absolute;left:-20000px;top:0;width:794px;visibility:hidden;pointer-events:none}.printed-page{width:794px;height:1123px}
+/* Text baseline, not the viewport, anchors ruled paper. */
+[data-paper=ruled] .a4-sheet .rich-editor,[data-paper=cornell] .a4-sheet .rich-editor{background-position:0 var(--rule-offset,-6px);background-attachment:local}
+@keyframes workspace-enter{from{opacity:.65;translate:0 4px}to{opacity:1;translate:0 0}}
+@media(prefers-reduced-motion:reduce){.notes-app *,.workspace-dialog{animation:none!important;transition:none!important}}
+@media print{
+ .workspace-dialog,.page-more,#pageJump,#printDocument{display:none!important}
+ .printing-snapshot>.notes-app{display:none!important}.printing-snapshot>#printDocument{display:block!important;position:static!important;width:210mm!important;visibility:visible!important;pointer-events:auto}
+ .printed-page{width:210mm!important;height:297mm!important;break-after:page;overflow:hidden}.printed-page:last-child{break-after:auto}
+ .printed-page .a4-sheet{box-sizing:border-box!important}.printed-page[data-font=sans] .rich-editor{font-family:Arial,sans-serif}.printed-page[data-font=serif] .rich-editor{font-family:Georgia,serif}
+ .printed-page[data-paper=plain] .rich-editor{background:none!important}.printed-page[data-paper=grid] .rich-editor{background-image:linear-gradient(#dce3df 1px,transparent 1px),linear-gradient(90deg,#dce3df 1px,transparent 1px)!important;background-size:28px 28px!important}
+ .printed-page .sheet-number{display:block!important}
+}

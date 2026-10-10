@@ -1,0 +1,24 @@
+<resources>
+ <style name="AlbaTheme" parent="android:style/Theme.Material.NoActionBar">
+  <item name="android:fontFamily">sans</item><item name="android:colorAccent">#b2ce9a</item>
+  <item name="android:windowLightStatusBar">false</item><item name="android:windowActionModeOverlay">true</item>
+  <item name="android:windowBackground">#101b16</item><item name="android:navigationBarColor">#101b16</item>
+ </style>
+ <style name="AlbaThemeLight" parent="android:style/Theme.Material.Light.NoActionBar">
+  <item name="android:fontFamily">sans</item><item name="android:colorAccent">#476844</item>
+  <item name="android:windowLightStatusBar">true</item><item name="android:windowActionModeOverlay">true</item>
+  <item name="android:windowBackground">#f4f5ee</item><item name="android:navigationBarColor">#f4f5ee</item>
+ </style>
+ <style name="AlbaDialogDark" parent="android:style/Theme.Material.Dialog.Alert">
+  <item name="android:colorAccent">#b2ce9a</item><item name="android:textColor">#ecf0e7</item>
+  <item name="android:textColorPrimary">#ecf0e7</item><item name="android:textColorSecondary">#9aa99b</item>
+  <item name="android:colorBackground">#1b2a21</item><item name="android:windowBackground">@android:color/transparent</item>
+  <item name="android:windowMinWidthMajor">94%</item><item name="android:windowMinWidthMinor">94%</item>
+ </style>
+ <style name="AlbaDialogLight" parent="android:style/Theme.Material.Light.Dialog.Alert">
+  <item name="android:colorAccent">#476844</item><item name="android:textColor">#243b2c</item>
+  <item name="android:textColorPrimary">#243b2c</item><item name="android:textColorSecondary">#74816f</item>
+  <item name="android:colorBackground">#fffef9</item><item name="android:windowBackground">@android:color/transparent</item>
+  <item name="android:windowMinWidthMajor">94%</item><item name="android:windowMinWidthMinor">94%</item>
+ </style>
+</resources>

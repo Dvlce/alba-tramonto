@@ -8,9 +8,15 @@ All three web spaces share the same dropdown navigation: existing brand icons, c
 
 [Optimization project](docs/TEST_LAB.md): the IT/EN site at `/optimization` publishes information, sourced news, benchmarks and evolution history. Notte and native Android 1.4 include a private **Test Lab** comparing the same model and prompt through normal Ollama and SSD, with actual outputs, charts and exported reports. [Measured comparison and limitations](docs/TEST_LAB_RESULTS.md).
 
-[ALBA SSD Runtime](docs/SSD_RUNTIME.md): esecuzione del GGUF scelto, kernel ARM nativi, mmap senza copie complete per i modelli grandi, confronto del decoding speculativo e controllo RAM/temperatura. Integrato nella chat avanzata di Notte, con identità del modello e benchmark verificabili. Non promette inferenza fluida oltre la RAM né implementa la cache esperti universale di Colibri.
+[ALBA SSD Runtime](docs/SSD_RUNTIME.md): the selected GGUF, native ARM kernels, memory mapping without full copies of large models, speculative decoding comparisons, and RAM/temperature checks. Integrated into Notte's advanced chat with explicit model identity and reproducible benchmarks. Models exceeding available RAM remain slow; Colibri's universal expert cache is not implemented.
 
-![Tramonto](docs/tramonto.png)
+<p>
+  <img src="docs/android-notebooks.png" width="260" alt="Tramonto notebook library in English">
+  <img src="docs/android-notebook.png" width="260" alt="Tramonto ruled notebook editor in English">
+  <img src="docs/android-chat.png" width="260" alt="Notte native chat in English">
+</p>
+
+Android 1.8.0 · Notebook library, ruled page editor, and chat. Real English UI captures with sample content, without personal data.
 
 ## Features
 
@@ -19,7 +25,7 @@ All three web spaces share the same dropdown navigation: existing brand icons, c
 - Single-use web keys, personal passwords, and remembered browsers that users can revoke. Optional Google, GitHub, Discord, and Twilio Verify sign-in, with encrypted provider secrets. Accounts are not automatically merged by email.
 - Up to 20 authorized users and 5 active chat slots, a queue, Stop controls, monthly token limits, a usage calendar, CPU/RAM/disk readings every 2 seconds, auditing, and encrypted backups with retention.
 - An animated Alba logo and Albi, the original apricot mascot.
-- Tramonto notebook collections, eight paper styles, twelve locally served fonts, tables, and templates. Numbered A4 pages, continuation of long text, and restoration of the current page and position. Pasted or uploaded images can be moved and resized with text alongside them. Formulas, graphs, and lab results can be inserted as PNG notebook objects, with selection, resize handles, width, alignment, and movement controls. Grouped editing commands, an object inspector beside the page, and printing of the A4 page alone.
+- Tramonto notebook collections, eight paper styles, twelve locally served fonts, tables, and templates. A compact workspace keeps writing immediately visible, with page navigation below the sheet, searchable pages, focus mode, and settings dialogs. Numbered A4 pages, automatic continuation of long text, insertion before/after the current page, and restoration of the page and scroll position. Ruled lines follow the selected font size. Pasted or uploaded images can be moved and resized with text alongside them. Formulas, graphs, and lab results can be inserted as PNG notebook objects, with selection, resize handles, width, alignment, and movement controls. Print one page or the whole notebook, choosing original, minimal or study typography, paper style, titles and page numbers; saved notes retain their original styles.
 - Alba and Tramonto appearance settings: Classic, Neomorphism, Glass, Claymorphism, Cybercore, Neobrutalism, Scrapbook, and Surrealism. Light, dark, gray, and black modes, plus six independent palettes remembered on the device. Alba's appearance menu is available before login. Tramonto prints clean white A4 pages without decorative effects. Lucide icons are served locally with their license included.
 - Mathematics: a visual MathLive editor synchronized with LaTeX, adjustable parentheses and multi-row systems. Notebook formulas retain their source and reopen for editing with a double click. LaTeX/KaTeX, plain-text/LaTeX function conversion (including color wrappers), three plotted curves with autoscaling, shaded areas and derivative overlays; real-domain conditions/intervals, zeros, sign tables, occupied quadrants and value tables that can be inserted into the notebook. Trigonometric and hyperbolic functions, numerical limits, symbolic derivatives, integrals, and numerical roots. Numerical estimates are not mathematical proofs.
 - Drawing: editable, draggable text objects; Command-Z / Ctrl-Z undo in drawing, circuits and networks. A handwriting font workshop groups upper/lowercase letters, numbers, accents, Greek and math symbols; draws individual glyphs, saves them with the note, applies the font to notebook and drawing text, and exports OTF files. Missing glyphs use fallback fonts. Named handmade formulas have a separate drawing canvas and reusable library for insertion into notebook text or drawings. Text can be aligned left, centered, aligned right or justified, with alignment preserved on reload.
@@ -80,7 +86,7 @@ To restore a backup, stop the service first and run `maintenance.py restore FILE
 
 ## Android and integration
 
-Get the APK from [Releases](https://github.com/Dvlce/alba-tramonto/releases), or `/download/alba-albi.apk` when it has been installed on the server. Version 1.3.0 uses a native Android interface without a WebView, with a main chat and dropdown navigation in Italian and English. It includes verified Android App Links for personal Telegram login links. Send `/notte` in Alba's private administrator chat to pair the administrator with autonomous messages.
+Get [Android 1.8.0](https://github.com/Dvlce/alba-tramonto/releases/tag/v1.8.0), or `/download/alba-albi.apk` when it has been installed on the server. It uses native Android Views, with Italian/English UI, bottom navigation, light/dark themes, searchable notebook pages, automatic saving, and short transitions. Ruled paper follows text baselines; chat updates preserve existing messages and newly typed drafts. Install over the existing app without uninstalling. Verified Android App Links support personal Telegram login links. Send `/notte` in Alba's private administrator chat to pair the administrator with autonomous messages.
 
 The native editor saves text, drawing, and JSON while preserving advanced objects. Full labs, images, and A4 PDF remain available in the web portal. The app contains neither personal data nor a bundled LLM and requires a server connection. Its HTTPS server address can be changed in the app. See [Android source and build instructions](android/README.md).
 
@@ -92,7 +98,7 @@ To integrate the engine into an existing system, see [alba-local-kit](https://gi
 .venv/bin/python -m unittest discover -s tests
 ```
 
-The automated suite runs on Raspberry Pi and in Linux CI, including four circuits executed in isolated ngspice. Simulator tests require Linux, ngspice, bubblewrap, and available user namespaces.
+The backend suite contains 416 tests and runs on Raspberry Pi and in Linux CI, including four circuits executed in isolated ngspice. Simulator tests require Linux, ngspice, bubblewrap, and available user namespaces. Native Android instrumentation verifies 123 UI and transport checks on an emulator with a fixture API.
 
 Browser checks use Playwright and Chromium:
 
@@ -103,7 +109,7 @@ Browser checks use Playwright and Chromium:
 .venv/bin/python tests/notte_browser_check.py
 ```
 
-Additional checks are available in `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/math_font_browser_check.py`, `tests/function_study_browser_check.py`, `tests/appearance_network_check.py`, and `tests/alba_appearance_check.py`. They use temporary databases and do not require LLM calls. Coverage includes identical portal menus and keyboard focus, theme-aware motion, save-before-navigation and failed-save recovery, private/group isolation, denied exports of another user's data, images, A4 printing, reloads, simulations, accounts, CSRF, revocation, and backup/restore.
+Additional checks are available in `tests/browser_check.py`, `tests/tramonto_browser_check.py`, `tests/labs_browser_check.py`, `tests/notebook_editor_check.py`, `tests/math_font_browser_check.py`, `tests/function_study_browser_check.py`, `tests/handwritten_math_browser_check.py`, `tests/notebook_pages_browser_check.py`, `tests/workspace_browser_check.py`, `tests/appearance_network_check.py`, and `tests/alba_appearance_check.py`. They use temporary databases and do not require LLM calls. Coverage includes identical portal menus and keyboard focus, theme-aware motion, save-before-navigation and failed-save recovery, private/group isolation, denied exports of another user's data, images, A4 printing, reloads, simulations, accounts, CSRF, revocation, and backup/restore.
 
 ## Scope and licenses
 

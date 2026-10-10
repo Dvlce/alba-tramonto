@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 /** Native selectable markdown: fenced code, emphasis, headings and tables. */
 final class NativeMarkdown {
     static TextView text(Context context,String content){
-        TextView view=new TextView(context);view.setTextColor(0xffe3eade);view.setTextSize(15);view.setLineSpacing(3,1.12f);view.setTextIsSelectable(true);view.setPadding(8,6,8,6);
+        TextView view=new TextView(context);view.setTextColor(new NativeUi(context).ink);view.setTextSize(16);view.setLineSpacing(NativeUi.dp(context,3),1.15f);view.setIncludeFontPadding(false);view.setTextIsSelectable(true);view.setPadding(0,NativeUi.dp(context,4),0,NativeUi.dp(context,4));
         SpannableStringBuilder result=new SpannableStringBuilder();
         Matcher matcher=Pattern.compile("(\\*\\*(.+?)\\*\\*|`([^`]+)`)").matcher(content);int end=0;
         while(matcher.find()){
@@ -32,7 +32,7 @@ final class NativeMarkdown {
         for(int i=0;i<sections.length;i++){
             String section=sections[i];if(section.isEmpty())continue;
             if(i%2==1){int newline=section.indexOf('\n');String code=newline>=0?section.substring(newline+1):section;
-                HorizontalScrollView scroll=new HorizontalScrollView(context);TextView view=text(context,code);view.setTypeface(Typeface.MONOSPACE);view.setBackgroundColor(0xff101d16);scroll.addView(view);target.addView(scroll);continue;}
+                HorizontalScrollView scroll=new HorizontalScrollView(context);TextView view=text(context,code);view.setTypeface(Typeface.MONOSPACE);view.setTextSize(13);view.setPadding(NativeUi.dp(context,14),NativeUi.dp(context,12),NativeUi.dp(context,14),NativeUi.dp(context,12));scroll.setBackground(NativeUi.shape(context,new NativeUi(context).soft,14,0));scroll.addView(view);target.addView(scroll);continue;}
             String[] lines=section.split("\n");StringBuilder prose=new StringBuilder();
             for(int line=0;line<lines.length;line++){
                 if(lines[line].trim().startsWith("|")&&line+1<lines.length&&lines[line+1].matches(".*\\|[ :|-]+\\|.*")){

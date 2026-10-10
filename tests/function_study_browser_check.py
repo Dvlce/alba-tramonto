@@ -24,8 +24,19 @@ async def main():
     await page.goto(str(server.make_url('/'))+'#web_key='+keys.issue(1,1,'web'));await page.locator('#dashboard').wait_for(state='visible');await page.goto(str(server.make_url('/tramonto')));await page.locator('#newNote').click();await page.locator('#noteEditor').wait_for(state='visible')
     async def save():assert await page.evaluate('TramontoTools.saveDoc()')
     def content():return json.loads(store.rows('SELECT content FROM notes ORDER BY id LIMIT 1')[0]['content'])
+    await page.locator('[data-pane=math]').click()
+    await page.locator('details[data-math-tool=sign]>summary').click();await page.locator('#calculateSign').click()
+    sign=await page.locator('#signResult').inner_text()
+    assert 'Punti esclusi dal dominio: 2' in sign and 'f(x) = 0: -1' in sign and 'Studio su tutto il dominio' in sign,sign
+    await page.locator('#signExpression').fill('x^2-4');await page.locator('#calculateSign').click()
+    sign=await page.locator('#signResult').inner_text();assert 'f(x) = 0: -2 · 2' in sign and 'f(x) < 0: (-2; 2)' in sign,sign
+    await page.locator('#insertSignStudy').click();await save();assert 'Studio del segno' in content()['html']
+    await page.locator('[data-pane=math]').click();await page.locator('#signExpression').fill('sin(x)');await page.locator('#calculateSign').click();assert 'Stima numerica' in await page.locator('#signResult').inner_text()
+    await page.locator('#signFrom').fill('20');await page.locator('#calculateSign').click();assert await page.locator('#insertSignStudy').is_disabled();assert 'intervallo crescente' in await page.locator('#signMessage').inner_text()
+    await page.locator('#signFrom').fill('-10');await page.locator('#signExpression').fill('x.constructor');await page.locator('#calculateSign').click();assert await page.locator('#insertSignStudy').is_disabled()
+    await page.set_viewport_size({'width':390,'height':844});assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth');await page.set_viewport_size({'width':1600,'height':1100})
     expression=r'\colorbox{white}{$ y=\frac{\sqrt{x-3}}{\sqrt{x^2-1}} $}'
-    await page.locator('[data-pane=math]').click();await page.locator('#formulaInput').fill(expression);await page.locator('#formulaToGraph').click()
+    await page.locator('[data-pane=math]').click();await page.evaluate("TramontoStudy.openTool('formulas')");await page.locator('#formulaInput').fill(expression);await page.locator('#formulaToGraph').click()
     assert await page.locator('#studyDomain').inner_text()=='[3; +∞)'
     assert await page.locator('#studyZeros').inner_text()=='3'
     assert await page.locator('#studyQuadrants').inner_text()=='I'
@@ -42,7 +53,7 @@ async def main():
     await page.locator('#insertGraphNotebook').click();await page.locator('#richEditor img').wait_for();await save();assert len(content()['images'])==1
     await page.locator('[data-pane=math]').click();await page.locator('#insertFunctionStudy').click();await save();assert 'Dominio reale: [3; +∞)' in content()['html'];assert 'Area geometrica' not in content()['html'] or '0.763' in content()['html']
     await page.reload();await page.locator('#noteEditor').wait_for(state='visible');assert await page.locator('#richEditor img').count()==1
-    await page.locator('[data-pane=math]').click();assert await page.locator('#graphShadeArea').is_checked();assert await page.locator('#graphDerivative').is_checked();assert await page.locator('#studyDomain').inner_text()=='[3; +∞)'
+    await page.locator('[data-pane=math]').click();await page.evaluate("TramontoStudy.openTool('graph')");assert await page.locator('#graphShadeArea').is_checked();assert await page.locator('#graphDerivative').is_checked();assert await page.locator('#studyDomain').inner_text()=='[3; +∞)'
     # Preserve centering on root text and headings through sanitizer/reload.
     await page.locator('[data-pane=text]').click();await page.locator('#richEditor').evaluate("e=>{e.innerHTML='Titolo da centrare';e.dispatchEvent(new Event('input',{bubbles:true}));e.focus();const r=document.createRange();r.selectNodeContents(e);const s=getSelection();s.removeAllRanges();s.addRange(r);document.dispatchEvent(new Event('selectionchange'));}")
     await page.locator('[data-format=justifyCenter]').click();await save();assert 'align="center"' in content()['html'],content()['html'];assert 'text-align' not in content()['html']
@@ -54,6 +65,10 @@ async def main():
     assert results['parabola']['domain']=='ℝ';assert results['parabola']['zeros']==[-2,2];assert {s['sign'] for s in results['parabola']['signs']}=={'+','−'}
     assert results['pole'] and results['unsafe']==5 and results['sampled']==[],results
     assert results['singleton']=='{0}' and results['log']=='(0; +∞)' and 'sin(x) ≠ 0' in results['unknown'],results
+    if '--sign-only' in sys.argv:
+     assert not errors,errors
+     await page.locator('[data-pane=math]').click();await page.evaluate("TramontoStudy.openTool('sign')");await page.locator('#signExpression').fill('(x+1)/(x-2)');await page.locator('#calculateSign').click();await page.locator('#signStudyTool').screenshot(path=str(ROOT/'artifacts'/'tramonto-sign-study.png'))
+     await browser.close();print('Sign study OK: rational, polynomial, numerical estimates, invalid input, notebook save, mobile layout and existing graph regressions.');return
     # Separate each glyph and keep Greek, digits and handmade formulas after save.
     await page.locator('[data-pane=draw]').click();await page.locator('#fontWorkshop summary').click();await page.locator('#customFontCategory').select_option('Numeri');await page.locator('#customFontAlphabet button').get_by_text('7',exact=True).click()
     glyph=page.locator('#customGlyphCanvas');await glyph.click(position={'x':80,'y':70});await save();assert '7' in content()['custom_font']['glyphs']

@@ -1,13 +1,22 @@
 'use strict';
 const $=id=>document.getElementById(id), NS='http://www.w3.org/2000/svg';
-const TAGS=['p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img'];
-const DEFAULT={schema:1,html:'',font:'serif',paper:'plain',formulas:[],graph:{expressions:['sin(x)','cos(x)'],x_min:-10,x_max:10,y_min:-2,y_max:2},limit:{expression:'sin(x)/x',point:'0',direction:'both'},drawing:{strokes:[]},circuit:{components:[],wires:[]},network:{nodes:[],links:[]},images:[]};
+const TAGS=['p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img','span','mark'];
+const HIGHLIGHT_COLORS=['#fff19c','#bce8b5','#f6bad6','#b8ddf5'];
+const DEFAULT={schema:1,html:'',font:'serif',font_size:16,letter_spacing:0,paper:'plain',formulas:[],graph:{expressions:['sin(x)','cos(x)'],x_min:-10,x_max:10,y_min:-2,y_max:2},limit:{expression:'sin(x)/x',point:'0',direction:'both'},drawing:{strokes:[]},circuit:{components:[],wires:[]},network:{nodes:[],links:[]},images:[]};
 const clone=value=>JSON.parse(JSON.stringify(value));
 let csrf='',books=[],bookId=null,notes=[],doc=null,dirty=false,saving=false,uploading=false,opening=false,openSequence=0,revision=0,saveTimer=0,activePane='text';
 let drawingHistory=[],circuitHistory=[],stroke=null,erasing=false,circuitMode='select',placing=null,selectedPart=null,selectedWire=null,wireStart=null,drag=null;
 function node(tag,text){const element=document.createElement(tag);if(text!==undefined)element.textContent=text;return element;}
 function svgNode(tag,attrs={},text){const element=document.createElementNS(NS,tag);for(const [key,value]of Object.entries(attrs))element.setAttribute(key,String(value));if(text!==undefined)element.textContent=text;return element;}
-function cleanHtml(value){return DOMPurify.sanitize(value.replace(/\u200b/g,''),{ALLOWED_TAGS:TAGS,ALLOWED_ATTR:['src','width','alt','data-layout','data-latex','align'],ALLOW_DATA_ATTR:false});}
+function cleanHtml(value){
+  const fragment=DOMPurify.sanitize(value.replace(/\u200b/g,''),{ALLOWED_TAGS:TAGS,ALLOWED_ATTR:['src','width','alt','data-layout','data-latex','align','style'],ALLOW_DATA_ATTR:false,RETURN_DOM_FRAGMENT:true});
+  for(const element of fragment.querySelectorAll('[style]')){
+    const color=element.style.backgroundColor.toLowerCase(),match=color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/),hex=match?'#'+match.slice(1).map(n=>Number(n).toString(16).padStart(2,'0')).join(''):color;
+    element.removeAttribute('style');
+    if(element.matches('span,mark')&&HIGHLIGHT_COLORS.includes(hex))element.setAttribute('style','background-color: '+hex+';');
+  }
+  const container=node('div');container.appendChild(fragment);return container.innerHTML;
+}
 function error(message=''){$('notesError').textContent=message;}
 function preference(key,fallback){try{return localStorage.getItem('alba.'+key)||fallback;}catch(_){return fallback;}}
 function appearance(){
@@ -28,9 +37,11 @@ async function api(path,method='GET',body){
   }const failure=new Error(data.error||'Operazione non riuscita.');failure.code=data.code;throw failure;}return data;
 }
 function changed(){if(!doc)return;dirty=true;revision++;$('saveStatus').textContent='Modifiche da salvare…';clearTimeout(saveTimer);saveTimer=setTimeout(saveDoc,1200);}
+function applyTextStyle(){const size=doc?.content.font_size??16,spacing=doc?.content.letter_spacing??0;$('noteFontSize').value=size;$('noteLetterSpacing').value=spacing;const style=$('a4Sheet').style;style.setProperty('--note-font-size',size+'px');style.setProperty('--note-line-height',Math.max(28,Math.ceil(size*1.75))+'px');style.setProperty('--note-letter-spacing',spacing+'px');window.TramontoLab?.fitPage();}
+for(const [id,key,min,max]of [['noteFontSize','font_size',8,72],['noteLetterSpacing','letter_spacing',-2,6]]){const input=$(id),update=clamp=>{if(!doc)return;if(input.value===''||!Number.isFinite(Number(input.value))){if(clamp)applyTextStyle();return;}const value=Number(input.value);if(!clamp&&(value<min||value>max))return;doc.content[key]=Math.max(min,Math.min(max,value));applyTextStyle();changed();};input.addEventListener('input',()=>update(false));input.addEventListener('change',()=>update(true));}
 async function saveDoc(){
   if(uploading){error('Attendi che le immagini siano state importate.');return false;}
-  if(!doc||!dirty)return true;
+  if(!doc)return true;if(!dirty){if(saving)await saving;return !dirty;}
   if(saving){await saving;if(dirty)return saveDoc();return true;}
   const current=doc,id=current.id,stamp=revision;current.content.html=cleanHtml($('richEditor').innerHTML);
   const payload={title:$('noteTitle').value.trim()||'Senza titolo',subject:$('noteSubject').value,notebook_id:current.notebook_id,version:current.version,content:clone(current.content)};
@@ -47,8 +58,8 @@ async function loadBooks(){
   for(const book of books){const button=node('button',book.title);button.type='button';button.className=book.id===bookId?'active':'';button.appendChild(node('small',String(book.note_count)));button.addEventListener('click',async()=>{if(!await saveDoc())return;bookId=book.id;doc=null;dirty=false;$('noteEditor').hidden=true;$('emptyNote').hidden=false;await loadBooks();await loadNotes();if(notes.length)await openNote(notes[0].id,true);});$('bookList').appendChild(button);}
 }
 async function loadNotes(){
-  notes=(await api('/api/tramonto/notes?notebook='+bookId+'&q='+encodeURIComponent($('noteSearch').value))).notes;
-  renderNotes();
+  const requestedBook=bookId,query=$('noteSearch').value;const result=await api('/api/tramonto/notes?notebook='+requestedBook+'&q='+encodeURIComponent(query));
+  if(bookId!==requestedBook||$('noteSearch').value!==query)return;notes=result.notes;renderNotes();
 }
 function renderNotes(){
   $('noteList').replaceChildren();
@@ -62,31 +73,32 @@ async function openNote(id,skipSave=false){
     $('emptyNote').hidden=true;$('noteEditor').hidden=false;$('noteTitle').value=doc.title;$('noteSubject').value=doc.subject;
     $('noteFont').value=doc.content.font;$('notePaper').value=doc.content.paper;$('noteEditor').dataset.font=doc.content.font;$('noteEditor').dataset.paper=doc.content.paper;
     $('sheetTitle').textContent=doc.title;$('richEditor').innerHTML=cleanHtml(doc.content.html);$('saveStatus').textContent='Salvato';
+    applyTextStyle();
     $('plotExpressions').value=doc.content.graph.expressions.join('\n');
     for(const [id,key]of [['xMin','x_min'],['xMax','x_max'],['yMin','y_min'],['yMax','y_max']])$(id).value=doc.content.graph[key];
     $('limitExpression').value=doc.content.limit.expression;$('limitPoint').value=doc.content.limit.point;$('limitDirection').value=doc.content.limit.direction;
-    resetFormula();renderFormulas();renderImages();redrawDrawing();renderCircuit();if(activePane==='math')plot(false);window.TramontoFont?.load();window.TramontoStudy?.load();await loadNotes();window.TramontoLab?.openNote();
+    resetFormula();renderFormulas();renderImages();redrawDrawing();renderCircuit();if(activePane==='math')plot(false);window.TramontoFont?.load();window.TramontoStudy?.load();await loadNotes();window.TramontoLab?.openNote();window.TramontoWorkspace?.opened();
   }catch(failure){error(failure.message);}finally{if(sequence===openSequence){opening=false;$('noteEditor').inert=false;}}
 }
-async function newNote(){
+async function newNote(position){
   $('newNote').disabled=true;$('noteEditor').inert=true;
-  try{if(!await saveDoc())return;const result=await api('/api/tramonto/notes','POST',{notebook_id:bookId,title:'Una nuova idea',subject:'generale',content:clone(DEFAULT)});await loadBooks();await openNote(result.id,true);$('noteTitle').focus();$('noteTitle').select();}catch(failure){error(failure.message);}finally{$('newNote').disabled=false;if(!opening)$('noteEditor').inert=false;}
+  try{if(!await saveDoc())return;const placement=doc&&['before','after'].includes(position)?{[position+'_id']:doc.id}:{};const result=await api('/api/tramonto/notes','POST',{notebook_id:bookId,title:'Una nuova idea',subject:'generale',content:clone(DEFAULT),...placement});await loadBooks();await openNote(result.id,true);if(position){$('richEditor').focus();}else{$('noteTitle').focus();$('noteTitle').select();}}catch(failure){error(failure.message);}finally{$('newNote').disabled=false;if(!opening)$('noteEditor').inert=false;}
 }
 $('newBookForm').addEventListener('submit',async event=>{event.preventDefault();try{if(!await saveDoc())return;const record=await api('/api/tramonto/notebooks','POST',{title:$('newBookName').value.trim()});bookId=record.id;doc=null;dirty=false;$('noteEditor').hidden=true;$('emptyNote').hidden=false;$('newBookName').value='';await loadBooks();await loadNotes();}catch(failure){error(failure.message);}});
-$('newNote').addEventListener('click',newNote);
+$('newNote').addEventListener('click',()=>newNote());
 $('renameBook').addEventListener('click',async()=>{const book=books.find(record=>record.id===bookId),title=prompt('Nome del quaderno',book?.title||'');if(!title)return;try{await api('/api/tramonto/notebooks/'+bookId,'PATCH',{title});await loadBooks();}catch(failure){error(failure.message);}});
 $('deleteBook').addEventListener('click',async()=>{if(!confirm('Eliminare questo quaderno e tutte le sue pagine e immagini?'))return;try{if(!await saveDoc())return;await api('/api/tramonto/notebooks/'+bookId,'DELETE');if(doc&&doc.notebook_id===bookId){doc=null;dirty=false;$('noteEditor').hidden=true;$('emptyNote').hidden=false;}bookId=null;await loadBooks();await loadNotes();}catch(failure){error(failure.message);}});
-$('deleteNote').addEventListener('click',async()=>{if(uploading){error('Attendi il completamento dell’importazione.');return;}if(!doc||!confirm('Eliminare questa pagina e le sue immagini?'))return;try{clearTimeout(saveTimer);if(saving)await saving;await api('/api/tramonto/notes/'+doc.id,'DELETE');doc=null;dirty=false;$('noteEditor').hidden=true;$('emptyNote').hidden=false;await loadBooks();await loadNotes();}catch(failure){error(failure.message);}});
+$('deleteNote').addEventListener('click',async()=>{if(uploading){error('Attendi il completamento dell’importazione.');return;}if(!doc||!confirm('Eliminare questa pagina e le sue immagini?'))return;$('noteEditor').inert=true;try{clearTimeout(saveTimer);if(saving)await saving;const list=(await api('/api/tramonto/notes?notebook='+bookId)).notes,index=list.findIndex(n=>n.id===doc.id),neighbor=list[index+1]||list[index-1];await api('/api/tramonto/notes/'+doc.id,'DELETE');doc=null;dirty=false;$('noteEditor').hidden=true;$('emptyNote').hidden=false;await loadBooks();await loadNotes();if(neighbor)await openNote(neighbor.id,true);}catch(failure){error(failure.message);}finally{if(!opening)$('noteEditor').inert=false;}});
 let searchTimer=0;$('noteSearch').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadNotes().catch(failure=>error(failure.message)),250);});
 for(const id of ['noteTitle','noteSubject'])$(id).addEventListener('input',()=>{if(id==='noteTitle')$('sheetTitle').textContent=$('noteTitle').value;changed();});
-for(const [id,key]of [['noteFont','font'],['notePaper','paper']])$(id).addEventListener('change',()=>{if(!doc)return;doc.content[key]=$(id).value;$('noteEditor').dataset[key]=$(id).value;redrawDrawing();window.TramontoLab?.fitPage();changed();});
+for(const [id,key]of [['noteFont','font'],['notePaper','paper']])$(id).addEventListener('change',()=>{if(!doc)return;if(id==='noteFont'&&$(id).value.startsWith('preset:')){window.TramontoFont?.apply($(id).value.slice(7)).catch(e=>error(e.message));return;}doc.content[key]=$(id).value;$('noteEditor').dataset[key]=$(id).value;redrawDrawing();window.TramontoLab?.fitPage();changed();});
 $('richEditor').addEventListener('input',changed);
 $('richEditor').addEventListener('paste',event=>{if(Array.from(event.clipboardData.files).some(f=>f.type.startsWith('image/')))return;event.preventDefault();const pasted=event.clipboardData.getData('text/html'),plain=event.clipboardData.getData('text/plain');document.execCommand('insertHTML',false,pasted?cleanHtml(pasted):plain.split('\n').map(line=>'<p>'+line.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</p>').join(''));changed();});
 document.querySelectorAll('[data-format]').forEach(button=>{button.addEventListener('mousedown',event=>event.preventDefault());button.addEventListener('click',()=>{window.TramontoLab.format(button.dataset.format,button.dataset.value);});});
 document.querySelectorAll('[data-pane]').forEach(button=>button.addEventListener('click',()=>{activePane=button.dataset.pane;document.querySelectorAll('[data-pane]').forEach(item=>item.classList.toggle('active',item===button));document.querySelectorAll('.tool-pane').forEach(item=>item.hidden=item.id!=='pane-'+activePane);if(activePane==='math')plot(false);if(activePane==='draw')redrawDrawing();if(activePane==='circuit')renderCircuit();window.TramontoLab?.fitPage();}));
 $('saveNote').addEventListener('click',saveDoc);
 
-function latex(target,value){katex.render(value,target,{displayMode:true,throwOnError:false,trust:false,maxExpand:500,maxSize:20});}
+function latex(target,value){katex.render(value,target,{displayMode:true,throwOnError:false,trust:false,maxExpand:500,maxSize:20});window.TramontoFont?.styleFormula(target);}
 // Formula source is kept alongside each notebook image, so the visual editor can reopen it.
 MathfieldElement.fontsDirectory='/tramonto-assets/vendor/mathlive/fonts';
 MathfieldElement.soundsDirectory=null;
@@ -98,7 +110,7 @@ const formulaStatus=node('p');formulaStatus.id='formulaEditStatus';formulaStatus
 const cancelFormula=node('button','Nuova formula');cancelFormula.id='cancelFormulaEdit';cancelFormula.type='button';cancelFormula.className='secondary-button';cancelFormula.hidden=true;$('addFormula').after(cancelFormula);
 function setFormula(value){$('formulaInput').value=value;visualFormula.setValue(value,{silenceNotifications:true});latex($('formulaPreview'),value);}
 function resetFormula(){formulaEditing=null;setFormula('');formulaStatus.textContent='';$('addFormula').textContent='Inserisci formula nel quaderno';cancelFormula.hidden=true;}
-function editFormula(value,target){formulaEditing={...target,note:doc.id};setFormula(value);formulaStatus.textContent='Formula in modifica · salva per applicare i cambiamenti.';$('addFormula').textContent='Aggiorna formula';cancelFormula.hidden=false;document.querySelector('[data-pane=math]').click();visualFormula.focus();}
+function editFormula(value,target){formulaEditing={...target,note:doc.id};setFormula(value);formulaStatus.textContent='Formula in modifica · salva per applicare i cambiamenti.';$('addFormula').textContent='Aggiorna formula';cancelFormula.hidden=false;document.querySelector('[data-pane=math]').click();window.TramontoStudy?.openTool('formulas');visualFormula.focus();}
 cancelFormula.addEventListener('click',resetFormula);
 $('formulaInput').addEventListener('input',()=>{visualFormula.setValue($('formulaInput').value,{silenceNotifications:true});latex($('formulaPreview'),$('formulaInput').value);});
 visualFormula.addEventListener('click',()=>visualFormula.focus());
@@ -450,7 +462,7 @@ $('exportNote').addEventListener('click',async()=>{if(!doc)return;try{doc.conten
   for(const id of doc.content.images){const response=await fetch('/api/tramonto/images/'+id,{credentials:'same-origin'});if(!response.ok)throw new Error('Immagine non disponibile.');const blob=await response.blob(),data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});value.images.push({id,data});}
   const name=($('noteTitle').value||'appunto').replace(/[^\p{L}\p{N} _-]/gu,'').slice(0,80);download(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),name+'.json');
 }catch(failure){error(failure.message);}});
-$('printNote').addEventListener('click',async()=>{if(!doc)return;await document.fonts.ready;const images=Array.from($('richEditor').querySelectorAll('img'));await Promise.all(images.map(image=>image.decode().catch(()=>{})));window.print();});
+$('printNote').addEventListener('click',()=>window.TramontoWorkspace?.showPrint());
 window.addEventListener('beforeunload',event=>{if(dirty||uploading){event.preventDefault();event.returnValue='';}});
 document.addEventListener('alba-before-space-change',event=>{
   event.detail.waitUntil((async()=>{
@@ -462,4 +474,4 @@ window.addEventListener('online',()=>{if(doc&&dirty&&!saving&&!opening&&!uploadi
 window.addEventListener('focus',async()=>{if(doc&&!dirty&&!saving&&!opening&&!uploading)try{const id=doc.id,updated=await api('/api/tramonto/notes/'+id);if(doc?.id===id&&!dirty&&!saving&&!opening&&!uploading&&updated.version!==doc.version)await openNote(id,true);}catch(failure){error(failure.message);}});
 window.TramontoTools={expressionFunction,estimateLimit,plot,saveDoc,redrawDrawing,renderCircuit};
 window.tramontoOpenPage=openNote;
-(async()=>{try{const me=await api('/api/me');if(!me.is_admin){location.replace('/');return;}csrf=me.csrf;$('notesIdentity').textContent=me.name||'Amministratore';const workspace=(await api('/api/tramonto/workspace'));bookId=workspace.notebook_id||null;await loadBooks();await loadNotes();if(notes.length)await openNote(notes.some(n=>n.id===workspace.note_id)?workspace.note_id:notes[0].id,true);if(workspace.note_id===doc?.id)window.TramontoLab?.restorePosition(workspace.scroll_y);}catch(failure){error(failure.message);}})();
+(async()=>{try{const me=await api('/api/me');if(!me.is_admin){location.replace('/');return;}csrf=me.csrf;await window.TramontoFont?.init(me.user_id);$('notesIdentity').textContent=me.name||'Amministratore';const workspace=(await api('/api/tramonto/workspace'));bookId=workspace.notebook_id||null;await loadBooks();await loadNotes();if(notes.length)await openNote(notes.some(n=>n.id===workspace.note_id)?workspace.note_id:notes[0].id,true);if(workspace.note_id===doc?.id)window.TramontoLab?.restorePosition(workspace.scroll_y);}catch(failure){error(failure.message);}})();

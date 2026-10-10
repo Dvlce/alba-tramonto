@@ -47,6 +47,45 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_01_unauthenticated_page_redirects_to_login(self):
         response=await self.req('/tramonto',raw=True,headers={}); self.assertEqual(response.status,302); self.assertEqual(response.headers['Location'],'/?next=tramonto')
+
+    async def test_font_presets_resume_limit_and_versions(self):
+        font={'name':'Calligrafia','weight':10,'glyphs':{'A':[[[20,30],[40,50]]]}}
+        response=await self.req('/fonts','POST',{'font':font});self.assertEqual(response.status,201);preset=await response.json()
+        font['glyphs']['B']=[[[60,70]]];font['name']='Calligrafia aggiornata'
+        response=await self.req('/fonts/'+preset['id'],'PUT',{'font':font,'version':1});self.assertEqual(response.status,200)
+        self.assertEqual((await self.req('/fonts/'+preset['id'],'PUT',{'font':font,'version':1})).status,409)
+        saved=(await (await self.req('/fonts')).json())['fonts'];self.assertEqual(saved[0]['font'],font);self.assertEqual(saved[0]['version'],2)
+        for n in range(9):self.assertEqual((await self.req('/fonts','POST',{'font':{'name':str(n),'weight':10,'glyphs':{}}})).status,201)
+        self.assertEqual((await self.req('/fonts','POST',{'font':font})).status,403)
+        self.assertEqual((await self.req('/fonts/'+preset['id'],'DELETE',{'version':1})).status,409)
+        self.assertEqual((await self.req('/fonts/'+preset['id'],'DELETE',{'version':2})).status,200)
+        self.assertEqual((await self.req('/fonts','POST',{'font':font})).status,201)
+
+    async def test_legacy_page_fonts_recovered_once_without_changing_notes(self):
+        font={'name':'Giada','weight':10,'glyphs':{'A':[[[20,30],[40,50]]]}}
+        value=await self.document();value['content']['custom_font']=font;value['content']['font']='custom'
+        self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        original=await self.document()
+        saved=(await (await self.req('/fonts')).json())['fonts'];self.assertEqual(len(saved),1);self.assertEqual(saved[0]['font'],font)
+        self.assertEqual(await self.document(),original)
+        self.assertEqual((await (await self.req('/fonts',uid=4)).json())['fonts'],[])
+        self.assertEqual((await self.req('/fonts/'+saved[0]['id'],'DELETE',{'version':1})).status,200)
+        self.assertEqual((await (await self.req('/fonts')).json())['fonts'],[])
+
+    async def test_font_presets_privacy_validation_and_backup(self):
+        font={'name':'Privato','weight':10,'glyphs':{'A':[[[20,30],[40,50]]]},'templates':[{'id':'formula','name':'Formula','strokes':[[[12,34]]]}]}
+        preset=await (await self.req('/fonts','POST',{'font':font})).json()
+        self.assertEqual((await (await self.req('/fonts',uid=4)).json())['fonts'],[])
+        self.assertEqual((await self.req('/fonts',uid=2)).status,403)
+        for method in ('PUT','DELETE'):self.assertEqual((await self.req('/fonts/'+preset['id'],method,{'font':font,'version':1},uid=4)).status,403)
+        self.assertEqual((await self.req('/fonts','POST',{'font':font},headers={'Cookie':self.headers[1]['Cookie']})).status,403)
+        self.assertEqual((await self.req('/fonts','POST',{'font':{'glyphs':{'A':[[[301,0]]]}}})).status,403)
+        self.assertEqual((await self.req('/fonts','POST',{'font':font,'user_id':4})).status,403)
+        backup=self.backups.create('manual');destination=self.settings.data/'fonts-restored.sqlite3';self.backups.restore(backup,destination)
+        restored=Store(destination)
+        try:self.assertEqual(json.loads(restored.rows('SELECT content FROM font_presets')[0]['content']),font)
+        finally:restored.close()
+        self.store.forget_user(1);self.assertEqual(self.store.rows('SELECT * FROM font_presets'),[])
     async def test_02_user_cannot_open_page_or_assets(self):
         for path in ('/tramonto','/tramonto-assets/tramonto.js','/tramonto-assets/tramonto.css'):
             self.assertEqual((await self.req(path,uid=2,raw=True)).status,403)
@@ -77,6 +116,73 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
         value=await self.document(); value['title']='Primo'; self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
         value['title']='Obsoleto'; response=await self.req('/notes/'+str(self.note),'PUT',value)
         self.assertEqual(response.status,409); self.assertEqual((await response.json())['code'],'version_conflict'); self.assertEqual((await self.document())['title'],'Primo')
+
+    async def test_page_insertion_order_numbers_and_deletion(self):
+        async def create(**placement):
+            response=await self.req('/notes','POST',{'notebook_id':self.book,**placement})
+            self.assertEqual(response.status,201);return (await response.json())['id']
+        last=await create();before=await create(before_id=self.note);middle=await create(after_id=self.note)
+        listing=(await (await self.req('/notes?notebook='+str(self.book))).json())['notes']
+        self.assertEqual([p['id'] for p in listing],[before,self.note,middle,last])
+        self.assertEqual([p['page_number'] for p in listing],[1,2,3,4])
+        self.assertEqual((await self.document(middle))['page_number'],3)
+        await self.req('/notes/'+str(middle),'DELETE')
+        self.assertEqual((await self.document(last))['page_number'],3)
+        book=(await (await self.req('/notebooks','POST',{'title':'Altro'})).json())['id']
+        response=await self.req('/notes','POST',{'notebook_id':book,'before_id':self.note})
+        self.assertEqual(response.status,403)
+        response=await self.req('/notes','POST',{'notebook_id':self.book,'before_id':before,'after_id':last})
+        self.assertEqual(response.status,403)
+        response=await self.req('/notes','POST',{'notebook_id':self.book,'after_id':True})
+        self.assertEqual(response.status,403)
+        self.assertEqual((await self.req('/notes','POST',{'notebook_id':self.book,'after_id':self.note},uid=4)).status,403)
+
+    async def test_pagination_is_atomic_and_inserts_before_following_page(self):
+        last=(await (await self.req('/notes','POST',{'notebook_id':self.book,'title':'Pagina seguente','content':{'html':'<p>Testo da conservare</p>'}})).json())['id']
+        image=(await (await self.upload()).json())['id'];value=await self.document()
+        value['content'].update(html='<p>Prima</p><p>Seconda</p>',images=[image],paper='ruled',font_size=20)
+        self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        value=await self.document();pages=['<p>Prima</p>','<p><span style="background-color: #fff19c;">Seconda</span><img src="/api/tramonto/images/'+str(image)+'" width="200"></p>','<p>Terza</p>']
+        response=await self.req('/notes/'+str(self.note)+'/paginate','POST',{'version':value['version']-1,'pages':pages})
+        self.assertEqual(response.status,409)
+        self.assertEqual(await self.document(),value)
+        response=await self.req('/notes/'+str(self.note)+'/paginate','POST',{'version':value['version'],'pages':[pages[0],'<img src="/api/tramonto/images/999999">']})
+        self.assertEqual(response.status,403);self.assertEqual(await self.document(),value)
+        response=await self.req('/notes/'+str(self.note)+'/paginate','POST',{'version':value['version'],'pages':pages})
+        self.assertEqual(response.status,200);ids=(await response.json())['ids']
+        listing=(await (await self.req('/notes?notebook='+str(self.book))).json())['notes']
+        self.assertEqual([p['id'] for p in listing],ids+[last]);self.assertEqual([p['page_number'] for p in listing],[1,2,3,4])
+        self.assertEqual((await self.document())['content']['html'],pages[0])
+        second=await self.document(ids[1]);self.assertEqual(second['content']['paper'],'ruled');self.assertEqual(second['content']['font_size'],20)
+        copied=second['content']['images'][0];self.assertNotEqual(copied,image)
+        self.assertEqual(await (await self.req('/images/'+str(copied))).read(),PNG)
+        self.assertIn('background-color: #fff19c;',second['content']['html'])
+        self.assertEqual((await self.document(last))['content']['html'],'<p>Testo da conservare</p>')
+        self.assertEqual((await self.req('/notes/'+str(self.note)+'/paginate','POST',{'version':value['version'],'pages':pages},uid=4)).status,403)
+
+    async def test_failed_image_copy_does_not_shift_or_create_pages(self):
+        image=(await (await self.upload()).json())['id']
+        last=(await (await self.req('/notes','POST',{'notebook_id':self.book})).json())['id']
+        original=self.store.rows('SELECT id,position FROM notes ORDER BY position')
+        response=await self.req('/notes','POST',{'notebook_id':self.book,'after_id':self.note,'copy_images_from':last,'content':{'html':'<img src="/api/tramonto/images/'+str(image)+'">','images':[image]}})
+        self.assertEqual(response.status,403);self.assertEqual(self.store.rows('SELECT id,position FROM notes ORDER BY position'),original)
+
+    def test_highlights_keep_only_safe_palette_backgrounds(self):
+        from tramonto import rich_text
+        self.assertEqual(rich_text('<span style="background-color: #fff19c;">Giallo <b>grassetto</b></span>'),'<span style="background-color: #fff19c;">Giallo <b>grassetto</b></span>')
+        for style in ('background-color: #000000;','background-color: #fff19c;position:fixed','background-image:url(https://bad.test)','color:red'):
+            self.assertEqual(rich_text('<span style="'+style+'" onclick="bad()">Testo</span>'),'<span>Testo</span>')
+
+    def test_legacy_page_order_migrates_once(self):
+        import sqlite3
+        from store import SCHEMA
+        path=Path(self.tmp.name)/'legacy.sqlite3';connection=sqlite3.connect(path)
+        connection.executescript(SCHEMA.replace(',position INTEGER NOT NULL DEFAULT 0',''))
+        for i in (3,9):connection.execute('INSERT INTO notes(id,user_id,notebook_id,title,subject,content,created,updated) VALUES(?,1,1,?,\'generale\',\'{}\',0,0)',(i,str(i)))
+        connection.commit();connection.close();legacy=Store(path)
+        self.assertEqual(legacy.rows('SELECT id,position FROM notes ORDER BY position'),[{'id':3,'position':3},{'id':9,'position':9}])
+        legacy.execute('UPDATE notes SET position=1 WHERE id=9');legacy.close();legacy=Store(path)
+        self.assertEqual([p['id'] for p in legacy.rows('SELECT id FROM notes ORDER BY position')],[9,3]);legacy.close()
     async def test_11_html_is_sanitized_on_server(self):
         value=await self.document(); value['content']['html']='<p onclick="alert(1)">Ciao<img src=x onerror=alert(2)></p><script>alert(3)</script><iframe src="https://bad.test"></iframe>'
         self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
@@ -174,6 +280,20 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
         for key,bad in (('text_size',200),('text','A'*1001),('font','bad')):
             broken=copy.deepcopy(data);broken['drawing']['strokes'][0][key]=bad
             with self.assertRaises(ValueError):content_data(broken)
+
+    async def test_font_symbols_and_text_size_roundtrip(self):
+        value=await self.document()
+        symbols='#"\'`“”‘’«»\\_&@€'
+        value['content'].update(font_size=32,letter_spacing=-.5,custom_font={'name':'Simboli','weight':10,'glyphs':{char:[[[40,200],[80,40]]] for char in symbols}})
+        self.assertEqual((await self.req('/notes/'+str(self.note),'PUT',value)).status,200)
+        saved=(await self.document())['content'];self.assertEqual(saved['font_size'],32);self.assertEqual(saved['letter_spacing'],-.5);self.assertEqual(set(saved['custom_font']['glyphs']),set(symbols))
+        for key,bad in [('font_size',7),('font_size',73),('font_size',True),('letter_spacing',-3),('letter_spacing',float('nan'))]:
+            broken=copy.deepcopy(saved);broken[key]=bad
+            with self.assertRaises(ValueError):content_data(broken)
+        saved['custom_font']['glyphs']={chr(0x400+n):[[[10,20]]] for n in range(512)}
+        self.assertEqual(len(content_data(saved)['custom_font']['glyphs']),512)
+        saved['custom_font']['glyphs']['#']=[[[10,20]]]
+        with self.assertRaises(ValueError):content_data(saved)
 
     def test_33_graph_study_and_handmade_formulas_roundtrip(self):
         data=content_data({})

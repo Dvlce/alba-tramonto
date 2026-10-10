@@ -4,20 +4,27 @@ import json
 import math
 import re
 import time
+import uuid
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
 from aiohttp import web
 from lab import PORTS,validate_network,validate_params,setup_labs
 
+MAX_FONT_GLYPHS=512
+
 SUBJECTS={'generale','italiano','storia','matematica','telecomunicazioni','sistemi_reti','scienze','altro'}
-TAGS={'p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img'}
+TAGS={'p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img','span','mark'}
+HIGHLIGHT_COLORS={'#fff19c','#bce8b5','#f6bad6','#b8ddf5'}
 
 class RichText(HTMLParser):
     def __init__(self,images=(),formula_sources=None): super().__init__(convert_charrefs=True); self.output=[]; self.images=set(images); self.formula_sources=formula_sources or {}
     def handle_starttag(self,tag,attrs):
         if tag not in TAGS: return
         attributes={k:v or '' for k,v in attrs}; safe=[]
+        if tag in ('span','mark'):
+            match=re.fullmatch(r'\s*background-color\s*:\s*(#[a-fA-F0-9]{6})\s*;?\s*',attributes.get('style',''))
+            if match and match[1].lower() in HIGHLIGHT_COLORS: safe.append(('style','background-color: '+match[1].lower()+';'))
         if tag=='img':
             match=re.fullmatch(r'/api/tramonto/images/([0-9]+)(?:\?v=[0-9]+)?',attributes.get('src',''))
             if not match or int(match[1]) not in self.images: return
@@ -50,10 +57,43 @@ def identifier(value):
     if not isinstance(value,str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}',value): raise ValueError('Identificatore non valido.')
     return value
 
+def custom_font_data(custom):
+    if not isinstance(custom,dict) or not isinstance(custom.get('glyphs'),dict) or len(custom['glyphs'])>MAX_FONT_GLYPHS: raise ValueError('Font personale non valido.')
+    glyphs={};count=0
+    for char,lines in custom['glyphs'].items():
+        if not isinstance(char,str) or len(char)!=1 or not isinstance(lines,list) or len(lines)>100: raise ValueError('Carattere non valido.')
+        glyphs[char]=[]
+        for line in lines:
+            if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto del carattere non valido.')
+            count+=len(line)
+            if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font troppo dettagliato.')
+            glyphs[char].append([[number(p[0],0,300),number(p[1],0,300)] for p in line])
+    result={'name':text(custom.get('name','Il mio font'),60),'glyphs':glyphs,'weight':number(custom.get('weight',10),2,24)}
+    if 'templates' in custom:
+        templates=custom['templates']
+        if not isinstance(templates,list) or len(templates)>20: raise ValueError('Troppe formule disegnate.')
+        clean=[]; ids=set()
+        for template in templates:
+            if not isinstance(template,dict): raise ValueError('Formula disegnata non valida.')
+            key=identifier(template.get('id'))
+            if key in ids: raise ValueError('Formula disegnata duplicata.')
+            ids.add(key); lines=template.get('strokes')
+            if not isinstance(lines,list) or not 1<=len(lines)<=100: raise ValueError('Tratti della formula non validi.')
+            strokes=[]
+            for line in lines:
+                if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto della formula non valido.')
+                count+=len(line)
+                if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font e formule troppo dettagliati.')
+                strokes.append([[number(p[0],0,600),number(p[1],0,220)] for p in line])
+            clean.append({'id':key,'name':text(template.get('name'),60,False),'strokes':strokes})
+        result['templates']=clean
+    if 'preset_id' in custom: result['preset_id']=identifier(custom['preset_id'])
+    return result
+
 def content_data(data):
     if not isinstance(data,dict): raise ValueError('Appunto non valido.')
     if len(json.dumps(data).encode())>1000000: raise ValueError('Appunto troppo grande; suddividilo in più pagine.')
-    result={'schema':1}
+    result={'schema':1,'font_size':number(data.get('font_size',16),8,72),'letter_spacing':number(data.get('letter_spacing',0),-2,6)}
     for key,choices,default in (('font',{'custom','sans','serif','mono','round','book','classic','humanist','geometric','slab','hand','script','typewriter'},'serif'),('paper',{'plain','ruled','grid','dots','cornell','engineering','music','isometric'},'plain')):
         value=data.get(key,default)
         if not isinstance(value,str) or value not in choices: raise ValueError('Stile non valido.')
@@ -99,35 +139,7 @@ def content_data(data):
     result['drawing']={'strokes':strokes}
     custom=data.get('custom_font')
     if custom is not None:
-        if not isinstance(custom,dict) or not isinstance(custom.get('glyphs'),dict) or len(custom['glyphs'])>160: raise ValueError('Font personale non valido.')
-        glyphs={};count=0
-        for char,lines in custom['glyphs'].items():
-            if not isinstance(char,str) or len(char)!=1 or not isinstance(lines,list) or len(lines)>100: raise ValueError('Carattere non valido.')
-            glyphs[char]=[]
-            for line in lines:
-                if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto del carattere non valido.')
-                count+=len(line)
-                if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font troppo dettagliato.')
-                glyphs[char].append([[number(p[0],0,300),number(p[1],0,300)] for p in line])
-        result['custom_font']={'name':text(custom.get('name','Il mio font'),60),'glyphs':glyphs,'weight':number(custom.get('weight',10),2,24)}
-        if 'templates' in custom:
-            templates=custom['templates']
-            if not isinstance(templates,list) or len(templates)>20: raise ValueError('Troppe formule disegnate.')
-            clean=[]; ids=set()
-            for template in templates:
-                if not isinstance(template,dict): raise ValueError('Formula disegnata non valida.')
-                key=identifier(template.get('id'))
-                if key in ids: raise ValueError('Formula disegnata duplicata.')
-                ids.add(key); lines=template.get('strokes')
-                if not isinstance(lines,list) or not 1<=len(lines)<=100: raise ValueError('Tratti della formula non validi.')
-                strokes=[]
-                for line in lines:
-                    if not isinstance(line,list) or not 1<=len(line)<=1000: raise ValueError('Tratto della formula non valido.')
-                    count+=len(line)
-                    if count>30000 or any(not isinstance(p,list) or len(p)!=2 for p in line): raise ValueError('Font e formule troppo dettagliati.')
-                    strokes.append([[number(p[0],0,600),number(p[1],0,220)] for p in line])
-                clean.append({'id':key,'name':text(template.get('name'),60,False),'strokes':strokes})
-            result['custom_font']['templates']=clean
+        result['custom_font']=custom_font_data(custom)
 
     circuit=data.get('circuit',{'components':[],'wires':[]})
     if not isinstance(circuit,dict) or not isinstance(circuit.get('components'),list) or not isinstance(circuit.get('wires'),list) or len(circuit['components'])>100 or len(circuit['wires'])>200: raise ValueError('Schema non valido.')
@@ -231,13 +243,30 @@ def setup_tramonto(app,service):
                 book=owned('notebooks',request.query['notebook'],uid); query+=' AND notebook_id=?'; args.append(book['id'])
             search=request.query.get('q','')[:100]
             if search: query+=' AND (title LIKE ? OR content LIKE ?)'; args.extend(['%'+search+'%']*2)
-            query=query.replace('SELECT id,notebook_id,title,subject,version,updated','SELECT id,notebook_id,title,subject,version,updated, (SELECT count(*) FROM notes p WHERE p.user_id=notes.user_id AND p.notebook_id=notes.notebook_id AND p.id<=notes.id) AS page_number')
-            return web.json_response({'notes':store.rows(query+' ORDER BY id ASC LIMIT 500',args)})
+            query=query.replace('SELECT id,notebook_id,title,subject,version,updated','SELECT id,notebook_id,title,subject,version,updated, (SELECT count(*) FROM notes p WHERE p.user_id=notes.user_id AND p.notebook_id=notes.notebook_id AND (p.position<notes.position OR (p.position=notes.position AND p.id<=notes.id))) AS page_number')
+            return web.json_response({'notes':store.rows(query+' ORDER BY position ASC,id ASC LIMIT 500',args)})
         value=await body(request); book=owned('notebooks',value.get('notebook_id'),uid); now=time.time()
         subject=value.get('subject','generale')
         if not isinstance(subject,str) or subject not in SUBJECTS: raise ValueError('Materia non valida.')
         content=content_data(value.get('content',{}))
-        source_id=value.get('copy_images_from')
+        title=text(value.get('title','Nuovo appunto'),180,False).strip()
+        anchors=[key for key in ('before_id','after_id') if key in value]
+        if len(anchors)>1: raise ValueError('Scegli una sola posizione per la pagina.')
+        anchor=None
+        if anchors:
+            if type(value[anchors[0]]) is not int: raise ValueError('Posizione della pagina non valida.')
+            anchor=owned('notes',value[anchors[0]],uid)
+            if anchor['notebook_id']!=book['id']: raise PermissionError()
+        with store.db:
+            if anchor:
+                position=anchor['position']+(1 if anchors[0]=='after_id' else 0)
+                store.db.execute('UPDATE notes SET position=position+1 WHERE user_id=? AND notebook_id=? AND position>=?',(uid,book['id'],position))
+            else: position=store.rows('SELECT coalesce(max(position),0)+1 AS n FROM notes WHERE user_id=? AND notebook_id=?',(uid,book['id']))[0]['n']
+            record=create_page(uid,book['id'],title,subject,content,position,now,value.get('copy_images_from'))
+            store.db.execute('UPDATE notebooks SET updated=? WHERE id=?',(now,book['id']))
+        return web.json_response({'id':record,'version':1},status=201)
+    def create_page(uid,book_id,title,subject,content,position,now,source_id=None):
+        # The caller owns the transaction, including image copies and page ordering.
         if content['images']:
             source=owned('notes',source_id,uid); mapping={}
             for image_id in content['images']:
@@ -245,17 +274,43 @@ def setup_tramonto(app,service):
                 if image_record['note_id']!=source['id']: raise PermissionError()
                 mapping[image_id]=image_record
         else: mapping={} 
-        record=store.execute('INSERT INTO notes(user_id,notebook_id,title,subject,content,created,updated) VALUES(?,?,?,?,?,?,?)',
-                            (uid,book['id'],text(value.get('title','Nuovo appunto'),180,False).strip(),subject,json.dumps(content,ensure_ascii=False),now,now)).lastrowid
+        record=store.db.execute('INSERT INTO notes(user_id,notebook_id,title,subject,content,created,updated,position) VALUES(?,?,?,?,?,?,?,?)',
+                            (uid,book_id,title,subject,json.dumps(content,ensure_ascii=False),now,now,position)).lastrowid
         if mapping:
             html_value=content['html']; image_ids=[]
             for old,asset in mapping.items():
-                copied=store.execute('INSERT INTO note_images(user_id,note_id,name,mime,data,created) VALUES(?,?,?,?,?,?)',(uid,record,asset['name'],asset['mime'],asset['data'],now)).lastrowid
+                copied=store.db.execute('INSERT INTO note_images(user_id,note_id,name,mime,data,created) VALUES(?,?,?,?,?,?)',(uid,record,asset['name'],asset['mime'],asset['data'],now)).lastrowid
                 image_ids.append(copied)
                 html_value=re.sub(r'(/api/tramonto/images/)'+str(old)+r'(?=["\s>?])',lambda m:m[1]+str(copied),html_value)
-            content.update(images=image_ids,html=html_value); store.execute('UPDATE notes SET content=? WHERE id=?',(json.dumps(content,ensure_ascii=False),record))
-        store.execute('UPDATE notebooks SET updated=? WHERE id=?',(now,book['id']))
-        return web.json_response({'id':record,'version':1},status=201)
+            content.update(images=image_ids,html=html_value); store.db.execute('UPDATE notes SET content=? WHERE id=?',(json.dumps(content,ensure_ascii=False),record))
+        return record
+    async def paginate_note(request):
+        uid=admin(request); value=await body(request); record=owned('notes',request.match_info['id'],uid)
+        if type(value.get('version')) is not int: raise ValueError('Versione della pagina non valida.')
+        if value['version']!=record['version']:
+            return web.json_response({'error':'La pagina è cambiata su un altro dispositivo. Ricaricala prima di distribuirla.','code':'version_conflict'},status=409)
+        pages=value.get('pages')
+        if not isinstance(pages,list) or not 2<=len(pages)<=60: raise ValueError('Distribuisci da 2 a 60 pagine per volta.')
+        pages=[text(page,200000,False) for page in pages]
+        if sum(map(len,pages))>200000: raise ValueError('Testo troppo lungo.')
+        content=content_data(json.loads(record['content'])); image_ids=content['images']; continuations=[]
+        for page_html in pages[1:]:
+            next_content={key:content[key] for key in ('font','font_size','letter_spacing','paper','custom_font') if key in content}
+            next_content.update(html=page_html,images=list(dict.fromkeys(int(m[1]) for m in re.finditer(r'/api/tramonto/images/(\d+)',page_html))))
+            if any(image not in image_ids for image in next_content['images']): raise PermissionError()
+            continuations.append(content_data(next_content))
+        content['html']=rich_text(pages[0],image_ids); now=time.time(); ids=[record['id']]
+        with store.db:
+            changed=store.db.execute('UPDATE notes SET content=?,version=version+1,updated=? WHERE id=? AND user_id=? AND version=?',
+                                    (json.dumps(content,ensure_ascii=False),now,record['id'],uid,value['version']))
+            if not changed.rowcount: raise ValueError('La pagina è cambiata prima della distribuzione.')
+            store.db.execute('UPDATE notes SET position=position+? WHERE user_id=? AND notebook_id=? AND position>?',
+                             (len(continuations),uid,record['notebook_id'],record['position']))
+            for i,next_content in enumerate(continuations,1):
+                suffix=' · continua '+str(i+1)
+                ids.append(create_page(uid,record['notebook_id'],record['title'][:180-len(suffix)]+suffix,record['subject'],next_content,record['position']+i,now,record['id']))
+            store.db.execute('UPDATE notebooks SET updated=? WHERE id=?',(now,record['notebook_id']))
+        return web.json_response({'ids':ids,'version':value['version']+1,'updated':now})
     async def note(request):
         uid=admin(request); record=owned('notes',request.match_info['id'],uid)
         if request.method=='GET':
@@ -268,7 +323,7 @@ def setup_tramonto(app,service):
                 saved=re.fullmatch(r'savedFormula([0-9]+)\.png',asset['name'])
                 if saved and int(saved[1])<len(formulas): sources[asset['id']]=formulas[int(saved[1])]
             parser=RichText(content['images'],sources);parser.feed(content['html']);content['html']=''.join(parser.output)
-            record['page_number']=store.rows('SELECT count(*) AS n FROM notes WHERE user_id=? AND notebook_id=? AND id<=?',(uid,record['notebook_id'],record['id']))[0]['n']; record.pop('user_id'); return web.json_response(record)
+            record['page_number']=store.rows('SELECT count(*) AS n FROM notes WHERE user_id=? AND notebook_id=? AND (position<? OR (position=? AND id<=?))',(uid,record['notebook_id'],record['position'],record['position'],record['id']))[0]['n']; record.pop('user_id'); return web.json_response(record)
         if request.method=='DELETE':
             with store.db:
                 store.db.execute('DELETE FROM note_images WHERE note_id=? AND user_id=?',(record['id'],uid))
@@ -314,6 +369,51 @@ def setup_tramonto(app,service):
                 store.db.execute('UPDATE notes SET content=?,version=version+1,updated=? WHERE id=? AND user_id=?',(json.dumps(data,ensure_ascii=False),time.time(),record['note_id'],uid))
             return web.json_response({'ok':True})
         return web.Response(body=record['data'],content_type=record['mime'],headers={'Content-Disposition':'inline'})
+    def preset_record(record):
+        return {'id':record['id'],'font':custom_font_data(json.loads(record['content'])),'version':record['version'],'updated':record['updated']}
+    async def font_presets(request):
+        uid=admin(request)
+        if request.method=='GET':
+            if request.query: raise PermissionError()
+            recovery_key='tramonto_font_recovery_'+str(uid)
+            if not store.setting(recovery_key):
+                # Older fonts lived only in page snapshots. Recover once without
+                # changing those pages or resurrecting a subsequently deleted preset.
+                with store.db:
+                    existing=store.rows('SELECT content FROM font_presets WHERE user_id=?',(uid,))
+                    names={json.loads(r['content']).get('name') for r in existing}
+                    count=len(existing)
+                    for record in store.rows('SELECT content,updated FROM notes WHERE user_id=? ORDER BY updated DESC,id DESC',(uid,)):
+                        if count>=10: break
+                        try:
+                            value=json.loads(record['content']).get('custom_font')
+                            if not value: continue
+                            font=custom_font_data(value);font.pop('preset_id',None)
+                        except (ValueError,TypeError,KeyError): continue
+                        if font['name'] in names or not any(font['glyphs'].values()): continue
+                        store.db.execute('INSERT INTO font_presets(id,user_id,content,updated) VALUES(?,?,?,?)',(uuid.uuid4().hex,uid,json.dumps(font,ensure_ascii=False),record['updated']))
+                        names.add(font['name']);count+=1
+                    store.db.execute('INSERT OR REPLACE INTO app_settings VALUES(?,?)',(recovery_key,'1'))
+            return web.json_response({'fonts':[preset_record(r) for r in store.rows('SELECT * FROM font_presets WHERE user_id=? ORDER BY updated DESC,id',(uid,))]})
+        value=await body(request); font=custom_font_data(value.get('font')); key=uuid.uuid4().hex; now=time.time()
+        with store.db:
+            if store.rows('SELECT count(*) AS n FROM font_presets WHERE user_id=?',(uid,))[0]['n']>=10: raise ValueError('Puoi salvare fino a 10 font. Modifica un preset esistente o eliminane uno.')
+            store.db.execute('INSERT INTO font_presets(id,user_id,content,updated) VALUES(?,?,?,?)',(key,uid,json.dumps(font,ensure_ascii=False),now))
+        return web.json_response({'id':key,'font':font,'version':1,'updated':now},status=201)
+    async def font_preset(request):
+        uid=admin(request); key=identifier(request.match_info['id'])
+        records=store.rows('SELECT * FROM font_presets WHERE id=? AND user_id=?',(key,uid))
+        if not records: raise PermissionError()
+        value=await body(request)
+        if type(value.get('version')) is not int: raise ValueError('Versione del font non valida.')
+        if request.method=='DELETE':
+            result=store.execute('DELETE FROM font_presets WHERE id=? AND user_id=? AND version=?',(key,uid,value['version']))
+        else:
+            font=custom_font_data(value.get('font')); now=time.time()
+            result=store.execute('UPDATE font_presets SET content=?,version=version+1,updated=? WHERE id=? AND user_id=? AND version=?',(json.dumps(font,ensure_ascii=False),now,key,uid,value['version']))
+        if not result.rowcount: return web.json_response({'error':'Il preset è cambiato su un altro dispositivo. Le modifiche locali sono conservate: ricarica la raccolta prima di riprovare.','code':'version_conflict'},status=409)
+        if request.method=='DELETE': return web.json_response({'ok':True})
+        return web.json_response({'id':key,'font':font,'version':value['version']+1,'updated':now})
     async def workspace(request):
         uid=admin(request)
         if request.method=='GET':
@@ -334,6 +434,8 @@ def setup_tramonto(app,service):
         web.patch('/api/tramonto/notebooks/{id}',notebook),web.delete('/api/tramonto/notebooks/{id}',notebook),
         web.get('/api/tramonto/notes',notes),web.post('/api/tramonto/notes',notes),
         web.get('/api/tramonto/notes/{id}',note),web.put('/api/tramonto/notes/{id}',note),web.delete('/api/tramonto/notes/{id}',note),
+        web.post('/api/tramonto/notes/{id}/paginate',paginate_note),
         web.post('/api/tramonto/notes/{id}/images',upload),web.get('/api/tramonto/images/{id}',image),web.delete('/api/tramonto/images/{id}',image)])
     app.add_routes([web.get('/api/tramonto/workspace',workspace),web.post('/api/tramonto/workspace',workspace)])
+    app.add_routes([web.get('/api/tramonto/fonts',font_presets),web.post('/api/tramonto/fonts',font_presets),web.put('/api/tramonto/fonts/{id}',font_preset),web.delete('/api/tramonto/fonts/{id}',font_preset)])
     setup_labs(app,service,admin,owned,body)

@@ -21,11 +21,11 @@ final class NativeBars extends View {
     }
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);
-        c.save();c.scale(getWidth()/660f,getWidth()/660f);paint.setTextSize(19);paint.setColor(0xffe3eade);c.drawText(title,0,23,paint);
+        c.save();c.scale(getWidth()/660f,getWidth()/660f);paint.setTextSize(19);paint.setColor(new NativeUi(getContext()).ink);c.drawText(title,0,23,paint);
         double max=1;for(int i=0;i<samples.length();i++)max=Math.max(max,measured(samples.optJSONObject(i),0));
-        for(int i=0;i<samples.length();i++){JSONObject s=samples.optJSONObject(i);float y=40+i*60;boolean normal=s.optString("backend").equals("normal");paint.setColor(0xffe3eade);c.drawText(normal?(english?"Normal":"Normale"):(english?"Optimized":"Ottimizzato"),0,y+18,paint);double value=measured(s,Double.NaN);
+        for(int i=0;i<samples.length();i++){JSONObject s=samples.optJSONObject(i);float y=40+i*60;boolean normal=s.optString("backend").equals("normal");paint.setColor(new NativeUi(getContext()).ink);c.drawText(normal?(english?"Normal":"Normale"):(english?"Optimized":"Ottimizzato"),0,y+18,paint);double value=measured(s,Double.NaN);
             if(Double.isNaN(value)){c.drawText(s.optString("status").equals("error")?(english?"Failed / N/A":"Fallito / N/A"):"—",155,y+18,paint);continue;}
-            paint.setColor(normal?0xff879985:0xffa1bb94);c.drawRect(155,y,155+(float)(value/max*330),y+25,paint);paint.setColor(0xffe3eade);c.drawText(String.format(Locale.US,"%.2f %s",value,unit),500,y+20,paint);
+            paint.setColor(normal?new NativeUi(getContext()).muted:new NativeUi(getContext()).primary);c.drawRect(155,y,155+(float)(value/max*330),y+25,paint);paint.setColor(new NativeUi(getContext()).ink);c.drawText(String.format(Locale.US,"%.2f %s",value,unit),500,y+20,paint);
         }c.restore();
     }
     @Override protected void onMeasure(int width,int height){int w=MeasureSpec.getSize(width);setMeasuredDimension(w,Math.max(getMinimumHeight(),(int)(w*180f/660f)));}

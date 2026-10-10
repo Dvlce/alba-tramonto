@@ -1,4 +1,34 @@
-# Alba · Tramonto · Notte — Native Android 1.5
+# Alba · Tramonto · Notte — Native Android 1.8.0
+
+Version 1.8.0 adds a searchable page index, previous/next controls, automatic
+saving after edits, and short transitions respecting system animation settings.
+Ruled text follows the actual text baselines at every font size. Changes to the
+title, paper or font preserve the original HTML. Chat updates retain existing
+message views and preserve text typed while a message is being sent. Personal
+fonts update only the edited text range instead of rebuilding the whole page.
+
+<p>
+  <img src="../docs/android-notebooks.png" width="260" alt="Tramonto notebook library in English">
+  <img src="../docs/android-notebook.png" width="260" alt="Tramonto ruled notebook editor in English">
+  <img src="../docs/android-chat.png" width="260" alt="Notte native chat in English">
+</p>
+
+English screenshots from the native emulator with public sample content.
+
+The approved mobile redesign uses outline icons, compact bottom navigation,
+notebook cards, rounded sheets and light/dark themes. Chat has open assistant
+prose and a compact composer. The notebook keeps Text and Drawing tabs; drawing
+tools float over the paper, with a fullscreen mode, eraser, colors and width.
+The font picker previews saved glyphs. Library font presets can be renamed with
+optimistic version checks; existing glyphs are retained. Paper selection supports
+plain, ruled and grid layouts. Changing theme preserves encrypted unsaved drafts.
+
+This release separates background polling from interactive requests, discards
+page responses after navigation, and offers Save & leave for unsaved notes.
+Expired sessions retain encrypted drafts for the same account; switching accounts
+clears old jobs and drafts. Font collections may use the larger response budget
+needed for up to ten saved presets. Native note text uses the saved vector font,
+with readable fallback for glyphs that have not been drawn yet.
 
 The dropdown includes Test Lab and Project & evolution. Test Lab selects an
 installed model and seven strategies: Notte SSD, ARM, KV8, Draft, Warm, CPU2 and
@@ -12,7 +42,7 @@ See [adaptive budgets and model retention](../docs/ADAPTIVE_RUNTIME.md).
 Warm comparisons reuse residency; Flux changes response budgets and instructions;
 KV8 reduces cache precision. These conditions are displayed in reports.
 
-The Android app uses Java and Android Views. It contains **no WebView, Javascript engine or browser UI**. Chat is the main screen; a dropdown contains Alba, Tramonto notebooks, memory, topic diary, all activity, personal-model training, token statistics, emotions, hardware and settings.
+The Android app uses Java and Android Views. It contains **no WebView, Javascript engine or browser UI**. Bottom navigation opens Alba, Tramonto notebooks and Notte. A grouped More menu contains memory, topic diary, all activity, personal-model training, token statistics, emotions, hardware and settings. Notes have Text and Drawing tabs, a font picker, text size and spacing, and a fullscreen drawing mode with eraser and undo.
 
 Italian and English UI follow the phone language, with a manual choice in Settings. AI responses follow the language of the message. The AI, SQLite database, notebooks and training run on the Raspberry; the APK is a native network client, not an on-phone LLM. HTTPS is required.
 
@@ -41,4 +71,12 @@ adb install -r android/build/smoke/native-smoke.apk
 adb shell am instrument -w local.alba.smoke/local.alba.NativeUiSmoke
 ```
 
-The test APK is separate from the release. Its explicit fixture transport checks native markdown/table rendering, menu navigation, warm links, rejected external link keys, account-bound chat drafts, diary, training/system/activity screens, Italian/English UI, notebook content preservation and versioned saving. It never uses real credentials, trains models or sends Telegram messages. Production API tests verify authentication, authorization and CSRF independently. GitHub Actions runs the emulator on the CI runner, not on the user's Mac. Test signing keys created in CI are ephemeral; published APKs use the existing release key.
+The test APK is separate from the release. Its native checks cover native markdown/table rendering, menu navigation, warm links, rejected external link keys, account-bound chat drafts, diary, training/system/activity screens, Italian/English UI, notebook content preservation, personal fonts, drawing and versioned saving. Theme recreation also verifies unsaved page, font and paper preservation. Screenshots cover chat, notebooks, font selection, drawing, settings and menu on a 360 × 640 dp phone in dark and light themes. Controlled HTTP connections exercise concurrent requests, credential clearing, expired sessions and response limits in the real NativeApi transport. It never uses real credentials, trains models or sends Telegram messages. Production API tests verify authentication, authorization and CSRF independently. GitHub Actions runs the emulator on the CI runner, not on the user's Mac. Test signing keys created in CI are ephemeral; published APKs use the existing release key.
+
+To refresh the English documentation images, run the instrumentation above, then:
+
+```sh
+adb pull /sdcard/Android/data/local.alba/files/smoke-docs-library.png docs/android-notebooks.png
+adb pull /sdcard/Android/data/local.alba/files/smoke-docs-notebook.png docs/android-notebook.png
+adb pull /sdcard/Android/data/local.alba/files/smoke-docs-chat.png docs/android-chat.png
+```

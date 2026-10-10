@@ -63,11 +63,12 @@ CREATE TABLE IF NOT EXISTS user_activity(user_id INTEGER PRIMARY KEY,started REA
 CREATE TABLE IF NOT EXISTS user_avatars(user_id INTEGER PRIMARY KEY,image BLOB,fetched REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS notebooks(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,title TEXT NOT NULL,created REAL NOT NULL,updated REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS notebooks_owner ON notebooks(user_id,updated);
-CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,notebook_id INTEGER NOT NULL,title TEXT NOT NULL,subject TEXT NOT NULL,content TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,created REAL NOT NULL,updated REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,notebook_id INTEGER NOT NULL,title TEXT NOT NULL,subject TEXT NOT NULL,content TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,created REAL NOT NULL,updated REAL NOT NULL,position INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS notes_owner_book ON notes(user_id,notebook_id,updated);
 CREATE TABLE IF NOT EXISTS note_images(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,note_id INTEGER NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,data BLOB NOT NULL,created REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS note_images_owner ON note_images(user_id,note_id);
 CREATE TABLE IF NOT EXISTS workspace_state(user_id INTEGER PRIMARY KEY,notebook_id INTEGER,note_id INTEGER,scroll_y REAL NOT NULL DEFAULT 0,updated REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS font_presets(id TEXT NOT NULL,user_id INTEGER NOT NULL,content TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,updated REAL NOT NULL,PRIMARY KEY(user_id,id));
 CREATE TABLE IF NOT EXISTS auth_accounts(provider TEXT NOT NULL,subject TEXT NOT NULL,user_id INTEGER NOT NULL,email TEXT NOT NULL DEFAULT '',created REAL NOT NULL,PRIMARY KEY(provider,subject));
 CREATE INDEX IF NOT EXISTS accounts_owner ON auth_accounts(user_id);
 CREATE TABLE IF NOT EXISTS auth_flows(digest TEXT PRIMARY KEY,kind TEXT NOT NULL,expires REAL NOT NULL,payload BLOB NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,user_id INTEGER);
@@ -115,6 +116,9 @@ class Store:
         self.db.execute('PRAGMA secure_delete=ON')
         self.db.execute('PRAGMA busy_timeout=10000')
         self.db.executescript(SCHEMA)
+        if 'position' not in {r[1] for r in self.db.execute('PRAGMA table_info(notes)')}:
+            self.db.execute('ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0')
+            self.db.execute('UPDATE notes SET position=id')
         for table,column,definition in [('summaries','summary_kind',"TEXT NOT NULL DEFAULT 'conversation'"),
                                         ('memories','summary_id','INTEGER'),
                                         ('web_sessions','device_id',"TEXT NOT NULL DEFAULT ''"),
@@ -283,7 +287,7 @@ class Store:
             self.db.execute('DELETE FROM conversations WHERE scope=?',(scope,))
             self.db.execute('DELETE FROM metrics WHERE scope=?',(scope,))
             self.db.execute('DELETE FROM token_usage WHERE user_id=? OR scope=?',(user_id,scope))
-            for table in ('personality','export_keys','web_sessions','web_credentials','user_activity','user_limits','user_avatars','note_images','notes','notebooks','workspace_state','auth_accounts','response_feedback','memory_access_grants'):
+            for table in ('personality','export_keys','web_sessions','web_credentials','user_activity','user_limits','user_avatars','note_images','notes','notebooks','workspace_state','font_presets','auth_accounts','response_feedback','memory_access_grants'):
                 self.db.execute(f'DELETE FROM {table} WHERE user_id=?',(user_id,))
             self.db.execute('DELETE FROM auth_flows WHERE user_id=?',(user_id,))
             self.db.execute('DELETE FROM memory_access_grants WHERE admin_id=?',(user_id,))

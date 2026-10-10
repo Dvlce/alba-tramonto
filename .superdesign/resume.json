@@ -9,15 +9,20 @@
       "designSystemPath": ".superdesign/design-system.md",
       "contextFiles": [
         "tramonto.html",
-        "tramonto.css",
         ".superdesign/context/tramonto-tokens.md",
-        ".superdesign/design-system.md"
+        ".superdesign/design-system.md",
+        "tramonto-study.js",
+        "tramonto-font.js",
+        "tramonto.css:15:110",
+        "tramonto.css:453:527"
       ],
       "fingerprints": {
-        "tramonto.html": "8572f2a25a04d9d479da1e46118ef1e89931a1222c71783e8fbe6c06efb50e5c",
-        "tramonto.css": "abc8ea948612554d97163279033b9a3d95506a071906ab5a789bbdd43163857f",
+        "tramonto.html": "afa75ea4950c3663168ec8926816246a6427ac02392da5dc33c22b0f755f0268",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
-        ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf"
+        ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
+        "tramonto-study.js": "55895a44bca3ff91b70a75e9d0a5a25e32152f6f6e14e18488b8a792adf3fb7c",
+        "tramonto-font.js": "c191354b50ffdc139401917397b35e761126c6f15a097e3d96fb5297c5c787aa",
+        "tramonto.css": "3d14a71087eb4f86e83154a2f0c6f24ffe319caf5cd01650dc1040cde6f9c0a7"
       },
       "components": [
         {
@@ -29,11 +34,11 @@
       "drafts": {
         "b562c42e-8f4a-4b42-9425-a2b1d5f397d6": {
           "title": "Tramonto Portal Transition",
-          "visualDirection": "Editable visual math with preserved LaTeX sources and adjustable systems; editable drawing text with keyboard undo; personal handwriting font workshop with persistent glyphs and OTF export. Existing notebook theme and local assets retained.",
-          "currentVersion": 15
+          "visualDirection": "Compact viewport workspace, settings dialogs, ordered page footer, readable mobile focus and nondestructive multi-page print with typography/paper options.",
+          "currentVersion": 20
         }
       },
-      "updatedAt": "2026-10-08T06:38:58.694237+00:00",
+      "updatedAt": "2026-10-10T20:03:22.995965+00:00",
       "referenceIds": [
         "9475faae-cb80-4115-b66c-d533ea9d2223",
         "89b5b07b-622f-4e3b-8da6-25c1ae4f24a2"
@@ -64,6 +69,55 @@
         }
       },
       "updatedAt": "2026-10-04T20:29:08.595148+00:00"
+    },
+    "android/tramonto": {
+      "targetKind": "existing-ui",
+      "projectId": "9eca8a62-4590-400f-bf3b-81c88ac87e16",
+      "baselineDraftId": "59f3b1eb-b645-4d66-b0bc-57d58ad08088",
+      "activeDraftId": "59f3b1eb-b645-4d66-b0bc-57d58ad08088",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        ".superdesign/context/android-ui.md",
+        "android/src/local/alba/MainActivity.java:80:142",
+        "android/src/local/alba/MainActivity.java:336:406",
+        "android/src/local/alba/NotebookCanvas.java",
+        "android/src/local/alba/NativeMarkdown.java",
+        "android/src/local/alba/NativeBars.java",
+        "android/src/local/alba/PersonalFont.java",
+        "android/src/local/alba/NativeUi.java",
+        "android/src/local/alba/NativeIcon.java",
+        "android/src/local/alba/NativePaper.java",
+        "android/src/local/alba/NativeChoice.java",
+        "android/src/local/alba/ModernDialog.java",
+        "android/res/values/styles.xml",
+        "android/src/local/alba/NotebookText.java"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
+        ".superdesign/context/android-ui.md": "97fe8b2d144184e120672e2fb88b81b74e05f44168ee417c5b8df6cd81f8c6c1",
+        "android/src/local/alba/MainActivity.java": "d74bbe920255fbd9715c337fc1db8a78caf641ae38c06e066e45b42b83983608",
+        "android/src/local/alba/NotebookCanvas.java": "ecdaeff5ece5eb59d4d59410280afa9d1488a30ecfb726dab982e56c04c23c7b",
+        "android/src/local/alba/NativeMarkdown.java": "0ca3c29e1e7a889a71ce71eca4fed71d73a0da9e8ceb4c94bbbf66b6d484ff2d",
+        "android/src/local/alba/NativeBars.java": "d792c2a97c0d346b89b33129462d0769a72ff11e0da694c88d3f26e51679f837",
+        "android/src/local/alba/PersonalFont.java": "fbd0d7e9c8c83adc9f6f3c19a6d2018e3be06c310e31cc275ab8afa3d2225ec0",
+        "android/src/local/alba/NativeUi.java": "0dc85792e950383ccf8b296ab39d3b7b368569ca8de121844d991b0d566a24bf",
+        "android/src/local/alba/NativeIcon.java": "0ab3e32bbfbc37ba2d907f30a65b1e0ff4493c768b3433a1808f57575a52a071",
+        "android/src/local/alba/NativePaper.java": "48b2ef573e8e66689a4d6e7251a6edd5e7ccc33e044ea87aa239da96ee5e5ff3",
+        "android/src/local/alba/NativeChoice.java": "46b7771a9a2d74923597ef42b9a322dec13cbdcdafe9190f80b98e11ed9558a9",
+        "android/src/local/alba/ModernDialog.java": "c06d5dd9d699ee139149f4f55887eb377a25fcc74d60569fa0bfe25cde61a4aa",
+        "android/res/values/styles.xml": "e793c139cdc45f75a182b2007419787868c969467bd162672bcbee7100004117",
+        "android/src/local/alba/NotebookText.java": "5e497b73ce0d1145eda22e106bb2356d1fb271827b833aae5bf44aa16f80dd82"
+      },
+      "components": [],
+      "drafts": {
+        "59f3b1eb-b645-4d66-b0bc-57d58ad08088": {
+          "title": "Android Redesign - Tramonto Drawing",
+          "visualDirection": "Android 1.8.0: searchable page index, previous/next, autosave, baseline-aligned ruled text, incremental personal font and chat rendering, race-safe drafts. 123 native checks.",
+          "currentVersion": 5
+        }
+      },
+      "updatedAt": "2026-10-10T20:03:22.995965+00:00"
     }
   }
 }
