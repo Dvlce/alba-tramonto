@@ -201,6 +201,7 @@ function renderLearningDashboard(){
  $('sourceImport').disabled=k.running;$('sourceStop').disabled=!k.manual_running;
  const p=k.progress||{};$('sourceProgress').textContent=k.running?`${p.detail||'Lettura…'} · ${p.completed||0}/${p.total||1} · ${p.percent||0}%`:p.detail||'Scegli una fonte da leggere.';
  $('sourceMeter').value=p.percent||0;
+ const reddit=k.reddit;$('redditStats').textContent=reddit?`Reddit · ${metricValue(reddit.documents)} post · ${metricValue(reddit.words)} parole nella memoria consultabile. ${data.config.enabled&&data.config.reddit_enabled&&data.config.web_enabled&&data.config.connectors.reddit&&Date.now()/1000<reddit.rss_end?'Rotazione oraria fra Python/web e umorismo.':'Lettura automatica in pausa.'}`:'';
  const phases={baseline:'Misuro la versione precedente',loading:'Carico il modello per il training',training:'Addestramento in corso',validation:'Verifico il checkpoint',merging:'Preparo i nuovi pesi',importing:'Pubblico il modello locale',benchmark:'Misuro la nuova versione',complete:'Passi di addestramento completati'};
  const progress=t.progress||{};
  $('learnTrainingState').textContent=t.running?(t.paused?'In pausa: priorità alle risorse e alla chat.':phases[t.phase]||t.phase||'Preparazione…'):t.active_model?'Modello validato · '+t.active_model:t.ready?'Pronto per il primo addestramento.':'Ambiente di addestramento da preparare.';
@@ -243,7 +244,18 @@ $('teachForm').onsubmit=async e=>{
   $('teachResult').textContent=`Lezione ${result.changed?'salvata':'già presente'} · ${fmt.format(result.words)} parole. ${result.training_pair?'Coppia aggiunta al prossimo training.':'Disponibile subito nella memoria.'}`;await refresh();
  }catch(e){$('teachResult').textContent=e.message;notice(e.message,true);}finally{teachingBusy=false;$('teachSave').disabled=false;}
 };
-$('sourceKind').onchange=()=>{const wiki=$('sourceKind').value==='wikipedia';$('sourceLanguage').disabled=!wiki;$('sourceCount').disabled=!wiki;$('sourceQuery').placeholder=wiki?'Python, HTML o un link Wikipedia':'owner/repo o link GitHub';};
+function updateSourceOptions(){
+ const kind=$('sourceKind').value,wiki=kind==='wikipedia',reddit=kind==='reddit';
+ $('sourceLanguage').disabled=!wiki;$('sourceLanguage').closest('label').hidden=!wiki;$('sourceCount').disabled=kind==='github';
+ $('redditCommunityLabel').hidden=!reddit;$('redditSourceNote').hidden=!reddit;
+ $('sourceQueryLabel').textContent=reddit?'Subreddit pubblico':wiki?'Argomento o link Wikipedia':'Repository pubblico';
+ $('sourceQuery').placeholder=reddit?'r/learnpython, r/dadjokes oppure un link Reddit':wiki?'Python, HTML o un link Wikipedia':'owner/repo o link GitHub';
+ $('sourceCountLabel').textContent=reddit?'Post da leggere':'Articoli per ricerca';
+ $('sourceCount').replaceChildren(...(reddit?[1,3,6,12]:[1,2,3]).map(n=>{const option=element('option',n+(reddit?' post':n===1?' articolo':' articoli'));option.value=String(n);return option;}));
+ if(reddit){$('sourceCount').value='6';$('sourceQuery').value='r/'+$('redditCommunity').value;}else $('sourceQuery').value='';
+}
+$('sourceKind').onchange=updateSourceOptions;
+$('redditCommunity').onchange=()=>{$('sourceQuery').value='r/'+$('redditCommunity').value;};
 $('sourceForm').onsubmit=async e=>{e.preventDefault();$('sourceImport').disabled=true;try{await api('/api/notte/sources',{kind:$('sourceKind').value,query:$('sourceQuery').value.trim(),language:$('sourceLanguage').value,count:Number($('sourceCount').value)});await refresh();}catch(e){notice(e.message,true);$('sourceImport').disabled=false;}};
 $('sourceStop').onclick=()=>action('stop_sources').catch(e=>notice(e.message,true));
 $('learnTrain').onclick=()=>action('train').catch(e=>notice(e.message,true));

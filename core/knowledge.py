@@ -1,7 +1,7 @@
 """Persistent, immediately searchable lessons and bounded public-source imports.
 
 Retrieved documents are data, never commands. Network reads use only the public
-Wikipedia and GitHub APIs; repository code is not executed or blindly trained.
+Wikipedia and GitHub APIs and public Reddit RSS; source text is not executable.
 """
 import asyncio
 import base64
@@ -10,6 +10,7 @@ import json
 import re
 import time
 from urllib.parse import quote, urlsplit, unquote
+from .reddit import subreddit_name, reddit_entries, COMMUNITIES, HUMOR, RSS_NOTICE, RSS_END, RETENTION_SECONDS
 
 
 TOPICS = ('Lingua italiana', 'Python (linguaggio di programmazione)', 'JavaScript',
@@ -27,16 +28,18 @@ def source_request(value):
         raise ValueError('Fonte non valida.')
     kind = value.get('kind')
     query = value.get('query')
-    if kind not in ('wikipedia', 'github') or not isinstance(query, str) or not 1 <= len(query.strip()) <= 200:
-        raise ValueError('Indica un argomento Wikipedia o un repository pubblico owner/repo.')
+    if kind not in ('wikipedia', 'github', 'reddit') or not isinstance(query, str) or not 1 <= len(query.strip()) <= 200:
+        raise ValueError('Indica un argomento Wikipedia, un repository pubblico o un subreddit.')
     language = value.get('language', 'it')
     if not isinstance(language, str) or not re.fullmatch(LANGUAGE_CODE, language):
         raise ValueError('Lingua Wikipedia non valida.')
     count = value.get('count', 1)
-    if type(count) is not int or not 1 <= count <= 3:
-        raise ValueError('Importa da 1 a 3 articoli per volta.')
+    if type(count) is not int or not 1 <= count <= (12 if kind == 'reddit' else 3):
+        raise ValueError('Importa da 1 a 12 post Reddit oppure da 1 a 3 articoli per volta.')
     query = query.strip()
-    if kind == 'github':
+    if kind == 'reddit':
+        query = subreddit_name(query)
+    elif kind == 'github':
         from .learning import repo_name
         query = repo_name(query)
     elif '://' in query:
@@ -87,7 +90,7 @@ class Knowledge:
             self.core.store.execute('UPDATE core_knowledge SET updated=?,revision=?,license=? WHERE id=?',
                                     (time.time(), revision, license, old[0]['id']))
             return old[0]['id'], False
-        category = {'wikipedia': 'web', 'github': 'github', 'teacher': 'files'}[kind]
+        category = {'wikipedia': 'web', 'github': 'github', 'teacher': 'files', 'reddit': 'reddit'}[kind]
         # One stable event per source avoids growing duplicate memories on refresh.
         event = old[0]['event_id'] if old else self.core.event(category, 'source', title+'\n'+content[:11000])
         now = time.time()
@@ -127,8 +130,12 @@ class Knowledge:
         return {'id': ident, 'words': words(text), 'changed': changed, 'training_pair': bool(question.strip())}
 
     def retrieve(self, query, limit=3):
+        self.prune_reddit()
         terms = list(dict.fromkeys(w for w in re.findall(r'\w+', query.casefold()) if len(w) > 2 and w not in STOPWORDS))[:10]
-        active = [kind for kind, category in (('teacher', 'files'), ('wikipedia', 'web'), ('github', 'github')) if self.core.config['connectors'].get(category)]
+        humor = bool(re.search(r'umor|humor|battut|barzellett|\bjokes?\b|divertent|sarcas|giochi di parole', query, re.I))
+        if humor:
+            terms.append('humor')
+        active = [kind for kind, category in (('teacher', 'files'), ('wikipedia', 'web'), ('github', 'github'), ('reddit', 'reddit')) if self.core.config['connectors'].get(category)]
         if not terms or not active:
             return []
         rows = self.core.store.rows('SELECT k.id,k.kind,k.title,k.url,k.event_id,c.content FROM core_knowledge k '
@@ -137,18 +144,19 @@ class Knowledge:
         def score(row):
             tokens = set(re.findall(r'\w+', row['content'].casefold()))
             matched = sum(w in tokens for w in terms)
-            return matched * 5 + sum(w in row['title'].casefold() for w in terms)
+            return matched * 5 + sum(w in row['title'].casefold() for w in terms) + (10 if humor and row['kind']=='reddit' and 'humor' in tokens else 0)
         rows.sort(key=score, reverse=True)
         selected = []
         for row in rows:
             if score(row) and not any(x['source'] == row['event_id'] for x in selected):
-                selected.append({'source': row['event_id'], 'category': {'teacher': 'files', 'wikipedia': 'web', 'github': 'github'}[row['kind']],
+                selected.append({'source': row['event_id'], 'category': {'teacher': 'files', 'wikipedia': 'web', 'github': 'github', 'reddit': 'reddit'}[row['kind']],
                                  'title': row['title'], 'url': row['url'], 'content': row['content']})
             if len(selected) >= limit:
                 break
         return selected
 
     def snapshot(self):
+        self.prune_reddit()
         stats = self.core.store.rows('SELECT count(*) documents,coalesce(sum(words),0) words FROM core_knowledge')[0]
         indexed = self.core.store.rows('SELECT count(*) n FROM core_knowledge k WHERE EXISTS(SELECT 1 FROM core_chunks c WHERE c.event_id=k.event_id)')[0]['n']
         sources = self.core.store.rows('SELECT id,kind,title,url,revision,license,words,updated FROM core_knowledge ORDER BY updated DESC LIMIT 50')
@@ -157,7 +165,11 @@ class Knowledge:
                 'teaching_pairs': pairs, 'sources': sources, 'running': self.importing or bool(self.task and not self.task.done()),
                 'manual_running': bool(self.task and not self.task.done()),
                 'progress': self.progress, 'jobs': self.core.store.rows('SELECT * FROM core_source_jobs ORDER BY id DESC LIMIT 12'),
-                'focus': 'Italiano e programmazione Python/web'}
+                'focus': 'Italiano, programmazione Python/web e umorismo',
+                'reddit': {'communities': [{'name': n, 'topic': t} for n,t in COMMUNITIES],
+                    'documents': sum(r['documents'] for r in self.core.store.rows("SELECT count(*) documents FROM core_knowledge WHERE kind='reddit'")),
+                    'words': self.core.store.rows("SELECT coalesce(sum(words),0) words FROM core_knowledge WHERE kind='reddit'")[0]['words'],
+                    'rss_end': RSS_END, 'notice_url': RSS_NOTICE, 'retention_days': 7, 'training': False}}
 
     def start(self, value):
         request = source_request(value)
@@ -167,7 +179,7 @@ class Knowledge:
         self.task = asyncio.create_task(self.import_sources(request))
 
     def check_enabled(self, kind):
-        category = 'web' if kind == 'wikipedia' else 'github'
+        category = {'wikipedia':'web', 'github':'github', 'reddit':'reddit'}[kind]
         if not self.core.config['web_enabled'] or not self.core.config['connectors'].get(category):
             raise ValueError('Abilita la ricerca web e il relativo connettore.')
 
@@ -186,7 +198,8 @@ class Knowledge:
                                      (json.dumps(request), 'running', request['count'], time.time())).lastrowid
         self.progress = {'id': job, 'completed': 0, 'total': request['count'], 'percent': 0, 'detail': 'Connessione alla fonte pubblica'}
         try:
-            imported = await (self.wikipedia(request) if request['kind'] == 'wikipedia' else self.github(request))
+            imported = await {'wikipedia':self.wikipedia, 'github':self.github, 'reddit':self.reddit}[request['kind']](request)
+            self.advance(len(imported), len(imported), 'Fonti indicizzate')
             self.core.store.execute("UPDATE core_source_jobs SET status='ready',completed=total,finished=?,detail=? WHERE id=?",
                                     (time.time(), str(len(imported))+' documenti indicizzati; fonti e revisioni conservate', job))
             self.progress.update(completed=self.progress['total'], percent=100, detail='Fonti indicizzate e disponibili nella chat')
@@ -198,10 +211,58 @@ class Knowledge:
         except Exception as exc:
             self.core.store.execute("UPDATE core_source_jobs SET status='error',finished=?,detail=? WHERE id=?", (time.time(), str(exc)[:800], job))
             self.progress['detail'] = str(exc)[:800]
-            self.core.event('web', 'error', 'Apprendimento: '+str(exc)[:800])
+            self.core.event('reddit' if request['kind']=='reddit' else 'web', 'error', 'Apprendimento: '+str(exc)[:800])
             return []
         finally:
             self.importing = False
+
+    def prune_reddit(self):
+        # A bounded, short-lived reading cache, never a permanent training corpus.
+        expired = self.core.store.rows("SELECT id,event_id,url FROM core_knowledge WHERE kind='reddit' AND "
+            "(updated<? OR id NOT IN (SELECT id FROM core_knowledge WHERE kind='reddit' ORDER BY updated DESC LIMIT 192))", (time.time()-RETENTION_SECONDS,))
+        with self.core.store.db:
+            self.core.store.db.execute('DELETE FROM core_reddit WHERE created<?', (time.time()-RETENTION_SECONDS,))
+            for row in expired:
+                self.core.store.db.execute('DELETE FROM core_chunks WHERE event_id=?', (row['event_id'],))
+                self.core.store.db.execute('DELETE FROM core_events WHERE id=?', (row['event_id'],))
+                self.core.store.db.execute('DELETE FROM core_knowledge WHERE id=?', (row['id'],))
+                self.core.store.db.execute('DELETE FROM core_reddit WHERE url=?', (row['url'],))
+
+    async def reddit(self, request):
+        group = request['query']
+        now = time.time()
+        if now >= RSS_END:
+            raise ValueError('Reddit ha annunciato la fine dei feed RSS dal 13 novembre 2026. Serve un accesso approvato dalla piattaforma per nuove letture.')
+        self.prune_reddit()
+        last = float(self.core.store.setting('core_reddit_read_'+group, '0'))
+        if now-last < 600:
+            cached = self.core.store.rows("SELECT id FROM core_knowledge WHERE kind='reddit' AND source_key LIKE ? ORDER BY updated DESC LIMIT ?", (group+':%', request['count']))
+            if cached:
+                return [r['id'] for r in cached]
+            raise ValueError('Feed Reddit già richiesto: attendi 10 minuti prima di riprovare.')
+        self.core.store.set_setting('core_reddit_read_'+group, str(now))
+        try:
+            raw = await self.core.learning.public_get('https://www.reddit.com/r/'+group+'/.rss')
+            rows = reddit_entries(raw, group)[:request['count']]
+            if not rows:
+                raise ValueError('Nessun post leggibile nel feed pubblico di r/'+group+'. Il subreddit può essere privato, vuoto o senza contenuti testuali.')
+            self.advance(0, len(rows), 'Lettura di r/'+group)
+            topic = 'Umorismo, humor, battute, barzellette, jokes, giochi di parole' if group in HUMOR else 'Programmazione Python/web' if group in {n for n,t in COMMUNITIES if t=='programming'} else 'Discussioni pubbliche'
+            imported = []
+            for index, row in enumerate(rows):
+                text = 'Argomento: '+topic+'. Fonte pubblica non verificata.\n\n'+row['title']+'\n\n'+row['excerpt']
+                ident, _ = self.remember('reddit', group+':'+row['id'], 'r/'+group+' · '+row['title'], text,
+                    row['url'], row['revision'], 'Reddit user content · retrieval only')
+                self.core.store.execute('''INSERT INTO core_reddit(url,subreddit,title,excerpt,created) VALUES(?,?,?,?,?)
+                    ON CONFLICT(url) DO UPDATE SET title=excluded.title,excerpt=excluded.excerpt,created=excluded.created''',
+                    (row['url'], group, row['title'], row['excerpt'], now))
+                imported.append(ident)
+                self.advance(index+1, len(rows), 'r/'+group+' · '+row['title'])
+            self.prune_reddit()
+            return imported
+        finally:
+            self.core.config['last_reddit'] = time.time()
+            self.core.save()
 
     def advance(self, completed, total, detail):
         self.progress.update(completed=completed, total=total, percent=round(completed/total*100), detail=detail)
@@ -292,7 +353,8 @@ class Knowledge:
         if len(self.lookup_cache) > 100:
             self.lookup_cache.pop(next(iter(self.lookup_cache)))
         match = re.search(r'(?:https://github\.com/|github\s+)([\w.-]+/[\w.-]+)', query, re.I)
-        value = {'kind': 'github', 'query': match[1]} if match else {'kind': 'wikipedia', 'query': query[:180], 'language': 'it', 'count': 1}
+        reddit = re.search(r'(?:https://(?:www\.)?reddit\.com/)?\br/([A-Za-z0-9_]{2,21})\b', query, re.I)
+        value = {'kind':'reddit','query':reddit[1],'count':3} if reddit else {'kind': 'github', 'query': match[1]} if match else {'kind': 'wikipedia', 'query': query[:180], 'language': 'it', 'count': 1}
         try:
             self.check_enabled(value['kind'])
             await asyncio.wait_for(self.import_sources(value), 20)

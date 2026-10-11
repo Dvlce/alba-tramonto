@@ -24,3 +24,5 @@
 @media(max-width:700px){.night-nav nav button{width:auto;flex:0 0 auto}.settings-save{flex-wrap:wrap}.settings-save button{width:100%}}
 
 .settings-card:nth-child(1),.settings-card:nth-child(2){grid-column:1/-1}.settings-card:first-child>label{max-width:420px}.settings-ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}@media(max-width:700px){.settings-ranges{grid-template-columns:1fr;gap:0}}
+
+.night-shell [hidden]{display:none!important}

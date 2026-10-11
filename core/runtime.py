@@ -9,6 +9,7 @@ import time
 from collections import Counter, OrderedDict
 from pathlib import Path
 from aiohttp import ClientError
+from .reddit import RSS_END
 
 log = logging.getLogger('alba.core')
 EMOTIONS = {'rabbia': .12, 'curiosità': .7, 'affetto': .35, 'noia': .15,
@@ -594,7 +595,7 @@ class Core:
                 if time.time()<self.retry_after or not self.config['enabled'] or self.running or (self.task and not self.task.done()) or self.engine.lock.locked() or self.engine.waiting: continue
                 if self.resources()['overloaded']: continue
                 if self.store.setting('bot_paused')=='1': continue
-                if self.config['reddit_enabled'] and self.config['web_enabled'] and time.time()-self.config['last_reddit']>=3600:
+                if self.config['reddit_enabled'] and self.config['web_enabled'] and self.config['connectors']['reddit'] and time.time()<RSS_END and time.time()-self.config['last_reddit']>=3600:
                     self.start('reddit')
                 elif self.config['study_enabled'] and time.time()-self.config['last_study']>=self.config['study_minutes']*60:
                     self.start('study')

@@ -107,6 +107,28 @@ async def main():
                 await page.locator('#teachResult').filter(has_text='salvata').wait_for()
                 assert await page.locator('#learnIndexed').inner_text()=='100%'
                 assert service.core.knowledge.retrieve('NEBULA-42')
+                assert not await page.locator('#redditCommunityLabel').is_visible()
+                await page.locator('#sourceKind').select_option('reddit')
+                await page.locator('#redditCommunityLabel').wait_for(state='visible')
+                assert not await page.locator('#sourceLanguage').is_visible()
+                await page.locator('#redditCommunity').select_option('dadjokes')
+                assert await page.locator('#sourceQuery').input_value()=='r/dadjokes'
+                await page.locator('#sourceCount').select_option('12')
+                from test_core_reddit import feed
+                async def public_reddit(*a,**k):return feed('dadjokes','A test joke','Original browser test punchline.')
+                service.core.learning.public_get=public_reddit
+                await page.locator('#sourceImport').click()
+                await page.locator('#redditStats').filter(has_text='1 post').wait_for()
+                assert service.core.knowledge.snapshot()['jobs'][0]['status']=='ready'
+                assert await page.locator('#learnSources a[href*="reddit.com/r/dadjokes/"]').count()==1
+                await page.set_viewport_size({'width':390,'height':844})
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                assert await page.locator('#redditSourceNote').is_visible()
+                await page.locator('#sourceKind').select_option('wikipedia')
+                assert not await page.locator('#redditCommunityLabel').is_visible()
+                assert await page.locator('#sourceLanguage').is_enabled()
+                assert await page.locator('#sourceCount option').count()==3
+                await page.set_viewport_size({'width':1440,'height':1000})
                 began=asyncio.Event()
                 async def blocked_source(*a,**k):began.set();await asyncio.Event().wait()
                 service.core.learning.public_get=blocked_source

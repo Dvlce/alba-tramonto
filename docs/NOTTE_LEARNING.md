@@ -18,6 +18,16 @@ The reader identifies itself with the project name and repository URL as require
 
 Relevant factual questions can trigger a bounded public-source lookup. Ordinary greetings and personal questions do not. This can be disabled using **Consult online sources / Consulta le fonti online quando serve**. Private repositories require credentials and are outside this public-source reader.
 
+## Public Reddit readings
+
+Choose **Reddit public / Reddit pubblico** in the source form, select a recommended community or enter `r/name` or its public Reddit URL, and read one to twelve posts. The hourly autonomous reader alternates programming communities (`learnpython`, `Python`, `webdev`, `learnprogramming`, `programming`) with humor communities (`dadjokes`, `cleanjokes`, `jokes`). Automatic reading requires autonomy, web access, the Reddit connector and the Reddit reading switch to be enabled. These controls also govern background access; disabling the connector excludes the stored Reddit material from retrieval.
+
+The reader imports text from the public Atom/RSS feed, including post bodies where available, rather than just the old 1,600-character excerpts. It does not download comment threads, images, private communities or author profiles. Canonical post links, feed revisions and source labels remain visible. The Learning panel reports actual post and word counts, and failed downloads do not increase them. The cache retains at most 192 posts for seven days; repeat requests reuse the same source and wait at least ten minutes before fetching the same community again. Downloads are bounded to 256 KiB and redirects are rejected.
+
+Reddit posts are unverified retrieval context, **excluded from LoRA training examples**. Relevant Italian humor requests can retrieve English source examples; the chat instructions ask Notte to invent original Italian jokes, adapt wordplay, cite used sources and avoid unsolicited jokes in serious answers. This makes the readings available immediately, but does not prove an improvement in humor or alter benchmark scores. Original examples supplied through the teaching form can separately be included in a later training run.
+
+Reddit has [announced the end of public RSS support on November 13, 2026](https://support.reddithelp.com/hc/en-us/articles/54353370049684-Changelog-October-8-2026). The connector shows this limitation and stops automatic RSS collection at that date. Continuing direct access then requires a platform-approved integration; unavailable feeds are reported without alternate scraping or access-control bypasses. [Reddit's Data API Terms](https://redditinc.com/policies/data-api-terms) do not grant permission to use user content for AI weight training.
+
 ## Real CPU training
 
 The existing pinned `Qwen/Qwen2.5-Coder-0.5B-Instruct` base remains unchanged. Notte trains a LoRA adapter locally on the Raspberry Pi. This personalizes a pretrained model; it does not train a foundation model from scratch or copy all of Wikipedia/GitHub.
