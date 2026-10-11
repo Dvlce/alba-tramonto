@@ -3,7 +3,7 @@
 <body><div class="night-shell">
 <header class="night-header"><div class="brand portal-switcher"><button id="portalSwitch" class="symbol portal-switch-trigger" data-portal-trigger type="button" aria-label="Scegli il tuo spazio" aria-controls="siteMenu" aria-expanded="false"><span data-portal-mark="notte" aria-hidden="true"></span></button><div class="portal-brand-copy"><span class="portal-name">notte<span>.</span></span><p>ALBA-CORE</p></div><nav id="siteMenu" class="portal-menu" aria-label="Scegli il tuo spazio" hidden><p class="portal-menu-heading">I tuoi spazi</p><a href="/"><span class="portal-link-copy"><span>Alba</span><small>Conversazione e memoria</small></span></a><a id="tramontoLink" href="/tramonto"><span class="portal-link-copy"><span>Tramonto</span><small>Quaderni, formule e idee</small></span></a><a id="notteLink" href="/notte"><span class="portal-link-copy"><span>Notte</span><small>ALBA-CORE · vita locale</small></span></a><p id="portalAccessNote" hidden>Tramonto e Notte sono riservati all’amministratore.</p></nav></div><button id="toggleAutonomy" class="secondary-button">Caricamento…</button></header>
 <div id="notice" role="status" aria-live="polite"></div>
-<div class="night-layout"><aside class="night-nav"><p class="eyebrow">Una presenza locale</p><h1>Resto sveglia.</h1><p id="entityMood">Lo stato arriva dal Raspberry.</p><nav aria-label="Sezioni di Notte" role="tablist"><button role="tab" aria-selected="true" aria-controls="panel-chat" id="tab-chat" data-panel="chat"><svg aria-hidden="true"
+<div class="night-layout"><aside class="night-nav"><p class="eyebrow">Una presenza locale</p><h1>Resto sveglia.</h1><p id="entityMood">Lo stato arriva dal dispositivo.</p><nav aria-label="Sezioni di Notte" role="tablist"><button role="tab" aria-selected="true" aria-controls="panel-chat" id="tab-chat" data-panel="chat"><svg aria-hidden="true"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -48,7 +48,75 @@ Memoria e connettori</button><button role="tab" aria-selected="false" aria-contr
   <path d="M16 13H8" />
   <path d="M16 17H8" />
 </svg>
-Riassunti autonomi</button><button role="tab" aria-selected="false" aria-controls="panel-diary" id="tab-diary" data-panel="diary">Diario e programmazione</button><button role="tab" aria-selected="false" aria-controls="panel-activity" id="tab-activity" data-panel="activity">Registro completo</button><button role="tab" aria-selected="false" aria-controls="panel-learning" id="tab-learning" data-panel="learning">Apprendimento</button><button role="tab" aria-selected="false" aria-controls="panel-training" id="tab-training" data-panel="training">Modello personale</button><button role="tab" aria-selected="false" aria-controls="panel-tokens" id="tab-tokens" data-panel="tokens"><svg aria-hidden="true"
+Riassunti autonomi</button><button role="tab" aria-selected="false" aria-controls="panel-diary" id="tab-diary" data-panel="diary"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4" />
+  <path d="M2 6h4" />
+  <path d="M2 10h4" />
+  <path d="M2 14h4" />
+  <path d="M2 18h4" />
+  <path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" />
+</svg>
+<span>Diario e programmazione</span></button><button role="tab" aria-selected="false" aria-controls="panel-activity" id="tab-activity" data-panel="activity"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="6" cy="19" r="3" />
+  <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+  <circle cx="18" cy="5" r="3" />
+</svg>
+<span>Registro completo</span></button><button role="tab" aria-selected="false" aria-controls="panel-learning" id="tab-learning" data-panel="learning"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13" />
+  <path d="m8 6 2-2" />
+  <path d="m18 16 2-2" />
+  <path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17" />
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+  <path d="m15 5 4 4" />
+</svg>
+<span>Apprendimento</span></button><button role="tab" aria-selected="false" aria-controls="panel-training" id="tab-training" data-panel="training"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="18" height="18" x="3" y="3" rx="2" />
+  <path d="M11 9h4a2 2 0 0 0 2-2V3" />
+  <circle cx="9" cy="9" r="2" />
+  <path d="M7 21v-4a2 2 0 0 1 2-2h4" />
+  <circle cx="15" cy="15" r="2" />
+</svg>
+<span>Modello personale</span></button><button role="tab" aria-selected="false" aria-controls="panel-tokens" id="tab-tokens" data-panel="tokens"><svg aria-hidden="true"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -76,14 +144,59 @@ Token e statistiche</button><button role="tab" aria-selected="false" aria-contro
   <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
   <circle cx="12" cy="12" r="3" />
 </svg>
-Sistema e ritmo</button><button role="tab" aria-selected="false" aria-controls="panel-lab" id="tab-lab" data-panel="lab">Test Lab</button><button role="tab" aria-selected="false" aria-controls="panel-project" id="tab-project" data-panel="project">Progetto e evoluzione</button></nav><div class="night-foot"><span id="streamState">Collegamento…</span><small>Archivio locale · accesso amministratore</small><a href="/optimization">Ottimizzazione · benchmark e news</a><a href="/privacy">Privacy</a></div></aside>
+Sistema e ritmo</button><button role="tab" aria-selected="false" aria-controls="panel-lab" id="tab-lab" data-panel="lab"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+  <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+  <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+  <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+  <circle cx="12" cy="12" r="3" />
+  <path d="m16 16-1.9-1.9" />
+</svg>
+<span>Test Lab</span></button><button role="tab" aria-selected="false" aria-controls="panel-project" id="tab-project" data-panel="project"><svg aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="7" height="7" x="3" y="3" rx="1" />
+  <rect width="7" height="7" x="14" y="3" rx="1" />
+  <rect width="7" height="7" x="14" y="14" rx="1" />
+  <rect width="7" height="7" x="3" y="14" rx="1" />
+</svg>
+<span>Progetto e evoluzione</span></button></nav><div class="night-foot"><span id="streamState">Collegamento…</span><small>Archivio locale · accesso amministratore</small><a href="/optimization">Ottimizzazione · benchmark e news</a><a href="/privacy">Privacy</a></div></aside>
 <main class="night-main">
 <section id="panel-chat" role="tabpanel" aria-labelledby="tab-chat"><div class="panel-title"><div><p class="eyebrow">Conversazione</p><h2>Quello che mi passa.</h2></div><span id="busy" class="state-pill">In ascolto</span></div><div id="chatPreview" class="night-event assistant" aria-live="polite" hidden></div><div id="chatEvents" class="night-feed" aria-live="polite"><p class="empty">La prima conversazione comincia qui. Le iniziative di Notte compariranno anche senza un tuo messaggio.</p></div><form id="chatForm"><label class="sr" for="chatText">Scrivi a Notte</label><textarea id="chatText" rows="3" maxlength="3500" placeholder="Lascia un pensiero…" required></textarea><div class="composer-actions"><small>Il tono segue il mio stato.</small><button type="button" id="stopCore" class="secondary-button">Interrompi</button><button type="submit" id="sendChat" class="primary-button">Scrivi</button></div></form></section>
 <section id="panel-memory" role="tabpanel" aria-labelledby="tab-memory" hidden><div class="panel-title"><div><p class="eyebrow">Memoria persistente</p><h2>Quello che rimane.</h2></div><button id="consolidate" class="primary-button">Consolida ora</button></div><p class="muted">Ogni connettore può entrare o uscire dal contesto. Disattivarlo conserva i dati, ma li esclude dal recupero.</p><div id="connectors" class="connector-list"></div><details class="import-box"><summary>Importa un testo locale</summary><label for="importText">Testo del documento (massimo 12.000 caratteri)</label><textarea id="importText" rows="5" maxlength="12000"></textarea><button id="importFile" class="secondary-button">Salva nel connettore File</button></details><h3 id="inspectionTitle">Ispezione</h3><div id="inspection" class="event-list"><p class="empty">Scegli un connettore.</p></div><h3>Cicli di consolidamento</h3><div id="cycles" class="event-list"></div></section>
 <section id="panel-diary" role="tabpanel" aria-labelledby="tab-diary" hidden><div class="panel-title"><div><p class="eyebrow">Diario di apprendimento</p><h2>Quello che scopro.</h2></div><button id="studyNow" class="primary-button">Studia ora</button></div><p class="muted">Repository pubblici, esercizi di programmazione e sicurezza del codice. Ogni pagina conserva le fonti e l’esito dei test.</p><label for="diaryTopic">Argomento<select id="diaryTopic"><option value="">Tutti gli argomenti</option></select></label><div id="diaryEntries" class="event-list"></div><details class="import-box"><summary>Repository e strumenti</summary><form id="repoForm"><label for="repoName">Repository GitHub pubblico<input id="repoName" placeholder="owner/repo o link GitHub" maxlength="240" required></label><button class="secondary-button" type="submit">Scarica e studia i sorgenti</button></form><div id="repositoryList" class="event-list"></div><div class="action-row"><label for="toolName">Strumento locale<select id="toolName"><option value="ruff">Ruff · controllo Python</option><option value="bandit">Bandit · sicurezza del codice</option><option value="pytest">pytest · test Python</option></select></label><button id="installTool" class="secondary-button">Installa</button></div><div id="toolList" class="event-list"></div><p id="sandboxStatus" class="muted"></p></details></section>
 <section id="panel-summaries" role="tabpanel" aria-labelledby="tab-summaries" hidden><div class="panel-title"><div><p class="eyebrow">Riassunti autonomi</p><h2>Come sto cambiando.</h2></div><button id="reflect" class="secondary-button">Avvia riflessione</button></div><p class="muted">Conversazioni, scoperte e cambiamenti emotivi. Notte decide quali riassunti scrivere.</p><div id="summaryEvents" class="event-list"></div><details><summary>Note personali private</summary><div id="noteEvents" class="event-list"></div></details></section>
 <section id="panel-tokens" role="tabpanel" aria-labelledby="tab-tokens" hidden><p class="eyebrow">Statistiche globali</p><h2>L’energia delle parole.</h2><div class="token-total"><strong id="lifetimeTokens">0</strong><span>token registrati dall’avvio del tracciamento</span></div><div class="chart-row"><canvas id="tokenChart" width="300" height="300" tabindex="0" aria-label="Distribuzione interattiva dei token per categoria"></canvas><div id="tokenLegend" class="token-legend"></div></div><p id="chartDetail" aria-live="polite"></p><p id="unknownTokens" class="muted"></p><h3>Ultimi 30 giorni · UTC</h3><label for="historyPeriod">Vista <select id="historyPeriod"><option value="day">Giornaliera</option><option value="week">Settimanale</option></select></label><div id="tokenHistory" class="token-history"></div><div class="action-row"><a class="secondary-button" href="/api/notte/export" download>Esporta statistiche JSON</a><button id="resetStats" class="text-button">Azzera periodo visualizzato</button></div><p class="muted">Il contatore di vita resta intatto. I token non riportati dal modello non vengono stimati.</p></section>
-<section id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden><p class="eyebrow">Sistema e ritmo</p><h2>La mia vita sul Pi.</h2><form id="settingsForm" class="settings-grid"><label>Profilo<select id="modelProfile"> <option value="fast">Notte · conversazione</option><option value="coding">Notte Coding · 7B</option></select></label><label>Consolidamento<select id="interval"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label>Riflessione<select id="reflectionMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label>Iniziativa<input id="initiative" type="range" min="0" max="1" step=".05"></label><label>Volatilità emotiva<input id="volatility" type="range" min="0" max="1" step=".05"></label><label>Studio autonomo<select id="studyMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label class="check-label"><input id="studyEnabled" type="checkbox">Studia, verifica codice e scrive il diario</label><label class="check-label"><input id="webEnabled" type="checkbox">Ricerche web e repository GitHub</label><label class="check-label"><input id="telegramEnabled" type="checkbox">Messaggi autonomi Telegram a Matt</label><p class="muted">Associa la chat privata con <code>/notte</code> nel bot Alba. Nessun limite giornaliero; <code>/notte off</code> li interrompe.</p><details><summary>WhatsApp opzionale</summary><label>Numero di Matt<input id="mattNumber" type="tel" placeholder="Prefisso internazionale"></label><label class="check-label"><input id="whatsappEnabled" type="checkbox">Messaggi WhatsApp tramite bridge locale</label><p class="muted">Richiede il bridge abbinato al telefono. Massimo 3 messaggi al giorno.</p></details><button class="primary-button" type="submit">Salva il ritmo</button></form><button id="benchmarkNow" class="secondary-button">Testa modelli e strategie</button><div id="benchmarkResults" class="event-list"></div><h3>Variazioni emotive recenti</h3><div id="emotionLog" class="event-list"></div></section>
+<section id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
+<div class="panel-title"><div><p class="eyebrow">Sistema e ritmo</p><h2>Il mio ritmo.</h2></div><span class="state-pill">Impostazioni locali</span></div>
+<form id="settingsForm" class="settings-grid">
+<fieldset class="settings-card"><legend>Conversazione</legend><p class="muted">Scegli il profilo con cui rispondo. Il modello personale validato si usa nel profilo rapido.</p><label for="modelProfile">Profilo<select id="modelProfile"><option value="fast">Notte · conversazione</option><option value="coding">Notte Coding</option><option value="quality">Qualità</option><option value="advanced">Avanzato</option></select></label></fieldset>
+<fieldset class="settings-card"><legend>Tempi e autonomia</legend><div class="settings-fields"><label for="interval">Consolidamento<select id="interval"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label for="reflectionMinutes">Riflessione<select id="reflectionMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label></div>
+<div class="settings-ranges"><div class="range-control"><label for="initiative">Iniziativa <output id="initiativeValue" for="initiative">0%</output></label><p id="initiativeHelp" class="muted">Quanto spesso propongo qualcosa senza una tua domanda.</p><input id="initiative" type="range" min="0" max="1" step=".05" aria-describedby="initiativeHelp"><div class="range-ends" aria-hidden="true"><span>Discreta</span><span>Propositiva</span></div></div>
+<div class="range-control"><label for="volatility">Volatilità emotiva <output id="volatilityValue" for="volatility">0%</output></label><p id="volatilityHelp" class="muted">Quanto rapidamente può variare il mio stato emotivo.</p><input id="volatility" type="range" min="0" max="1" step=".05" aria-describedby="volatilityHelp"><div class="range-ends" aria-hidden="true"><span>Stabile</span><span>Variabile</span></div></div></div></fieldset>
+<fieldset class="settings-card"><legend>Studio e fonti</legend><label for="studyMinutes">Studio autonomo<select id="studyMinutes"><option value="10">Ogni 10 minuti</option><option value="30">Ogni 30 minuti</option><option value="60">Ogni 60 minuti</option></select></label><label class="check-label"><input id="studyEnabled" type="checkbox"><span>Studia, verifica codice e scrive il diario</span></label><label class="check-label"><input id="webEnabled" type="checkbox"><span>Ricerche web e repository GitHub</span></label><p class="muted">Le prove di codice isolate richiedono Linux e la sandbox disponibile.</p></fieldset>
+<fieldset class="settings-card"><legend>Messaggi e collegamenti</legend><label class="check-label"><input id="telegramEnabled" type="checkbox"><span>Messaggi autonomi Telegram</span></label><p class="muted">Associa la chat privata con <code>/notte</code> nel bot Alba. <code>/notte off</code> interrompe i messaggi.</p><details><summary>WhatsApp opzionale</summary><label for="mattNumber">Numero del destinatario<input id="mattNumber" type="tel" placeholder="Prefisso internazionale" autocomplete="tel"></label><label class="check-label"><input id="whatsappEnabled" type="checkbox"><span>Messaggi WhatsApp tramite bridge locale</span></label><p class="muted">Richiede il bridge abbinato al telefono. Massimo 3 messaggi al giorno.</p></details></fieldset>
+<div class="settings-save"><p id="settingsState" role="status" aria-live="polite"></p><button id="saveSettings" class="primary-button" type="submit">Salva il ritmo</button></div>
+</form>
+<div class="action-row"><button id="benchmarkNow" class="secondary-button">Testa modelli e strategie</button></div><div id="benchmarkResults" class="event-list"></div><h3>Variazioni emotive recenti</h3><div id="emotionLog" class="event-list"></div></section>
 <section id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" hidden><p class="eyebrow">Attività in diretta</p><h2>Ogni passo resta visibile.</h2><button id="readReddit" class="secondary-button">Leggi Reddit ora</button><div class="action-row"><button id="olderActivity" class="secondary-button">Attività precedenti</button><button id="latestActivity" class="secondary-button">Torna alla diretta</button></div><div id="activityEvents" class="event-list"></div></section>
 <section id="panel-learning" role="tabpanel" aria-labelledby="tab-learning" hidden>
 <div class="panel-title"><div><p class="eyebrow">Italiano · Python · Web</p><h2>Imparo, un passo alla volta.</h2></div><button id="learnTrain" class="primary-button">Addestra ora</button></div>
@@ -98,5 +211,5 @@ Sistema e ritmo</button><button role="tab" aria-selected="false" aria-controls="
 <section id="panel-lab" role="tabpanel" aria-labelledby="tab-lab" hidden><div class="panel-title"><div><p class="eyebrow">Modelli veri · prove isolate</p><h2>Test Lab.</h2></div><a href="/optimization">Progetto ↗</a></div><p class="muted">Confronta Ollama normale e runtime SSD con lo stesso modello e prompt. Le prove non modificano il profilo della chat e non entrano nella sua memoria. I tempi includono caricamento e generazione; il secondo percorso può beneficiare della cache del sistema operativo.</p><form id="labForm"><div class="lab-controls"><label for="labModel">Modello installato<select id="labModel" required></select></label><label for="labMode">Percorso<select id="labMode"><option value="compare">Confronta normale e ottimizzato</option><option value="normal">Normale · Ollama</option><option value="optimized">Ottimizzato · SSD</option></select></label><label for="labPolicy">Ottimizzazione<select id="labPolicy"><option value="adaptive">Notte Flux · token e contesto</option><option value="warm">Notte Warm · modello residente</option><option value="cpu2">Notte CPU2 · due thread</option><option value="compact">Notte KV8 · cache q8</option><option value="mapped">Notte SSD · mapped</option><option value="speculative">Notte Draft · token verificati</option><option value="native">Notte ARM · kernel native</option></select></label><label for="labContext">Contesto<select id="labContext"><option value="512">512 token</option><option value="1024" selected>1024 token</option><option value="2048">2048 token</option></select></label><label for="labOutput">Output massimo<input id="labOutput" type="number" min="8" max="256" value="96" required></label></div><p id="labModelNote" class="muted"></p><label for="labPrompt">Prompt condiviso<textarea id="labPrompt" rows="4" maxlength="2000" required placeholder="Quanto fa 17+25? Rispondi solo con il numero."></textarea></label><div class="action-row"><button id="labRun" class="primary-button" type="submit">Standard → ottimizzazione</button><button id="labStop" class="secondary-button" type="button" disabled>Interrompi prova</button></div></form><p id="labState" role="status" aria-live="polite"></p><div id="labLive" class="lab-responses"></div><h3>Storico e report</h3><div id="labRuns" class="lab-history"></div></section>
 <section id="panel-project" role="tabpanel" aria-labelledby="tab-project" hidden><p class="eyebrow">Informazioni · news · benchmark · storia</p><h2>Ogni evoluzione lascia una prova.</h2><p class="muted">Il runtime SSD esegue il GGUF originale: nessun modello più piccolo al suo posto. È sperimentale. Nei piccoli test Python il draft verificato migliora il 7B del 37%, ma nel test inglese lo rallenta. Il 14B gira a circa 0,10 token/s; la chat lunga con il 7B richiede ancora minuti.</p><div class="action-row"><a class="secondary-button" href="/optimization">Apri sito del progetto · IT / EN</a><a class="secondary-button" href="/optimization/reports/SSD_RUNTIME_RESULTS.md">Report e grafici</a><a href="/optimization/reports/SSD_RUNTIME_RESULTS.json" download>Dati JSON</a></div><div id="projectNews" class="event-list"></div></section>
 </main>
-<aside class="night-state"><div class="panel-title"><h2>Adesso</h2><span class="live-dot" aria-hidden="true"></span></div><p id="moodLabel" class="mood-label">Caricamento</p><div id="emotions" class="emotion-bars"></div><div class="system-meters"><h3>Il Raspberry</h3><dl><div><dt>CPU</dt><dd id="cpu">—</dd></div><div><dt>RAM</dt><dd id="ram">—</dd></div><div><dt>Temperatura</dt><dd id="temperature">—</dd></div><div><dt>Energia</dt><dd id="energy">—</dd></div><div><dt>Modello</dt><dd id="modelName">—</dd></div><div><dt>Contesto</dt><dd id="contextSize">—</dd></div><div><dt>Ultimo consolidamento</dt><dd id="lastConsolidation">—</dd></div></dl><p id="loadStatus" class="muted"></p><p id="embeddingStatus" class="muted"></p></div><p class="state-note">Le emozioni sono parametri persistenti del sistema e cambiano il suo comportamento.</p></aside>
+<aside class="night-state"><div class="panel-title"><h2>Adesso</h2><span class="live-dot" aria-hidden="true"></span></div><p id="moodLabel" class="mood-label">Caricamento</p><div id="emotions" class="emotion-bars"></div><div class="system-meters"><h3>Questo dispositivo</h3><dl><div><dt>CPU</dt><dd id="cpu">—</dd></div><div><dt>RAM</dt><dd id="ram">—</dd></div><div><dt>Temperatura</dt><dd id="temperature">—</dd></div><div><dt>Energia</dt><dd id="energy">—</dd></div><div><dt>Modello</dt><dd id="modelName">—</dd></div><div><dt>Contesto</dt><dd id="contextSize">—</dd></div><div><dt>Ultimo consolidamento</dt><dd id="lastConsolidation">—</dd></div></dl><p id="loadStatus" class="muted"></p><p id="embeddingStatus" class="muted"></p></div><p class="state-note">Le emozioni sono parametri persistenti del sistema e cambiano il suo comportamento.</p></aside>
 </div></div></body></html>

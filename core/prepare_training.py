@@ -14,16 +14,23 @@ TORCH_WHEEL = ('https://download-r2.pytorch.org/whl/cpu/'
     '#sha256=8d47e0cfc59679d4e367646c3df4cf433c7d1595b31307e0e7b2391c58ca2160')
 
 
+def supported(system=None,machine=None,version=None):
+    system=system or platform.system();machine=machine or platform.machine();version=version or sys.version_info[:2]
+    return system=='Linux' and ((machine in ('aarch64','arm64') and version==(3,13)) or (machine in ('x86_64','AMD64') and (3,10)<=version<=(3,13)))
+
+
 def prepare(root):
-    if platform.machine() not in ('aarch64','arm64') or sys.version_info[:2]!=(3,13):
-        raise ValueError('Il pacchetto CPU verificato richiede ARM64 e Python 3.13.')
+    arm=platform.machine() in ('aarch64','arm64')
+    if not supported():
+        raise ValueError('Training CPU: Linux ARM64/Python 3.13 oppure x86_64/Python 3.10–3.13.')
     root=Path(root).resolve();root.mkdir(mode=0o700,parents=True,exist_ok=True)
     env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','PIP_DISABLE_PIP_VERSION_CHECK':'1',
          'PYTHONNOUSERSITE':'1','HF_HUB_DISABLE_TELEMETRY':'1','HF_HUB_DISABLE_XET':'1',
          'HF_HOME':str(root/'hf-cache'),'PIP_CACHE_DIR':str(root/'pip-cache')}
     python=root/'environment/bin/python'
     if not python.exists():subprocess.run([sys.executable,'-m','venv',str(root/'environment')],env=env,check=True)
-    subprocess.run([str(python),'-m','pip','install','--index-url','https://pypi.org/simple','--only-binary=:all:',TORCH_WHEEL,
+    subprocess.run([str(python),'-m','pip','install','--index-url','https://pypi.org/simple' if arm else 'https://download.pytorch.org/whl/cpu','--only-binary=:all:',TORCH_WHEEL if arm else 'torch==2.12.1'],env=env,check=True)
+    subprocess.run([str(python),'-m','pip','install','--index-url','https://pypi.org/simple','--only-binary=:all:',
         'transformers==4.57.1','peft==0.17.1','accelerate==1.10.1','safetensors==0.6.2'],env=env,check=True)
     subprocess.run([str(python),'-c',
         'from huggingface_hub import snapshot_download; import sys; snapshot_download('+repr(BASE_ID)+

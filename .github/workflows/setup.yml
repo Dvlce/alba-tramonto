@@ -1,0 +1,24 @@
+name: Portable setup
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  setup:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m unittest discover -s tests -p test_setup.py
+      - run: python tests/setup_smoke.py
+      - run: python tools/build_setup.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: setup-${{ matrix.os }}
+          path: dist/setup/*

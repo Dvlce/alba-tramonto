@@ -45,7 +45,7 @@
       ]
     },
     "/notte": {
-      "targetKind": "new-ui",
+      "targetKind": "existing-ui",
       "projectId": "9eca8a62-4590-400f-bf3b-81c88ac87e16",
       "activeDraftId": "5254c5f7-3743-436b-9dc2-ca01c64d19c8",
       "designSystemPath": ".superdesign/design-system.md",
@@ -58,17 +58,17 @@
       "fingerprints": {
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
-        "notte.html": "1fee3d495a888684e3b75afc415d6f2ec232487abdf98b2a2f5a1bd6ec1d780c",
-        "notte.css": "89006858c028cbc35e1034cc4c67fe58e8629550997df9ed1c35c3f61fdcf8dd"
+        "notte.html": "afabb61aa3cb88ad4df77c19bd870a969cf91ed91f5c802c7d65ad01978344a2",
+        "notte.css": "8f5ee113cb82eda1bb81d7a0e73de01fe56d2866861c8a681bfafcf6e972a674"
       },
       "drafts": {
         "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
           "title": "Notte \u00b7 Apprendimento",
-          "visualDirection": "User-approved dark sage learning dashboard, teaching form, public sources with provenance, measured training progress and previous/new grouped histograms. Compact responsive forms; no invented measurements.",
-          "currentVersion": 7
+          "visualDirection": "Approved dark sage dashboard, complete inline navigation icons, grouped system settings, full-width touch and keyboard sliders with percent outputs; drafts survive live updates and reloads.",
+          "currentVersion": 8
         }
       },
-      "updatedAt": "2026-10-11T08:22:04.007695+00:00"
+      "updatedAt": "2026-10-11T08:57:33.038172+00:00"
     },
     "android/tramonto": {
       "targetKind": "existing-ui",

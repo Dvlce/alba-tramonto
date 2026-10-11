@@ -63,10 +63,31 @@ async def main():
                 await page.locator('#tokenLegend button').first.click()
                 assert 'token' in await page.locator('#chartDetail').inner_text()
                 await page.locator('#tab-system').click()
+                assert await page.locator('[data-panel]').count()==await page.locator('[data-panel] svg').count()
+                await page.locator('#initiative').fill('0.75')
+                await page.locator('#volatility').fill('0.35')
+                assert await page.locator('#initiativeValue').inner_text()=='75%'
+                assert await page.locator('#volatilityValue').inner_text()=='35%'
+                await page.locator('#initiative').focus()
+                await page.keyboard.press('ArrowRight')
+                assert await page.locator('#initiativeValue').inner_text()=='80%'
                 await page.locator('#interval').select_option('30')
+                await page.wait_for_timeout(2200)
+                assert await page.locator('#initiative').input_value()=='0.8'
+                await page.locator('#tab-chat').click()
+                await page.locator('#tab-system').click()
+                assert await page.locator('#volatility').input_value()=='0.35'
+                await page.goto(str(server.make_url('/notte'))+'#system')
+                await page.locator('#panel-system').wait_for(state='visible')
+                assert await page.locator('#initiativeValue').inner_text()=='80%'
+                await page.set_viewport_size({'width':390,'height':844})
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                assert await page.locator('#initiative').evaluate('(el) => el.getBoundingClientRect().width > 200 && el.getBoundingClientRect().height >= 44')
+                await page.set_viewport_size({'width':1440,'height':1000})
                 await page.get_by_role('button',name='Salva il ritmo').click()
                 await page.locator('#notice').filter(has_text='Ritmo aggiornato').wait_for()
                 assert service.core.config['interval']==30
+                assert service.core.config['initiative']==0.8 and service.core.config['volatility']==0.35
                 await page.locator('#toggleAutonomy').click()
                 await page.locator('#toggleAutonomy').filter(has_text='Risveglia').wait_for()
                 await page.locator('#tab-chat').click()
@@ -126,7 +147,9 @@ async def main():
                 await page.locator('#dashboard').wait_for(state='visible')
                 assert await page.locator('#notteLink').count()==1
                 await browser.close()
-        finally:await server.close();store.close()
+        finally:
+            if errors:print('Browser errors:',errors)
+            await server.close();store.close()
         assert not errors,errors
     print('Notte browser OK: live chat, markdown/XSS, connector toggles, consolidation, summaries, tokens, settings, autonomy, desktop/mobile and Alba navigation.')
 

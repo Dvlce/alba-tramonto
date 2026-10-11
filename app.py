@@ -548,7 +548,10 @@ async def main():
         stop=asyncio.Event()
         loop=asyncio.get_running_loop()
         for sig in (signal.SIGTERM,signal.SIGINT):
-            loop.add_signal_handler(sig,stop.set)
+            try:
+                loop.add_signal_handler(sig,stop.set)
+            except NotImplementedError:  # Windows' ProactorEventLoop
+                signal.signal(sig,lambda *_:loop.call_soon_threadsafe(stop.set))
         log.info('Alba avviata, modello=%s, web=127.0.0.1:%s',settings.model,settings.web_port)
         waiter=asyncio.create_task(stop.wait())
         done,_=await asyncio.wait([waiter,*tasks],return_when=asyncio.FIRST_COMPLETED)

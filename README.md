@@ -38,6 +38,8 @@ See [ALBA-CORE architecture, configuration, and limitations](docs/ALBA_CORE.md) 
 
 ## Install on Linux / Raspberry Pi
 
+[One-file setup for Linux, Windows and macOS](docs/SETUP.md): download one installer for your operating system; it embeds the public application sources and prepares Python, dependencies, Ollama, models and startup on a fresh machine. Internet is needed for dependency/model downloads. Isolated Python/SPICE execution and LoRA weight training require Linux.
+
 Recommended hardware: Raspberry Pi 5, 8 GB RAM, 64-bit Linux, and at least 10 GB free for models and data. Setup inspects RAM, CPU, and disk space and selects an initial model. A 750 GB disk is not required; retention is configured in `.env`.
 
 ```sh
@@ -50,7 +52,7 @@ Setup installs Linux dependencies, a Python environment, Ollama if it is missing
 
 Initial credentials are written to `data/first-access.txt` with mode `0600`. Read them from the terminal, store them safely, and remove that file. The server listens **only on 127.0.0.1:8088**. Publish it through an HTTPS reverse proxy, set `PUBLIC_URL`, and restart. Tailscale Funnel is one option; web and Telegram users do not need to install Tailscale. Do not expose the Ollama port or the database.
 
-The generated service runs as the installing user. To use a dedicated service account, adapt `deploy/alba.service`. [Security measures](SICUREZZA.md) describes the reference installation in Italian. `deploy/harden_pi.py` is specific to that machine: review and adapt its users and keys before using it elsewhere. General setup does not automatically change SSH or firewall configuration.
+Linux source installation creates a service running as the installing user. The portable setup also supports macOS LaunchAgent and Windows current-user startup. To use a dedicated service account, adapt `deploy/alba.service`. [Security measures](SICUREZZA.md) describes the reference installation in Italian. `deploy/harden_pi.py` is specific to that machine: review and adapt its users and keys before using it elsewhere. General setup does not automatically change SSH or firewall configuration.
 
 The model and backend can be replaced:
 

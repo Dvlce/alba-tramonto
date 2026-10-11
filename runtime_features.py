@@ -2,6 +2,7 @@
 import asyncio
 import shutil
 import time
+import sys
 from pathlib import Path
 from datetime import datetime
 from usage import ROME
@@ -68,6 +69,13 @@ class Performance:
             total=fields['MemTotal']; used=total-fields['MemAvailable']
             ram=dict(total=total,used=used,percent=round(100*used/total,1))
         except (OSError,ValueError,KeyError,IndexError): pass
+        if sys.platform!='linux' and str(self.proc)=='/proc':
+            try:
+                import psutil
+                memory=psutil.virtual_memory()
+                cpu=psutil.cpu_percent(interval=None)
+                ram=dict(total=memory.total,used=memory.total-memory.available,percent=memory.percent)
+            except (ImportError,OSError): pass
         disk=shutil.disk_usage(self.root)
         temperature=None
         try: temperature=round(float(Path('/sys/class/thermal/thermal_zone0/temp').read_text())/1000,1)

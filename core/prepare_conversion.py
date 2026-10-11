@@ -16,7 +16,14 @@ def prepare(root):
         with urllib.request.urlopen('https://codeload.github.com/ggml-org/llama.cpp/tar.gz/'+LLAMA_REVISION,timeout=180) as response:raw=response.read(128*1024*1024+1)
         if len(raw)>128*1024*1024:raise ValueError('Archivio convertitore troppo grande.')
         staging=root/'converter-source';staging.mkdir(exist_ok=True)
-        with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as archive:archive.extractall(staging,filter='data')
+        with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as archive:
+            for member in archive.getmembers():
+                target=staging/member.name
+                if not target.resolve().is_relative_to(staging.resolve()) or not (member.isfile() or member.isdir()):raise ValueError('Archivio convertitore non sicuro.')
+                if member.isdir():target.mkdir(parents=True,exist_ok=True)
+                else:
+                    target.parent.mkdir(parents=True,exist_ok=True)
+                    target.write_bytes(archive.extractfile(member).read())
         (staging/('llama.cpp-'+LLAMA_REVISION)).rename(source)
     subprocess.run([str(python),'-m','pip','install','--index-url','https://pypi.org/simple','--only-binary=:all:',
                     'sentencepiece==0.2.1','protobuf==6.33.0','numpy','pyyaml'],env=env,check=True)

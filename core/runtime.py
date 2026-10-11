@@ -64,7 +64,7 @@ class Core:
           CREATE INDEX IF NOT EXISTS core_event_category ON core_events(category,id DESC);
         ''')
         defaults = {'model': os.getenv('CORE_MODEL','qwen2.5:1.5b'), 'chat_model': os.getenv('CORE_CHAT_MODEL',self.settings.model),
-                    'code_model': os.getenv('CORE_CODE_MODEL','qwen2.5-coder:3b'), 'profile': 'fast', 'advanced_code_model': 'qwen2.5-coder:7b',
+                    'code_model': os.getenv('CORE_CODE_MODEL','qwen2.5-coder:3b'), 'profile': 'fast', 'advanced_code_model': os.getenv('CORE_ADVANCED_CODE_MODEL','qwen2.5-coder:7b'),
                     'training_enabled': True, 'training_hour': 3, 'personal_model': '', 'personal_adapter': '',
                     'personal_enabled': False, 'personal_preference_set': False, 'online_lookup': True,
                     'ssd_enabled': False, 'ssd_policy': 'auto',

@@ -28,6 +28,8 @@ Android 1.8.0 · Notebook library, ruled page editor, and chat. Real English UI 
 - Schemi in vista tecnica: griglia fine su fondo bianco, simboli sottili, nomi e valori su righe separate, numerazione dei pin degli operazionali e colori rapidi dei fili. L’aspetto morbido Tramonto si può selezionare nello stesso pannello. Esempio di rivelatore di picco con due operazionali generici a ±15 V, diodo, condensatore, scarica con S1 e oscilloscopio ingresso/uscita, verificato in ngspice.
 - Reti: nove dispositivi, cavi, VLAN, gateway e interfacce; ping animato e traceroute didattici, controllo IP/gateway/collegamenti, duplicazione e disposizione a griglia. CIDR con intervallo host/wildcard, suddivisione uniforme e VLSM, rapporti e tabelle inseribili nel quaderno. Selezione multipla con Maiusc/clic, pressione prolungata o area, spostamento del gruppo, Canc/Delete e Annulla nei circuiti e nelle topologie. Console show/diagnose/traceroute. Non esegue Cisco IOS né invia pacchetti reali; il routing tra più router non è implementato.
 
+[Setup in un solo file per Linux, Windows e macOS](docs/SETUP.md): scarica il file del tuo sistema; include il portale e prepara le dipendenze sulla macchina nuova. Servono internet per i download e Linux per le prove di codice isolate e il training LoRA.
+
 ## Installazione Linux / Raspberry Pi
 
 Requisiti consigliati: Raspberry Pi 5, 8 GB, Linux 64 bit, almeno 10 GB liberi per modelli e dati. Il setup analizza RAM/CPU/disco e sceglie il modello iniziale. I 750 GB non sono necessari: la retention si configura in `.env`.
