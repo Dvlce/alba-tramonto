@@ -30,7 +30,7 @@ These two sources retain at most 256 documents in total for 30 days, deduplicate
 
 ### Verification on the installed Raspberry
 
-Both endpoints returned HTTP 200 from the installation on October 11, 2026. The end-to-end import and retrieval results are recorded in [NOTTE_COMMUNITY_RESULTS.json](NOTTE_COMMUNITY_RESULTS.json). Reddit continued to refuse access with HTTP 403 and imported no posts; the alternative readers are independent of that blocked connection. Automated OAuth tests for Reddit remain simulations, not evidence of live access.
+Both endpoints returned HTTP 200 from the installation on October 11, 2026. The end-to-end import and retrieval results are recorded in [NOTTE_COMMUNITY_RESULTS.json](NOTTE_COMMUNITY_RESULTS.json). Reddit continued to refuse access with HTTP 403 and imported no posts; the alternative readers are independent of that blocked connection. The active local model was also checked with copied public sources in a temporary database: both Python and humor requests retrieved the new material and completed responses, without changing production chat history. The Python response cited Stack Overflow; the humor response did not include its source URL despite the prompt. Source attribution remains available in the Learning archive. No humor-quality gain was measured. Automated OAuth tests for Reddit remain simulations, not evidence of live access.
 
 ## Legacy Reddit readings with limited access
 

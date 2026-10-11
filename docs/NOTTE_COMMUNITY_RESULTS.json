@@ -54,5 +54,34 @@
     "unit_tests_passed": true,
     "browser_desktop_and_390px_passed": true,
     "api_access": "Anonymous Stack Exchange and public JokeAPI; no keys"
+  },
+  "real_local_model_probe": {
+    "model": "notte-personal:20261011-20",
+    "temporary_database": true,
+    "production_chat_history_unchanged": true,
+    "probes": [
+      {
+        "kind": "stackoverflow",
+        "retrieved_source_count": 5,
+        "real_model_reply_completed": true,
+        "source_cited_in_reply": true,
+        "output_tokens": 640,
+        "tokens_per_second": 25.41,
+        "total_ms": 27198,
+        "output_limit_reached": false,
+        "quality_improvement_measured": false
+      },
+      {
+        "kind": "jokes",
+        "retrieved_source_count": 5,
+        "real_model_reply_completed": true,
+        "source_cited_in_reply": false,
+        "output_tokens": 96,
+        "tokens_per_second": 27.41,
+        "total_ms": 6052,
+        "output_limit_reached": false,
+        "quality_improvement_measured": false
+      }
+    ]
   }
 }
