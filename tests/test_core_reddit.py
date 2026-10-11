@@ -164,6 +164,12 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(api.await_count,1)
         self.assertEqual(self.core.knowledge.snapshot()['jobs'][0]['status'],'error')
 
+    async def test_unavailable_reddit_does_not_suspend_other_background_learning(self):
+        self.core.learning.reddit=AsyncMock(side_effect=PublicSourceError('HTTP 403',403,600))
+        await self.core.work('reddit')
+        self.assertIn('403',self.core.error);self.assertEqual(self.core.failures,0)
+        self.assertEqual(self.core.retry_after,0)
+
     async def test_cancel_is_recorded_and_import_can_restart(self):
         begun=asyncio.Event()
         async def delayed(*args,**kwargs):begun.set();await asyncio.Event().wait()
@@ -202,3 +208,16 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
         api=self.core.learning.public_get=AsyncMock(return_value=feed('dadjokes'))
         await self.core.knowledge.lookup('Cerca su r/dadjokes')
         self.assertIn('/r/dadjokes/',api.await_args.args[0]);self.assertEqual(self.core.knowledge.snapshot()['reddit']['documents'],1)
+
+    async def test_configured_approved_api_remains_a_retrieval_source_after_rss_retirement(self):
+        client=self.core.learning.reddit_client
+        client.approved=True;client.client_id='test_client';client.secret='fake_test_secret'
+        client.posts=AsyncMock(return_value=[{'id':'abc','title':'Test joke','excerpt':'Original test punchline.',
+            'revision':'123','url':'https://www.reddit.com/r/dadjokes/comments/abc/'}])
+        rss=self.core.learning.public_get=AsyncMock(side_effect=AssertionError('Never fall back to RSS.'))
+        with patch('core.knowledge.RSS_END',time.time()-1):
+            imported=await self.core.knowledge.import_sources({'kind':'reddit','query':'dadjokes'})
+        state=self.core.knowledge.snapshot()
+        self.assertEqual(len(imported),1);self.assertEqual(state['reddit']['transport'],'oauth_api')
+        self.assertEqual(rss.await_count,0);self.assertEqual(self.core.knowledge.training_examples(),[])
+        self.assertNotIn('fake_test_secret',json.dumps(state));self.assertNotIn('test_client',json.dumps(state))

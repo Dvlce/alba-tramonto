@@ -26,7 +26,17 @@ The reader imports text from the public Atom/RSS feed, including post bodies whe
 
 Reddit posts are unverified retrieval context, **excluded from LoRA training examples**. Relevant Italian humor requests can retrieve English source examples; the chat instructions ask Notte to invent original Italian jokes, adapt wordplay, cite used sources and avoid unsolicited jokes in serious answers. This makes the readings available immediately, but does not prove an improvement in humor or alter benchmark scores. Original examples supplied through the teaching form can separately be included in a later training run.
 
-Reddit has [announced the end of public RSS support on November 13, 2026](https://support.reddithelp.com/hc/en-us/articles/54353370049684-Changelog-October-8-2026). The connector shows this limitation and stops automatic RSS collection at that date. Continuing direct access then requires a platform-approved integration; unavailable feeds are reported without alternate scraping or access-control bypasses. [Reddit's Data API Terms](https://redditinc.com/policies/data-api-terms) do not grant permission to use user content for AI weight training.
+Reddit has [announced the end of public RSS support on November 13, 2026](https://support.reddithelp.com/hc/en-us/articles/54353370049684-Changelog-October-8-2026). The connector shows this limitation and stops automatic RSS collection at that date. RSS may already be refused with HTTP 403 depending on Reddit's access controls. Unavailable feeds are reported without alternate scraping or access-control bypasses. [Reddit's Data API Terms](https://redditinc.com/policies/data-api-terms) do not grant permission to use user content for AI weight training.
+
+For an **existing Reddit application with approved Data API access**, configure the following in the installation's private `.env`, then restart Alba:
+
+```dotenv
+REDDIT_API_APPROVED=1
+REDDIT_CLIENT_ID=your_approved_application_id
+REDDIT_CLIENT_SECRET=your_application_secret
+```
+
+Do not commit those values or paste secrets into chat. Setting `REDDIT_API_APPROVED=1` records the administrator's declaration; it does not obtain Reddit approval or bypass access restrictions. The application uses Reddit's [application-only OAuth flow](https://github.com/reddit-archive/reddit/wiki/OAuth2#application-only-oauth), keeps short-lived tokens in memory and renews them when needed. It requests only public post listings from `oauth.reddit.com`; author profiles, private communities, comment threads and write actions are excluded. Token and listing downloads are bounded, redirects are rejected and authentication failures never fall back to alternate scraping. The panel identifies **OAuth API** versus **public RSS** without revealing client credentials or tokens. Current platform migration requirements still apply to approved legacy API applications.
 
 ## Real CPU training
 

@@ -573,8 +573,11 @@ class Core:
             self.event('activity','interrupted',mode);raise
         except Exception as exc:
             self.error = str(exc)[:180] if isinstance(exc,ValueError) else type(exc).__name__
-            self.failures += 1
-            self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
+            # An unavailable public feed has its own connector cooldown. It
+            # must not suspend unrelated Wikipedia/GitHub study or reflection.
+            if mode!='reddit':
+                self.failures += 1
+                self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
             log.warning('Ciclo core fallito (%s)',type(exc).__name__)
         finally:
             if mode in ('chat','personal_chat'):
@@ -596,7 +599,7 @@ class Core:
                 if time.time()<self.retry_after or not self.config['enabled'] or self.running or (self.task and not self.task.done()) or self.engine.lock.locked() or self.engine.waiting: continue
                 if self.resources()['overloaded']: continue
                 if self.store.setting('bot_paused')=='1': continue
-                if self.config['reddit_enabled'] and self.config['web_enabled'] and self.config['connectors']['reddit'] and time.time()<RSS_END and time.time()>=float(self.store.setting('core_reddit_retry_after','0')) and time.time()-self.config['last_reddit']>=3600:
+                if self.config['reddit_enabled'] and self.config['web_enabled'] and self.config['connectors']['reddit'] and (time.time()<RSS_END or self.learning.reddit_client.configured) and time.time()>=float(self.store.setting('core_reddit_retry_after','0')) and time.time()-self.config['last_reddit']>=3600:
                     self.start('reddit')
                 elif self.config['study_enabled'] and time.time()-self.config['last_study']>=self.config['study_minutes']*60:
                     self.start('study')

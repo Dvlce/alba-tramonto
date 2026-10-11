@@ -170,6 +170,7 @@ class Knowledge:
                     'documents': sum(r['documents'] for r in self.core.store.rows("SELECT count(*) documents FROM core_knowledge WHERE kind='reddit'")),
                     'words': self.core.store.rows("SELECT coalesce(sum(words),0) words FROM core_knowledge WHERE kind='reddit'")[0]['words'],
                     'rss_end': RSS_END, 'notice_url': RSS_NOTICE, 'retention_days': 7, 'training': False,
+                    'transport': 'oauth_api' if self.core.learning.reddit_client.configured else 'public_rss',
                     'retry_after': float(self.core.store.setting('core_reddit_retry_after','0'))}}
 
     def start(self, value):
@@ -232,7 +233,8 @@ class Knowledge:
     async def reddit(self, request):
         group = request['query']
         now = time.time()
-        if now >= RSS_END:
+        api=self.core.learning.reddit_client
+        if now >= RSS_END and not api.configured:
             raise ValueError('Reddit ha annunciato la fine dei feed RSS dal 13 novembre 2026. Serve un accesso approvato dalla piattaforma per nuove letture.')
         self.prune_reddit()
         last = float(self.core.store.setting('core_reddit_read_'+group, '0'))
@@ -248,8 +250,11 @@ class Knowledge:
         # Space requests across all communities, including manual imports.
         self.core.store.set_setting('core_reddit_retry_after', str(now+60))
         try:
-            raw = await self.core.learning.public_get('https://www.reddit.com/r/'+group+'/.rss')
-            rows = reddit_entries(raw, group)[:request['count']]
+            if api.configured:
+                rows=await api.posts(group,request['count'])
+            else:
+                raw = await self.core.learning.public_get('https://www.reddit.com/r/'+group+'/.rss')
+                rows = reddit_entries(raw, group)[:request['count']]
             if not rows:
                 raise ValueError('Nessun post leggibile nel feed pubblico di r/'+group+'. Il subreddit può essere privato, vuoto o senza contenuti testuali.')
             self.advance(0, len(rows), 'Lettura di r/'+group)

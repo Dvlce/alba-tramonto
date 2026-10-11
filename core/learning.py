@@ -55,6 +55,13 @@ class PublicSourceError(ValueError):
         self.retry_seconds=retry_seconds
 
 
+def retry_delay(value):
+    try:return max(0,int(value))
+    except (ValueError,TypeError):
+        try:return max(0,parsedate_to_datetime(value).timestamp()-time.time())
+        except (ValueError,TypeError,OverflowError):return 0
+
+
 def repo_name(value):
     if not isinstance(value,str): raise ValueError('Repository non valido.')
     value = value.strip().removeprefix('https://github.com/').removesuffix('/').removesuffix('.git')
@@ -94,6 +101,8 @@ def extract_sources(raw, destination):
 class Learning:
     def __init__(self, core):
         self.core=core
+        from .reddit_oauth import RedditClient
+        self.reddit_client=RedditClient(core)
         self.root=core.settings.data/'core-workspace'
         self.phase=''
         core.store.db.executescript('''
@@ -126,11 +135,7 @@ class Learning:
                            'Accept':accept},timeout=45) as response:
             if response.status!=200:
                 reason = ' Limite API raggiunto; riprova dopo il ripristino della quota.' if response.status==429 else ' Accesso rifiutato dalla fonte (identificazione del client o quota).' if response.status==403 else ''
-                retry=response.headers.get('Retry-After','')
-                try:seconds=max(0,int(retry))
-                except (ValueError,TypeError):
-                    try:seconds=max(0,parsedate_to_datetime(retry).timestamp()-time.time())
-                    except (ValueError,TypeError,OverflowError):seconds=0
+                seconds=retry_delay(response.headers.get('Retry-After',''))
                 raise PublicSourceError('Fonte pubblica non disponibile (HTTP '+str(response.status)+').'+reason,response.status,seconds)
             data=bytearray()
             async for part in response.content.iter_chunked(16384):
