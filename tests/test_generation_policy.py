@@ -10,6 +10,10 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(plan('Spiega dettagliatamente la memoria')['output_tokens'],768)
     def test_context_is_stable_for_short_followups(self):
         self.assertEqual(plan('Ciao')['context_tokens'],plan('Come funziona la memoria?')['context_tokens'])
+    def test_only_the_complete_identifier_keeps_a_short_reply_budget(self):
+        request='Qual è il codice identificativo completo? Riportalo esattamente. Rispondi solo con il codice.'
+        self.assertEqual(plan(request)['output_tokens'],96)
+        self.assertEqual(plan(request)['kind'],'brief')
     def test_old_history_is_windowed_but_current_query_is_preserved(self):
         history=[{'role':'user','content':'a'*800},{'role':'assistant','content':'b'*800}]*10
         original=list(history);query='Raccontami qualcosa.'

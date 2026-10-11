@@ -10,12 +10,12 @@ import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from .prepare_training import BASE_ID,BASE_REVISION
-from .training_data import examples,HOLDOUT
+from .training_data import curriculum,validation,HOLDOUT,LANGUAGE_HOLDOUT,CODE_SYSTEM,LANGUAGE_SYSTEM
 
 
 class Training:
     def __init__(self,core):
-        self.core=core;self.root=core.settings.data/'core-training';self.task=None;self.process=None;self.phase='';self.paused=False
+        self.core=core;self.root=core.settings.data/'core-training';self.task=None;self.process=None;self.phase='';self.paused=False;self.progress={}
         core.store.db.executescript('''CREATE TABLE IF NOT EXISTS core_training(
             id INTEGER PRIMARY KEY,day TEXT NOT NULL,started REAL NOT NULL,finished REAL,
             status TEXT NOT NULL,model TEXT NOT NULL DEFAULT '',dataset_hash TEXT NOT NULL DEFAULT '',
@@ -26,11 +26,22 @@ class Training:
     def today(self):return datetime.datetime.now(ZoneInfo('Europe/Rome'))
     def due(self):
         now=self.today()
-        return self.ready() and self.core.config['training_enabled'] and now.hour>=self.core.config['training_hour'] and not self.core.store.rows('SELECT id FROM core_training WHERE day=?',(now.date().isoformat(),))
+        if not (self.ready() and self.core.config['training_enabled'] and now.hour>=self.core.config['training_hour'] and
+                not self.core.store.rows('SELECT id FROM core_training WHERE day=?',(now.date().isoformat(),))):return False
+        previous=self.core.store.rows("SELECT dataset_hash FROM core_training WHERE status='ready' ORDER BY id DESC LIMIT 1")
+        return not previous or previous[0]['dataset_hash']!=self.dataset_digest(self.dataset())
+    def dataset(self):
+        verified=self.core.store.rows("SELECT * FROM core_diary WHERE status='verified' ORDER BY id DESC LIMIT 100")
+        return curriculum(verified,self.core.knowledge.training_examples())
+    @staticmethod
+    def dataset_digest(rows):
+        import hashlib
+        content=sorted(({k:r[k] for k in ('prompt','answer','system','task')} for r in rows),key=lambda r:(r['prompt'],r['answer']))
+        return hashlib.sha256(json.dumps(content,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     def snapshot(self):
         runs=self.core.store.rows('SELECT * FROM core_training ORDER BY id DESC LIMIT 30')
         return {'ready':self.ready(),'running':bool(self.task and not self.task.done()),'phase':self.phase,
-                'paused':self.paused,'base':BASE_ID,'base_revision':BASE_REVISION,'active_model':self.core.config['personal_model'],
+                'paused':self.paused,'progress':self.progress,'base':BASE_ID,'base_revision':BASE_REVISION,'active_model':self.core.config['personal_model'],
                 'active_adapter':self.core.config['personal_adapter'],'runs':[{**r,'metrics':json.loads(r['metrics'])} for r in runs],
                 'schedule':'Europe/Rome · %02d:00'%self.core.config['training_hour']}
     def start(self):
@@ -46,24 +57,41 @@ class Training:
                {'function':'is_positive','cases':[{'args':[0],'expected':False},{'args':[2],'expected':True}]},
                {'function':'last_or_none','cases':[{'args':[[]],'expected':None},{'args':[[1,2]],'expected':2}]},
                {'function':'maximum','cases':[{'args':[[]],'expected':None},{'args':[[-4,2,1]],'expected':2}]}]
-        results=[]
+        results=[];language_results=[];output_tokens=0;generation_seconds=0
+        async def response_for(prompt,system):
+            nonlocal output_tokens,generation_seconds
+            started=time.monotonic()
+            async with self.core.engine.session.post(self.core.settings.llm_url+'/api/chat',json={
+                'model':name,'stream':False,'think':False,'keep_alive':'30s',
+                'messages':[{'role':'system','content':system},{'role':'user','content':prompt}],
+                'options':{'num_ctx':1024,'num_predict':160,'num_thread':2,'temperature':0}},timeout=180) as response:
+                if response.status!=200:raise ValueError('Benchmark: modello non disponibile.')
+                out=await response.json()
+            self.core.tokens('training',out.get('prompt_eval_count'),out.get('eval_count'))
+            duration=out.get('eval_duration',0)/1e9
+            if duration>0:
+                output_tokens+=out.get('eval_count',0);generation_seconds+=duration
+            return out['message']['content'].strip(),round(time.monotonic()-started,3)
         for (prompt,_),spec in zip(HOLDOUT,cases):
             async with self.core.engine.lock:
-                async with self.core.engine.session.post(self.core.settings.llm_url+'/api/chat',json={
-                    'model':name,'stream':False,'think':False,'keep_alive':'30s',
-                    'messages':[{'role':'system','content':'Scrivi soltanto la funzione Python richiesta, nessuna spiegazione.'},
-                                {'role':'user','content':prompt}],
-                    'options':{'num_ctx':1024,'num_predict':160,'num_thread':2,'temperature':0}},timeout=180) as response:
-                    if response.status!=200:raise ValueError('Benchmark: modello non disponibile.')
-                    out=await response.json()
-                self.core.tokens('training',out.get('prompt_eval_count'),out.get('eval_count'))
-                code=out['message']['content'].strip()
+                code,seconds=await response_for(prompt+'\nNome obbligatorio della funzione: '+spec['function']+'.',CODE_SYSTEM)
                 fenced=re.search(r'```(?:python)?\s*\n(.*?)```',code,re.S)
                 if fenced:code=fenced[1]
                 rc,output=await self.core.learning.exercise(code,spec)
-            results.append({'function':spec['function'],'passed':rc==0,'code':code[:6000],'result':output[:1800]})
+            results.append({'function':spec['function'],'passed':rc==0,'code':code[:6000],'result':output[:1800],'seconds':seconds})
             self.core.event('training','benchmark',json.dumps(results[-1],ensure_ascii=False))
-        return {'passed':sum(r['passed'] for r in results),'total':len(results),'results':results}
+        for case in LANGUAGE_HOLDOUT:
+            async with self.core.engine.lock:
+                answer,seconds=await response_for(case['prompt'],LANGUAGE_SYSTEM)
+            passed=all(any(word in answer.casefold() for word in choices) for choices in case['keywords'])
+            language_results.append({'prompt':case['prompt'],'answer':answer[:2000],'passed':passed,'seconds':seconds})
+        passed=sum(r['passed'] for r in results);language_passed=sum(r['passed'] for r in language_results)
+        return {'passed':passed,'total':len(results),'results':results,'language_passed':language_passed,
+                'language_total':len(language_results),'language_results':language_results,
+                'success_percent':round((passed+language_passed)/(len(results)+len(language_results))*100,1),
+                'tokens_per_second':round(output_tokens/generation_seconds,2) if generation_seconds else None,
+                'seconds':round(sum(r['seconds'] for r in results+language_results),3),
+                'suite':'notte-it-python-web-v1','language_method':'Controlli testuali indicativi su 6 risposte; Python eseguito in sandbox'}
 
     async def execute(self,work,previous):
         args=['bwrap','--unshare-all','--die-with-parent','--ro-bind','/usr','/usr',
@@ -109,6 +137,7 @@ class Training:
                     content=line.decode('utf-8',errors='replace');log.write(content);log.flush()
                     try:
                         progress=json.loads(content);self.phase=progress.get('stage','training')
+                        self.progress.update({k:progress[k] for k in ('stage','step','total_steps','percent','loss','seconds','validation_loss','best_step') if k in progress})
                         self.core.event('training','progress',content[:5000])
                     except json.JSONDecodeError:pass
             return await process.wait()
@@ -138,6 +167,9 @@ class Training:
         work=self.root/'runs'/str(row);work.mkdir(mode=0o700,parents=True,exist_ok=True)
         self.core.event('training','start','Fine-tuning CPU locale: '+str(row))
         try:
+            self.phase='baseline';self.progress={'stage':'baseline','percent':0}
+            previous_model=self.core.config['personal_model'] or self.core.config['model']
+            before_benchmark=await self.benchmark(previous_model)
             # A stopped CPU worker still occupies RAM. Release cached inference
             # weights before loading Torch, instead of waiting forever under load.
             async with self.core.engine.lock:
@@ -149,18 +181,23 @@ class Training:
                         if response.status!=200:raise ValueError('Impossibile liberare la memoria del modello.')
                         await response.read()
                 self.core.event('training','memory','Cache di inferenza scaricata prima del worker CPU')
-            verified=self.core.store.rows("SELECT * FROM core_diary WHERE status='verified' ORDER BY id DESC LIMIT 100")
-            train=examples(verified)
+            train=self.dataset()
             import hashlib
-            digest=hashlib.sha256(json.dumps(train,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+            digest=self.dataset_digest(train)
             spec={'base':BASE_ID,'revision':BASE_REVISION,'train':train,
-                  'validation':[{'prompt':p,'answer':a} for p,a in HOLDOUT],'steps':min(24,len(train))}
+                  'validation':validation(),'steps':min(96,max(48,len(train))),
+                  'learning_rate':.0003,'previous_model':previous_model,'before_benchmark':before_benchmark}
             (work/'spec.json').write_text(json.dumps(spec,ensure_ascii=False))
             self.core.store.execute('UPDATE core_training SET dataset_hash=?,samples=? WHERE id=?',(digest,len(train),row))
             previous=self.root/'runs'/self.core.config['personal_adapter']/'adapter' if self.core.config['personal_adapter'] else None
             self.phase='loading';rc=await self.execute(work,previous)
             if rc:raise ValueError('Worker CPU non completato. Consulta il log del ciclo.')
             report=json.loads((work/'report.json').read_text())
+            from .knowledge import words
+            report.update(previous_model=previous_model,before_benchmark=before_benchmark,
+                training_words=sum(words(r['prompt'])+words(r['answer']) for r in train),samples=len(train),
+                dataset_hash=digest,origins={origin:sum(r['origin']==origin for r in train) for origin in {r['origin'] for r in train}})
+            (work/'report.json').write_text(json.dumps(report))
             self.core.store.execute('UPDATE core_training SET metrics=? WHERE id=?',(json.dumps(report),row))
             if not report['accepted']:
                 self.core.store.execute("UPDATE core_training SET status='rejected',finished=?,detail=? WHERE id=?",(time.time(),'Loss di validazione peggiorata: modello precedente conservato',row));return
@@ -187,18 +224,26 @@ class Training:
             fp16.unlink();quantized.unlink()
             self.phase='benchmark'
             report['benchmark']=await self.benchmark(name)
+            report['candidate_model']=name
+            report['promoted']=False
             (work/'report.json').write_text(json.dumps(report))
             self.core.store.execute('UPDATE core_training SET metrics=? WHERE id=?',(json.dumps(report),row))
             # Validation loss alone is not proof of correct code. A candidate
             # that fails an independent execution test cannot replace the adapter.
-            if report['benchmark']['passed']!=report['benchmark']['total']:
+            if (report['benchmark']['passed']!=report['benchmark']['total'] or
+                    report['benchmark']['language_passed']<before_benchmark['language_passed']):
                 self.core.store.execute("UPDATE core_training SET status='rejected',model=?,finished=?,detail=? WHERE id=?",
-                    (name,time.time(),'Benchmark funzionale incompleto; checkpoint precedente conservato',row))
+                    (name,time.time(),'Test Python incompleti o regressione nei controlli italiano/web; checkpoint precedente conservato',row))
                 self.core.event('training','rejected',name);return
             self.core.config['personal_previous_adapter']=self.core.config['personal_adapter']
-            self.core.config['personal_model']=name;self.core.config['personal_adapter']=str(row);self.core.save()
+            self.core.config['personal_model']=name;self.core.config['personal_adapter']=str(row)
+            if not self.core.config.get('personal_preference_set',False):self.core.config['personal_enabled']=True
+            self.core.save()
+            report['promoted']=True
+            (work/'report.json').write_text(json.dumps(report))
+            self.core.store.execute('UPDATE core_training SET metrics=? WHERE id=?',(json.dumps(report),row))
             self.core.store.execute("UPDATE core_training SET status='ready',model=?,finished=?,detail=? WHERE id=?",
-                  (name,time.time(),'LoRA verificato (4/4), disponibile nella chat personale; profilo principale conservato',row))
+                  (name,time.time(),'LoRA verificato: 4/4 test Python, controlli italiano/web senza regressioni; attivo nella chat Notte (profilo rapido)',row))
             self.core.event('training','complete',json.dumps({'model':name,'metrics':report},ensure_ascii=False))
         except asyncio.CancelledError:
             cancelled=True

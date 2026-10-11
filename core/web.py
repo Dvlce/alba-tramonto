@@ -30,6 +30,26 @@ def setup_core(app, service):
         admin(request)
         return web.json_response(core.snapshot())
 
+    async def knowledge(request):
+        uid = admin(request)
+        if request.method == 'GET':
+            return web.json_response(core.knowledge.snapshot())
+        try:
+            result = core.knowledge.teach(await request.json())
+        except ValueError as exc:
+            return web.json_response({'error': str(exc)}, status=400)
+        core.store.audit(uid, 'core_teach', uid)
+        return web.json_response(result, status=201)
+
+    async def sources(request):
+        uid = admin(request)
+        try:
+            core.knowledge.start(await request.json())
+        except ValueError as exc:
+            return web.json_response({'error': str(exc)}, status=400)
+        core.store.audit(uid, 'core_sources', uid)
+        return web.json_response({'ok': True}, status=202)
+
     async def models(request):
         admin(request)
         embedding=core.config['embedding_model'].removesuffix(':latest')
@@ -116,6 +136,7 @@ def setup_core(app, service):
         elif name in ('chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe'): core.start(name,value.get('text',''))
         elif name=='train': core.training.start()
         elif name=='stop_training': await core.training.stop()
+        elif name=='stop_sources': await core.knowledge.stop()
         elif name=='personal_chat': core.start(name,value.get('text',''))
         elif name=='rollback':
             ident=value.get('id')
@@ -177,6 +198,7 @@ def setup_core(app, service):
 
     async def cleanup(app):
         await core.training.stop()
+        await core.knowledge.stop()
         await asyncio.gather(*(s.close() for s in list(sockets)),return_exceptions=True)
         if core.task and not core.task.done():
             core.task.cancel()
@@ -194,6 +216,7 @@ def setup_core(app, service):
         web.get('/optimization/assets/{name}',optimization_asset),web.get('/optimization/reports/{name}',optimization_report),
         web.get('/api/notte/lab',lab),web.post('/api/notte/lab',lab),web.get('/api/notte/lab/{id}/export',lab_export),
         web.get('/api/notte/project',native_project),
+        web.get('/api/notte/knowledge',knowledge),web.post('/api/notte/knowledge',knowledge),web.post('/api/notte/sources',sources),
         web.get('/api/notte/status',status),web.get('/api/notte/models',models),web.get('/api/notte/ssd-plan',ssd_plan),web.get('/api/notte/events',events),web.get('/api/notte/diary',diary),web.get('/api/notte/training/{id}',training_files),
         web.post('/api/notte/action',action),web.get('/api/notte/export',export),
         web.get('/api/notte/stream',stream),web.get('/.well-known/assetlinks.json',assetlinks)])

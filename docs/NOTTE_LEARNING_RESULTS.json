@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-11",
+  "hardware": "Raspberry Pi 5, 8 GB RAM, NVMe, CPU training and inference",
+  "base": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "evaluation_suite": "notte-it-python-web-v1",
+  "runs": [
+    {
+      "id": 17,
+      "status": "ready",
+      "detail": "LoRA verificato: 4/4 test Python, controlli italiano/web senza regressioni; attivo nella chat Notte (profilo rapido)",
+      "active_model": "notte-personal:20261011-17",
+      "documents": 28,
+      "words": 31336,
+      "indexed_percent": 100.0,
+      "samples": 64,
+      "training_words": 1742,
+      "steps": 64,
+      "best_step": 64,
+      "initial_loss": 1.0783075328916312,
+      "final_loss": 1.0733822349458932,
+      "gain_percent": 0.46,
+      "before": {
+        "passed": 4,
+        "total": 4,
+        "language_passed": 5,
+        "language_total": 6,
+        "success_percent": 90.0,
+        "tokens_per_second": 26.27,
+        "seconds": 29.818
+      },
+      "after": {
+        "passed": 4,
+        "total": 4,
+        "language_passed": 5,
+        "language_total": 6,
+        "success_percent": 90.0,
+        "tokens_per_second": 26.34,
+        "seconds": 27.277
+      },
+      "rss_mb": 3651.75,
+      "parameter_delta_l1": 69.45068717002869,
+      "trainable_parameters": 22528,
+      "adapter_sha256": "4d86e8ef51effd76ddd8b54b8b0c53e912714f752b6c9b899139e8f151f5b617",
+      "gguf_sha256": "f29ca559d5c7c4a187514876d392e5f5eb3508bf1190e704fc79427ff03dbf56",
+      "origins": {
+        "sandbox-verified": 12,
+        "public-document": 8,
+        "project-authored": 44
+      }
+    },
+    {
+      "id": 18,
+      "status": "ready",
+      "detail": "LoRA verificato: 4/4 test Python, controlli italiano/web senza regressioni; attivo nella chat Notte (profilo rapido)",
+      "active_model": "notte-personal:20261011-18",
+      "documents": 32,
+      "words": 54269,
+      "indexed_percent": 100.0,
+      "samples": 68,
+      "training_words": 2080,
+      "steps": 68,
+      "best_step": 68,
+      "initial_loss": 1.0733822349458932,
+      "final_loss": 1.0581483211368323,
+      "gain_percent": 1.42,
+      "before": {
+        "passed": 4,
+        "total": 4,
+        "language_passed": 5,
+        "language_total": 6,
+        "success_percent": 90.0,
+        "tokens_per_second": 26.39,
+        "seconds": 27.458
+      },
+      "after": {
+        "passed": 4,
+        "total": 4,
+        "language_passed": 5,
+        "language_total": 6,
+        "success_percent": 90.0,
+        "tokens_per_second": 26.65,
+        "seconds": 19.408
+      },
+      "rss_mb": 3729.984375,
+      "parameter_delta_l1": 211.1468002796173,
+      "trainable_parameters": 67584,
+      "adapter_sha256": "d3dd76dc652ca7222c22d42ca1c3f5e3fa8f08b984435f706f277890425bb5ea",
+      "gguf_sha256": "4d10c491142e28b624a9b8d2e7a5d943eb556adbf1c8ee02b083ac6eb0c36a81",
+      "origins": {
+        "public-document": 12,
+        "sandbox-verified": 12,
+        "project-authored": 44
+      }
+    }
+  ],
+  "limitations": [
+    "Four Python execution checks and six indicative keyword checks are a small regression suite, not general intelligence or accuracy measurements.",
+    "Validation loss decreased, while measured test success stayed at 90%.",
+    "Archived words count retained retrieval text, not words encoded into the model weights.",
+    "Published report excludes private datasets, document contents, model weights and chat transcripts."
+  ],
+  "fresh_teaching_probe": {
+    "model": "notte-personal:20261011-18",
+    "new_fact_used": true,
+    "persistent_after_reload": true,
+    "retrieved_sources": 1,
+    "output_tokens": 96,
+    "tokens_per_second": 30.07,
+    "total_ms": 5753
+  }
+}

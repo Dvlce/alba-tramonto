@@ -26,6 +26,7 @@ class HTTPGuard:
             allowed={self.public_url,str(request.url.origin())}
             if origin and origin not in allowed: raise PermissionError('Origine non autorizzata.')
             limit=1100000 if request.path.startswith('/api/tramonto/') else 20000
+            if request.path=='/api/notte/knowledge': limit=140000
             if request.path=='/api/login' or request.path.startswith('/auth/'): limit=4000
             image=request.path.startswith('/api/tramonto/notes/') and request.path.endswith('/images')
             if image: limit=8*1024*1024

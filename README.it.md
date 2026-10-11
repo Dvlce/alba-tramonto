@@ -118,3 +118,7 @@ Per inserire un interruttore in serie: scegli la sua icona e tocca un tratto lib
 del cavo. Doppio clic apre/chiude l'interruttore; il tasto assegnato nelle proprietà
 fa lo stesso. **Simula** acquisisce lo stato aggiornato. I quattro morsetti
 dell'oscilloscopio sono sotto il simbolo, anche negli schemi precedenti.
+
+## Apprendimento Notte
+
+La sezione `/notte#learning` permette di insegnare lezioni, importare articoli Wikipedia e documenti GitHub, addestrare il modello locale e confrontare versioni con statistiche reali. Le fonti sono subito consultabili; i pesi cambiano solo dopo validazione. [Guida e misure aggiornate](docs/NOTTE_LEARNING.md).

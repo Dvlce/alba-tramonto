@@ -8,6 +8,8 @@ All three web spaces share the same dropdown navigation: existing brand icons, c
 
 [Optimization project](docs/TEST_LAB.md): the IT/EN site at `/optimization` publishes information, sourced news, benchmarks and evolution history. Notte and native Android 1.4 include a private **Test Lab** comparing the same model and prompt through normal Ollama and SSD, with actual outputs, charts and exported reports. [Measured comparison and limitations](docs/TEST_LAB_RESULTS.md).
 
+[Notte learning](docs/NOTTE_LEARNING.md): teach persistent lessons, read public Wikipedia articles and GitHub documents, and train a local Italian/Python/web adapter. The private learning panel shows word counts, indexing and training progress, measured previous/new histograms, evaluation results and rollback. Only validated versions can become the regular Notte model.
+
 [ALBA SSD Runtime](docs/SSD_RUNTIME.md): the selected GGUF, native ARM kernels, memory mapping without full copies of large models, speculative decoding comparisons, and RAM/temperature checks. Integrated into Notte's advanced chat with explicit model identity and reproducible benchmarks. Models exceeding available RAM remain slow; Colibri's universal expert cache is not implemented.
 
 <p>

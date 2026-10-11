@@ -77,6 +77,44 @@ async def main():
                 await page.locator('#diaryEntries').filter(has_text='Test superati').wait_for()
                 await page.locator('#diaryTopic').select_option('Python')
                 assert await page.locator('#diaryEntries .diary-entry').count()==1
+                await page.locator('#tab-learning').click()
+                await page.locator('#teachTitle').fill('Regola del progetto')
+                await page.locator('#teachText').fill('Il progetto usa il nome NEBULA-42 nelle prove.')
+                await page.wait_for_timeout(2200) # live refresh must retain the draft
+                assert await page.locator('#teachText').input_value()=='Il progetto usa il nome NEBULA-42 nelle prove.'
+                await page.locator('#teachSave').click()
+                await page.locator('#teachResult').filter(has_text='salvata').wait_for()
+                assert await page.locator('#learnIndexed').inner_text()=='100%'
+                assert service.core.knowledge.retrieve('NEBULA-42')
+                began=asyncio.Event()
+                async def blocked_source(*a,**k):began.set();await asyncio.Event().wait()
+                service.core.learning.public_get=blocked_source
+                await page.locator('#sourceQuery').fill('Python')
+                await page.locator('#sourceImport').click();await began.wait()
+                await page.locator('#sourceStop').wait_for(state='visible')
+                await page.wait_for_function("() => !document.querySelector('#sourceStop').disabled")
+                await page.locator('#sourceStop').click()
+                await page.locator('#sourceProgress').filter(has_text='interrotta').wait_for()
+                assert service.core.knowledge.snapshot()['jobs'][0]['status']=='interrupted'
+                metrics={'initial_loss':2,'final_loss':1,'previous_model':'previous','candidate_model':'new','promoted':True,
+                    'before_benchmark':{'passed':3,'total':4,'language_passed':4,'language_total':6,'tokens_per_second':12},
+                    'benchmark':{'passed':4,'total':4,'language_passed':5,'language_total':6,'tokens_per_second':13,'success_percent':90}}
+                store.execute('INSERT INTO core_training(day,started,status,metrics) VALUES(?,?,?,?)',('test',1,'ready',json.dumps(metrics)))
+                await page.wait_for_function("() => document.querySelectorAll('#learnHistogram .learn-bar-pair').length === 4")
+                assert await page.locator('#learnCompareTable tbody tr').count()==4
+                await page.locator('#teachTitle').fill('Bozza conservata')
+                await page.locator('#teachText').fill('Testo da completare dopo il ricaricamento.')
+                await page.goto(str(server.make_url('/notte'))+'#learning')
+                await page.locator('#panel-learning').wait_for(state='visible')
+                assert await page.locator('#teachText').input_value()=='Testo da completare dopo il ricaricamento.'
+                await page.set_viewport_size({'width':390,'height':844})
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                await page.locator('#teachText').fill('Una lezione sul telefono.')
+                await page.locator('#teachSave').click()
+                await page.locator('#teachResult').filter(has_text='salvata').wait_for()
+                await page.screenshot(path=str(ROOT/'artifacts/notte-learning-mobile.png'),full_page=True)
+                await page.set_viewport_size({'width':1440,'height':1000})
+                await page.locator('#tab-diary').click()
                 await page.screenshot(path=str(ROOT/'artifacts/notte-diary.png'),full_page=True)
                 await page.locator('#tab-chat').click()
                 artifacts=ROOT/'artifacts';artifacts.mkdir(exist_ok=True)

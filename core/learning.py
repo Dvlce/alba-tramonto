@@ -127,8 +127,11 @@ class Learning:
 
     async def public_get(self,url,limit=262144,params=None):
         async with self.core.engine.session.get(url,params=params,allow_redirects=False,
-                  headers={'User-Agent':'ALBA-CORE/1.3 local-learning','Accept':'application/vnd.github+json'},timeout=45) as response:
-            if response.status!=200: raise ValueError('Fonte pubblica non disponibile (HTTP '+str(response.status)+').')
+                  headers={'User-Agent':'Notte/1.8 (https://github.com/Dvlce/alba-tramonto; local-learning)',
+                           'Accept':'application/vnd.github+json' if url.startswith('https://api.github.com/') else 'application/json, application/xml;q=0.9, text/plain;q=0.8'},timeout=45) as response:
+            if response.status!=200:
+                reason = ' Limite API raggiunto; riprova dopo il ripristino della quota.' if response.status==429 else ' Accesso rifiutato dalla fonte (identificazione del client o quota).' if response.status==403 else ''
+                raise ValueError('Fonte pubblica non disponibile (HTTP '+str(response.status)+').'+reason)
             data=bytearray()
             async for part in response.content.iter_chunked(16384):
                 data.extend(part)
@@ -181,8 +184,10 @@ class Learning:
         existing=self.core.store.rows('SELECT * FROM core_repositories WHERE name=?',(name,))
         destination=self.root/'repos'/name.replace('/','--')
         if existing and destination.is_dir():
-            return existing[0], [{'path':p.relative_to(destination).as_posix(),'content':p.read_text()}
-                                  for p in sorted(destination.rglob('*')) if p.is_file()][:80]
+            files=[{'path':p.relative_to(destination).as_posix(),'content':p.read_text()}
+                   for p in sorted(destination.rglob('*')) if p.is_file()][:80]
+            self.remember_repository(name,existing[0]['revision'],files)
+            return existing[0],files
         if not self.core.action_slot('github',4,3600): raise ValueError('Limite di download GitHub raggiunto.')
         # A commit SHA is immutable and requires no untrusted branch interpolation.
         meta=json.loads(await self.public_get('https://api.github.com/repos/'+name+'/commits',params={'per_page':1}))
@@ -198,7 +203,16 @@ class Learning:
         docs=sorted(selected,key=lambda x:(not x['path'].lower().startswith('readme'),len(x['path'])))
         for entry in docs[:12]:
             self.core.event('github','source',f"Fonte: https://github.com/{name}/blob/{revision}/{entry['path']}\n"+entry['content'][:7000])
+        self.remember_repository(name,revision,docs)
         return {'name':name,'revision':revision,'files':len(selected)},docs
+
+    def remember_repository(self,name,revision,files):
+        from urllib.parse import quote
+        for entry in sorted(files,key=lambda x:(not x['path'].lower().startswith('readme'),len(x['path'])))[:6]:
+            old=self.core.store.rows('SELECT revision,license FROM core_knowledge WHERE kind=? AND source_key=?',('github',name+'/'+entry['path']))
+            if old and old[0]['revision']!=revision:continue
+            self.core.knowledge.remember('github',name+'/'+entry['path'],name+' · '+entry['path'],entry['content'],
+                'https://github.com/'+name+'/blob/'+revision+'/'+quote(entry['path'],safe='/'),revision,old[0]['license'] if old else 'NOASSERTION')
 
     async def bounded_process(self,args,timeout,env,output_limit=32768):
         process=await asyncio.create_subprocess_exec(*args,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,
@@ -278,6 +292,7 @@ class Learning:
         sources=[];code='';summary='';result='';status='error'
         try:
             if self.core.config['web_enabled']:
+                await self.core.knowledge.refresh_next()
                 repo,files=await self.repository(name or lesson['repo'])
                 sources=[f"https://github.com/{repo['name']}/tree/{repo['revision']}"]
                 source_text='\n'.join(f['path']+'\n'+f['content'][:1800] for f in files[:2])

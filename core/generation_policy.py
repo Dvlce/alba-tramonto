@@ -3,7 +3,7 @@ import re
 
 CODING = re.compile(r"\b(code|function|python|javascript|typescript|sql|debug|algorithm)\b|programm|codice|script|hacking|vulnerab|algoritm", re.I)
 DETAILED = re.compile(r"dettagli|approfond|passo.{0,8}passo|complet[oa]|detailed|in.depth|step.by.step|thorough", re.I)
-BRIEF = re.compile(r"breve|concis|solo (?:il|la|un)|soltanto|in una frase|brief|short|just (?:the|a)|only (?:the|a)|one sentence", re.I)
+BRIEF = re.compile(r"breve|concis|solo (?:con )?(?:il|la|un)|rispondi solo\b|soltanto|in una frase|brief|short|just (?:the|a)|only (?:the|a|return|give|output)|one sentence", re.I)
 
 
 def estimate(text):

@@ -49,6 +49,7 @@ function renderStatus(){
   if(activePanel==='system'){renderEmotionLog();$('benchmarkResults').replaceChildren(...(data.benchmarks||[]).map(r=>{const a=element('article',undefined,'night-event');a.append(element('h3',r.model+' · '+r.metrics.cache),element('p',r.status+' · '+JSON.stringify(r.options)),element('p',r.metrics.tokens_per_second+' token/s · primo token '+r.metrics.first_token_ms+' ms · test '+r.metrics.test_passed));return a;}));}
   if(activePanel==='diary')renderLearning();
   if(activePanel==='training')renderTraining();
+  if(activePanel==='learning')renderLearningDashboard();
   if(activePanel==='lab')renderLab();
 }
 function renderConnectors(){
@@ -123,7 +124,7 @@ $('importFile').onclick=()=>action('import',{text:$('importText').value}).then((
 $('resetStats').onclick=()=>{if(confirm('Azzerare il periodo visualizzato? Il totale di vita rimane.'))action('reset_stats').catch(e=>notice(e.message,true));};
 function connect(){if(socket||document.hidden)return;socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/notte/stream');socket.onopen=()=>{$('streamState').textContent='In diretta dal Raspberry';};socket.onmessage=async event=>{const update=JSON.parse(event.data);await refresh();if(update.last_id>lastChatId)await loadEvents('chat','chatEvents');};socket.onerror=()=>socket?.close();socket.onclose=()=>{socket=null;$('streamState').textContent='Riconnessione…';clearTimeout(reconnectTimer);if(!document.hidden)reconnectTimer=setTimeout(connect,5000);};}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(reconnectTimer);socket?.close();}else{refresh();connect();}});
-(async()=>{try{const me=await api('/api/me');if(!me.is_admin){notice('Notte è riservata all’amministratore.',true);return;}csrf=me.csrf;await refresh();await loadEvents('chat','chatEvents');connect();}catch(e){notice(e.message,true);}})();
+(async()=>{try{const me=await api('/api/me');if(!me.is_admin){notice('Notte è riservata all’amministratore.',true);return;}csrf=me.csrf;initLearningDraft(me.user_id);await refresh();await loadEvents('chat','chatEvents');connect();if(['#lab','#project','#learning'].includes(location.hash))await panel(location.hash.slice(1));}catch(e){notice(e.message,true);}})();
 
 function renderTraining(){
  const t=data.training;$('trainingState').textContent=t.base+' · '+t.schedule+' · '+(t.running?t.phase:t.ready?'Pronto':'Preparazione richiesta')+' · '+(t.active_model||'Nessuna versione personale attiva');
@@ -171,4 +172,73 @@ async function loadProject(){const project=await api('/optimization/data');$('pr
 $('labModel').onchange=labModelNote;$('labMode').onchange=labModelNote;$('labPolicy').onchange=labModelNote;
 $('labForm').onsubmit=async e=>{e.preventDefault();$('labRun').disabled=true;try{await api('/api/notte/lab',{model:$('labModel').value,prompt:$('labPrompt').value,mode:$('labMode').value,policy:$('labPolicy').value,context:Number($('labContext').value),output:Number($('labOutput').value)});notice('Test Lab avviata.');await refresh();}catch(error){notice(error.message,true);$('labRun').disabled=false;}};
 $('labStop').onclick=()=>action('stop').catch(e=>notice(e.message,true));
-if(location.hash==='#lab'||location.hash==='#project')setTimeout(()=>panel(location.hash.slice(1)).catch(e=>notice(e.message,true)),1000);
+
+let learningDraftKey='', teachingBusy=false, comparisonKey='', sourceRenderKey='';
+const teachingFields=['teachTitle','teachText','teachQuestion','teachAnswer'];
+const metricValue=(value,unit='')=>typeof value==='number'&&Number.isFinite(value)?fmt.format(value)+unit:'—';
+function initLearningDraft(uid){
+ learningDraftKey='notte-lesson-draft-'+uid;
+ try{const draft=JSON.parse(sessionStorage.getItem(learningDraftKey)||'{}');for(const id of teachingFields)if(!$(id).value&&typeof draft[id]==='string')$(id).value=draft[id];}catch{}
+}
+function saveLearningDraft(){if(!learningDraftKey)return;try{sessionStorage.setItem(learningDraftKey,JSON.stringify(Object.fromEntries(teachingFields.map(id=>[id,$(id).value]))));}catch{}}
+for(const id of teachingFields)$(id).addEventListener('input',saveLearningDraft);
+function renderLearningDashboard(){
+ const k=data.knowledge,t=data.training;if(!k||!t)return;
+ const latest=t.runs.find(r=>typeof r.metrics?.initial_loss==='number'),m=latest?.metrics,b=t.runs.find(r=>r.metrics?.benchmark)?.metrics?.benchmark;
+ $('learnWords').textContent=metricValue(k.words);$('learnIndexed').textContent=metricValue(k.indexed_percent,'%');
+ $('learnSuccess').textContent=metricValue(b?.success_percent,'%');$('learnSpeed').textContent=metricValue(b?.tokens_per_second);
+ $('learnSourceSummary').textContent='Archivio · '+fmt.format(k.documents)+' documenti · '+fmt.format(k.teaching_pairs)+' coppie per il training';
+ $('learnTrain').disabled=t.running||!t.ready;$('learnStopTrain').disabled=!t.running;
+ $('sourceImport').disabled=k.running;$('sourceStop').disabled=!k.manual_running;
+ const p=k.progress||{};$('sourceProgress').textContent=k.running?`${p.detail||'Lettura…'} · ${p.completed||0}/${p.total||1} · ${p.percent||0}%`:p.detail||'Scegli una fonte da leggere.';
+ $('sourceMeter').value=p.percent||0;
+ const phases={baseline:'Misuro la versione precedente',loading:'Carico il modello per il training',training:'Addestramento in corso',validation:'Verifico il checkpoint',merging:'Preparo i nuovi pesi',importing:'Pubblico il modello locale',benchmark:'Misuro la nuova versione',complete:'Passi di addestramento completati'};
+ const progress=t.progress||{};
+ $('learnTrainingState').textContent=t.running?(t.paused?'In pausa: priorità alle risorse e alla chat.':phases[t.phase]||t.phase||'Preparazione…'):t.active_model?'Modello validato · '+t.active_model:t.ready?'Pronto per il primo addestramento.':'Ambiente di addestramento da preparare.';
+ const attempt=t.runs[0];if(!t.running&&attempt&&attempt.status!=='ready')$('learnTrainingState').textContent=`Ultimo tentativo #${attempt.id}: ${attempt.detail} · Modello attivo: ${t.active_model||'nessuno'}`;
+ if(t.running&&typeof progress.percent==='number'){$('learnTrainingMeter').value=progress.percent;}else if(t.running){$('learnTrainingMeter').removeAttribute('value');}else{$('learnTrainingMeter').value=100;}
+ $('learnTrainingMeter').hidden=!t.running;
+ $('learnTrainingDetail').textContent=t.running&&progress.total_steps?`${progress.step||0}/${progress.total_steps} passi · ${metricValue(progress.percent,'%')} · loss ${metricValue(progress.loss)}`:m?`${fmt.format(m.samples||latest.samples)} esempi · ${metricValue(m.training_words)} parole nel dataset · ${metricValue(m.seen_training_tokens)} token di risposta usati · ${metricValue(m.steps)} passi`:'Lezioni memorizzate subito; i pesi cambiano dopo addestramento, validazione e test.';
+ for(const [id,key] of [['learnUseModel','personal_enabled'],['learnOnline','online_lookup']])if(document.activeElement!==$(id))$(id).checked=Boolean(data.config[key]);
+ $('learnUseModel').disabled=!t.active_model;
+ const rollback=t.runs.find(r=>String(r.id)===String(data.config.personal_previous_adapter)&&r.status==='ready');$('learnRollback').disabled=!rollback||t.running;
+ const comparable=t.runs.filter(r=>r.metrics?.before_benchmark&&typeof r.metrics?.initial_loss==='number');
+ const key=comparable.map(r=>r.id+':'+r.status).join('|');
+ if($('learnComparison').dataset.options!==key){const selected=$('learnComparison').value;$('learnComparison').replaceChildren(...comparable.map(r=>{const option=element('option','#'+r.id+' · '+r.day+(r.metrics.promoted?' · validata':' · scartata'));option.value=String(r.id);return option;}));if(comparable.some(r=>String(r.id)===selected))$('learnComparison').value=selected;$('learnComparison').dataset.options=key;}
+ $('learnComparison').disabled=!comparable.length;
+ renderLearningComparison(comparable.find(r=>String(r.id)===$('learnComparison').value));
+ const sk=JSON.stringify([k.sources,k.jobs]);if(sk===sourceRenderKey)return;sourceRenderKey=sk;
+ $('learnSources').replaceChildren(...k.sources.map(source=>{const card=element('article',undefined,'night-event');card.append(element('h3',source.title),element('p',`${source.kind} · ${fmt.format(source.words)} parole · ${when(source.updated)}`));if(source.url){const link=element('a','Apri la fonte ↗');link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';card.append(link);}card.append(element('p',source.license+(source.revision?' · revisione '+source.revision.slice(0,12):''),'muted'));return card;}));
+ $('learnSourceJobs').replaceChildren(...k.jobs.map(job=>{const card=element('article',undefined,'night-event');card.append(element('p',job.status+' · '+job.completed+'/'+job.total+' · '+job.detail));return card;}));
+}
+function renderLearningComparison(run){
+ const key=JSON.stringify(run?.metrics||{});if(key===comparisonKey)return;comparisonKey=key;
+ const table=$('learnCompareTable').querySelector('tbody');table.replaceChildren();$('learnHistogram').replaceChildren();
+ if(!run){$('learnCompareNote').textContent='Il confronto apparirà dopo la prima nuova valutazione. I vecchi report non contengono tutti questi dati.';return;}
+ const m=run.metrics,old=m.before_benchmark,next=m.benchmark||{};
+ $('learnCompareNote').textContent=`${m.previous_model} → ${m.candidate_model||run.model||'candidato #'+run.id} · ${m.promoted?'Versione validata e attivata.':'Versione scartata: il checkpoint precedente è conservato.'} Barre con scala propria per ogni misura.`;
+ const rows=[['Loss di validazione ↓',m.initial_loss,m.final_loss,''],['Test Python ↑',old.passed/old.total*100,next.passed/next.total*100,'%'],['Controlli italiano/web ↑',old.language_passed/old.language_total*100,next.language_passed/next.language_total*100,'%'],['Velocità di generazione ↑',old.tokens_per_second,next.tokens_per_second,' token/s']];
+ for(const [label,a,b,unit] of rows){
+  const tr=element('tr');tr.append(element('th',label),element('td',metricValue(a,unit)),element('td',metricValue(b,unit)));tr.firstChild.scope='row';table.append(tr);
+  const pair=element('div',undefined,'learn-bar-pair');pair.append(element('h4',label));const max=Math.max(a||0,b||0,.001);
+  for(const [name,value,isNew] of [['Precedente',a,false],['Nuova',b,true]]){const row=element('div',undefined,'learn-bar-row'),track=element('div',undefined,'learn-bar-track'),bar=element('span',undefined,'learn-bar'+(isNew?' new':''));bar.style.width=Number.isFinite(value)?Math.max(0,value)/max*100+'%':'0%';track.append(bar);track.setAttribute('aria-hidden','true');row.append(element('span',name),track,element('strong',metricValue(value,unit)));pair.append(row);}
+  $('learnHistogram').append(pair);
+ }
+}
+$('learnComparison').onchange=()=>{comparisonKey='';renderLearningDashboard();};
+$('teachForm').onsubmit=async e=>{
+ e.preventDefault();if(teachingBusy)return;teachingBusy=true;$('teachSave').disabled=true;
+ const captured=Object.fromEntries(teachingFields.map(id=>[id,$(id).value]));
+ try{const result=await api('/api/notte/knowledge',{title:captured.teachTitle,text:captured.teachText,question:captured.teachQuestion,answer:captured.teachAnswer});
+  if(teachingFields.every(id=>$(id).value===captured[id]))for(const id of teachingFields)$(id).value='';saveLearningDraft();
+  $('teachResult').textContent=`Lezione ${result.changed?'salvata':'già presente'} · ${fmt.format(result.words)} parole. ${result.training_pair?'Coppia aggiunta al prossimo training.':'Disponibile subito nella memoria.'}`;await refresh();
+ }catch(e){$('teachResult').textContent=e.message;notice(e.message,true);}finally{teachingBusy=false;$('teachSave').disabled=false;}
+};
+$('sourceKind').onchange=()=>{const wiki=$('sourceKind').value==='wikipedia';$('sourceLanguage').disabled=!wiki;$('sourceCount').disabled=!wiki;$('sourceQuery').placeholder=wiki?'Python, HTML o un link Wikipedia':'owner/repo o link GitHub';};
+$('sourceForm').onsubmit=async e=>{e.preventDefault();$('sourceImport').disabled=true;try{await api('/api/notte/sources',{kind:$('sourceKind').value,query:$('sourceQuery').value.trim(),language:$('sourceLanguage').value,count:Number($('sourceCount').value)});await refresh();}catch(e){notice(e.message,true);$('sourceImport').disabled=false;}};
+$('sourceStop').onclick=()=>action('stop_sources').catch(e=>notice(e.message,true));
+$('learnTrain').onclick=()=>action('train').catch(e=>notice(e.message,true));
+$('learnStopTrain').onclick=()=>action('stop_training').catch(e=>notice(e.message,true));
+for(const [id,key] of [['learnUseModel','personal_enabled'],['learnOnline','online_lookup']])$(id).onchange=()=>action('config',{config:{[key]:$(id).checked}}).catch(e=>notice(e.message,true));
+$('learnRollback').onclick=()=>action('rollback',{id:Number(data.config.personal_previous_adapter)}).catch(e=>notice(e.message,true));
+$('learnVersions').onclick=()=>panel('training');

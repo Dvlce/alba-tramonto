@@ -48,7 +48,8 @@ def web_app(service):
                 except PermissionError:
                     request['session_expired']=True; raise
                 if request.path.startswith('/api/tramonto/') and not service.is_admin(request['identity']['user_id']): raise PermissionError()
-                if not request.path.startswith('/api/tramonto/') and request.content_length and request.content_length>20000: raise ValueError()
+                limit=140000 if request.path=='/api/notte/knowledge' else 20000
+                if not request.path.startswith('/api/tramonto/') and request.content_length and request.content_length>limit: raise ValueError()
                 if request.method!='GET':
                     if not secrets.compare_digest(request.headers.get('X-CSRF-Token',''),request['identity']['csrf']):
                         raise PermissionError('Richiesta non autorizzata.')
