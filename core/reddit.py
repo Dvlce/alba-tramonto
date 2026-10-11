@@ -20,6 +20,10 @@ MAX_BYTES = 262144
 RETENTION_SECONDS = 7 * 86400
 
 
+def humor_request(query):
+    return bool(re.search(r'umor|humor|battut|barzellett|\bjokes?\b|divertent|sarcas|giochi di parole', query, re.I))
+
+
 def subreddit_name(value):
     if not isinstance(value, str):
         raise ValueError('Indica il nome di un subreddit pubblico.')

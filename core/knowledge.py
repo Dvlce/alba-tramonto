@@ -10,7 +10,7 @@ import json
 import re
 import time
 from urllib.parse import quote, urlsplit, unquote
-from .reddit import subreddit_name, reddit_entries, COMMUNITIES, HUMOR, RSS_NOTICE, RSS_END, RETENTION_SECONDS
+from .reddit import subreddit_name, reddit_entries, humor_request, COMMUNITIES, HUMOR, RSS_NOTICE, RSS_END, RETENTION_SECONDS
 
 
 TOPICS = ('Lingua italiana', 'Python (linguaggio di programmazione)', 'JavaScript',
@@ -132,7 +132,7 @@ class Knowledge:
     def retrieve(self, query, limit=3):
         self.prune_reddit()
         terms = list(dict.fromkeys(w for w in re.findall(r'\w+', query.casefold()) if len(w) > 2 and w not in STOPWORDS))[:10]
-        humor = bool(re.search(r'umor|humor|battut|barzellett|\bjokes?\b|divertent|sarcas|giochi di parole', query, re.I))
+        humor = humor_request(query)
         if humor:
             terms.append('humor')
         active = [kind for kind, category in (('teacher', 'files'), ('wikipedia', 'web'), ('github', 'github'), ('reddit', 'reddit')) if self.core.config['connectors'].get(category)]

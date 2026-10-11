@@ -1,5 +1,6 @@
 """Context-aware generation budgets. No weight changes or hidden model fallback."""
 import re
+from .reddit import humor_request
 
 CODING = re.compile(r"\b(code|function|python|javascript|typescript|sql|debug|algorithm)\b|programm|codice|script|hacking|vulnerab|algoritm", re.I)
 DETAILED = re.compile(r"dettagli|approfond|passo.{0,8}passo|complet[oa]|detailed|in.depth|step.by.step|thorough", re.I)
@@ -18,6 +19,10 @@ def tokens(messages):
 
 def plan(query, ceiling=4096, context_floor=2048):
     coding = bool(CODING.search(query))
+    # A joke about Python is a conversation request; a program that generates
+    # jokes still needs the normal code budget and routing.
+    if humor_request(query) and not re.search(r'\b(?:scrivi|write|implementa|debug|correggi|fix)\b.*\b(?:codice|code|funzion\w*|function|script|programma)\b', query, re.I|re.S):
+        coding = False
     detailed = bool(DETAILED.search(query))
     brief = bool(BRIEF.search(query))
     simple = bool(re.fullmatch(r"\s*(?:ciao|hello|hi|hey|grazie|thanks|buongiorno|buonanotte|come stai)[!?.\s]*", query, re.I))
@@ -58,7 +63,7 @@ def assemble(system, query, history, memories, state, policy):
         return cache_friendly_messages(messages)
     rows = [dict(r) for r in history]
     if rows and rows[-1]['role']=='user' and rows[-1]['content']==query: rows.pop()
-    notes = [{**m, 'content': m['content'][:700 if policy['coding'] else 400]} for m in memories[:4 if policy['coding'] else 2]]
+    notes = [{**m, 'content': m['content'][:1000 if m.get('category')=='reddit' and humor_request(query) else 700 if policy['coding'] else 400]} for m in memories[:4 if policy['coding'] else 2]]
     messages = build(rows, notes)
     while tokens(messages)+maximum+64 > context and rows:
         rows.pop(0)

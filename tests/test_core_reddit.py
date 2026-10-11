@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 import test_core
 from core.knowledge import source_request
 from core.reddit import reddit_entries, subreddit_name, RSS_END, RETENTION_SECONDS
+from core.generation_policy import plan
 
 
 def feed(group='learnpython', title='Python functions', text='Use clear names for Python functions.', ident='abc'):
@@ -17,6 +18,11 @@ def feed(group='learnpython', title='Python functions', text='Use clear names fo
 
 
 class RedditParserTests(unittest.TestCase):
+    def test_python_joke_uses_conversation_budget_but_joke_program_remains_code(self):
+        self.assertFalse(plan('Raccontami una battuta sulla programmazione Python')['coding'])
+        self.assertEqual(plan('Raccontami una battuta sulla programmazione Python')['output_tokens'],224)
+        self.assertTrue(plan('Scrivi una funzione Python per generare battute')['coding'])
+
     def test_subreddit_names_public_urls_and_limits(self):
         for value in ('LearnPython','r/LearnPython','/r/LearnPython/','https://www.reddit.com/r/LearnPython/'):
             self.assertEqual(subreddit_name(value),'learnpython')
@@ -85,6 +91,18 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(recalled[0]['category'],'reddit');self.assertIn('dadjokes',recalled[0]['title'])
         self.core.configure({'connectors':{'reddit':False}})
         self.assertEqual(await self.core.retrieve('battuta',prefer_lexical=True),[])
+
+    async def test_real_chat_payload_receives_punchline_source_and_originality_instruction(self):
+        text='A deliberately long test setup. '*12+'END_OF_ORIGINAL_TEST_PUNCHLINE'
+        self.core.learning.public_get=AsyncMock(return_value=feed('dadjokes','An original test joke',text))
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'dadjokes'})
+        await self.core.work('chat','Raccontami una battuta sulla programmazione Python')
+        self.assertEqual(self.core.error,'')
+        payload=next(p for url,p in self.model.calls if url.endswith('/api/chat'))
+        context=json.dumps(payload['messages'],ensure_ascii=False)
+        self.assertIn('battuta originale',context);self.assertIn('END_OF_ORIGINAL_TEST_PUNCHLINE',context)
+        self.assertIn('https://www.reddit.com/r/dadjokes/comments/abc/',context)
+        self.assertEqual(payload['options']['num_predict'],224)
 
     async def test_short_cache_deduplication_and_changed_post_replace_chunks(self):
         api=self.core.learning.public_get=AsyncMock(return_value=feed(text='The first original explanation.'))
