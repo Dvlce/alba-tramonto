@@ -21,6 +21,8 @@ RETENTION_SECONDS = 7 * 86400
 
 
 def humor_request(query):
+    if re.search(r'\b(?:senza|niente|evita|no|without)\s+(?:le\s+|il\s+)?(?:battut|barzellett|humor|umor|jokes?|scherz)',query,re.I):
+        return False
     return bool(re.search(r'umor|humor|battut|barzellett|\bjokes?\b|divertent|sarcas|giochi di parole', query, re.I))
 
 

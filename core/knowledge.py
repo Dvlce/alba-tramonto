@@ -169,7 +169,8 @@ class Knowledge:
                 'reddit': {'communities': [{'name': n, 'topic': t} for n,t in COMMUNITIES],
                     'documents': sum(r['documents'] for r in self.core.store.rows("SELECT count(*) documents FROM core_knowledge WHERE kind='reddit'")),
                     'words': self.core.store.rows("SELECT coalesce(sum(words),0) words FROM core_knowledge WHERE kind='reddit'")[0]['words'],
-                    'rss_end': RSS_END, 'notice_url': RSS_NOTICE, 'retention_days': 7, 'training': False}}
+                    'rss_end': RSS_END, 'notice_url': RSS_NOTICE, 'retention_days': 7, 'training': False,
+                    'retry_after': float(self.core.store.setting('core_reddit_retry_after','0'))}}
 
     def start(self, value):
         request = source_request(value)
@@ -236,11 +237,16 @@ class Knowledge:
         self.prune_reddit()
         last = float(self.core.store.setting('core_reddit_read_'+group, '0'))
         if now-last < 600:
-            cached = self.core.store.rows("SELECT id FROM core_knowledge WHERE kind='reddit' AND source_key LIKE ? ORDER BY updated DESC LIMIT ?", (group+':%', request['count']))
+            cached = self.core.store.rows("SELECT id FROM core_knowledge WHERE kind='reddit' AND substr(source_key,1,instr(source_key,':')-1)=? ORDER BY updated DESC LIMIT ?", (group, request['count']))
             if cached:
                 return [r['id'] for r in cached]
             raise ValueError('Feed Reddit già richiesto: attendi 10 minuti prima di riprovare.')
+        retry=float(self.core.store.setting('core_reddit_retry_after','0'))
+        if now<retry:
+            raise ValueError('Letture Reddit in pausa per la quota: riprova fra '+str(max(1,int((retry-now+59)//60)))+' minuti.')
         self.core.store.set_setting('core_reddit_read_'+group, str(now))
+        # Space requests across all communities, including manual imports.
+        self.core.store.set_setting('core_reddit_retry_after', str(now+60))
         try:
             raw = await self.core.learning.public_get('https://www.reddit.com/r/'+group+'/.rss')
             rows = reddit_entries(raw, group)[:request['count']]
@@ -260,6 +266,10 @@ class Knowledge:
                 self.advance(index+1, len(rows), 'r/'+group+' · '+row['title'])
             self.prune_reddit()
             return imported
+        except ValueError as exc:
+            if getattr(exc,'status',None) in (403,429):
+                self.core.store.set_setting('core_reddit_retry_after', str(time.time()+max(600,getattr(exc,'retry_seconds',0))))
+            raise
         finally:
             self.core.config['last_reddit'] = time.time()
             self.core.save()

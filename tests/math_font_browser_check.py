@@ -36,7 +36,14 @@ async def main():
     await page.locator('#drawingText').fill('Testo modificato');await page.locator('#drawingTextApply').click();await save();assert content()['drawing']['strokes'][0]['text']=='Testo modificato'
     await canvas.press('Meta+z');await save();assert content()['drawing']['strokes'][0]['text']=='Testo nel disegno\nSeconda riga';await canvas.click(position={'x':140,'y':100});await page.locator('#drawingText').fill('Testo modificato');await page.locator('#drawingTextApply').click();await save()
     await canvas.click(position={'x':500,'y':250});await save();assert len(content()['drawing']['strokes'])==2;await canvas.press('Meta+z');await save();assert len(content()['drawing']['strokes'])==1
-    await page.locator('#fontWorkshop summary').click();await page.locator('#customFontAlphabet button').filter(has_text='A').first.click();glyph=page.locator('#customGlyphCanvas');await glyph.scroll_into_view_if_needed();box=await glyph.bounding_box();await page.mouse.move(box['x']+70,box['y']+240);await page.mouse.down();await page.mouse.move(box['x']+150,box['y']+40,steps=8);await page.mouse.move(box['x']+230,box['y']+240,steps=8);await page.mouse.up();await page.locator('#customFontApply').click();await page.wait_for_function('document.fonts.check("30px TramontoPersonal")');await save();assert content()['font']=='custom';assert len(content()['custom_font']['glyphs']['A'][0])>10
+    await page.locator('#fontWorkshop summary').click();await page.locator('#customFontAlphabet button').filter(has_text='A').first.click();glyph=page.locator('#customGlyphCanvas');await glyph.scroll_into_view_if_needed();box=await glyph.bounding_box();await page.mouse.move(box['x']+70,box['y']+240);await page.mouse.down()
+    # Each sample spans a rendering frame so Chromium cannot merge the whole
+    # synthetic stroke into a handful of pointer events on a loaded CI runner.
+    for x1,y1,x2,y2 in ((70,240,150,40),(150,40,230,240)):
+        for step in range(1,9):
+            await page.mouse.move(box['x']+x1+(x2-x1)*step/8,box['y']+y1+(y2-y1)*step/8)
+            await page.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    await page.mouse.up();await page.locator('#customFontApply').click();await page.wait_for_function('document.fonts.check("30px TramontoPersonal")');await save();assert content()['font']=='custom';assert len(content()['custom_font']['glyphs']['A'][0])>10
     assert 'TramontoPersonal' in await page.locator('#richEditor').evaluate('e=>getComputedStyle(e).fontFamily')
     async with page.expect_download() as info:await page.locator('#customFontDownload').click()
     font=await info.value;target=ROOT/'artifacts'/'tramonto-personal-font.otf';await font.save_as(str(target));assert target.read_bytes().startswith(b'OTTO')

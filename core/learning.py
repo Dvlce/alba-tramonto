@@ -14,6 +14,7 @@ import tempfile
 import time
 import zipfile
 from pathlib import Path, PurePosixPath
+from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree
 from .reddit import reddit_entries, COMMUNITIES
 
@@ -45,6 +46,13 @@ LESSONS = (
      'cases':[{'args':[['a','bb','c','bb']],'expected':{'1':['a','c'],'2':['bb','bb']}},{'args':[[]],'expected':{}},{'args':[['','à']],'expected':{'0':[''],'1':['à']}}]},
 )
 TEXT_SUFFIXES = {'.py','.js','.ts','.md','.rst','.txt','.toml','.json','.yaml','.yml'}
+
+
+class PublicSourceError(ValueError):
+    def __init__(self, message, status, retry_seconds=0):
+        super().__init__(message)
+        self.status=status
+        self.retry_seconds=retry_seconds
 
 
 def repo_name(value):
@@ -112,12 +120,18 @@ class Learning:
         return [{**r,'sources':json.loads(r['sources'])} for r in rows]
 
     async def public_get(self,url,limit=262144,params=None):
+        accept = 'application/vnd.github+json' if url.startswith('https://api.github.com/') else 'application/atom+xml, application/rss+xml;q=0.9, application/xml;q=0.8' if url.startswith('https://www.reddit.com/') else 'application/json, application/xml;q=0.9, text/plain;q=0.8'
         async with self.core.engine.session.get(url,params=params,allow_redirects=False,
                   headers={'User-Agent':'Notte/1.8 (https://github.com/Dvlce/alba-tramonto; local-learning)',
-                           'Accept':'application/vnd.github+json' if url.startswith('https://api.github.com/') else 'application/json, application/xml;q=0.9, text/plain;q=0.8'},timeout=45) as response:
+                           'Accept':accept},timeout=45) as response:
             if response.status!=200:
                 reason = ' Limite API raggiunto; riprova dopo il ripristino della quota.' if response.status==429 else ' Accesso rifiutato dalla fonte (identificazione del client o quota).' if response.status==403 else ''
-                raise ValueError('Fonte pubblica non disponibile (HTTP '+str(response.status)+').'+reason)
+                retry=response.headers.get('Retry-After','')
+                try:seconds=max(0,int(retry))
+                except (ValueError,TypeError):
+                    try:seconds=max(0,parsedate_to_datetime(retry).timestamp()-time.time())
+                    except (ValueError,TypeError,OverflowError):seconds=0
+                raise PublicSourceError('Fonte pubblica non disponibile (HTTP '+str(response.status)+').'+reason,response.status,seconds)
             data=bytearray()
             async for part in response.content.iter_chunked(16384):
                 data.extend(part)

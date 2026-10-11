@@ -1,12 +1,12 @@
 # One-file setup for a fresh machine
 
-Download **one file for your operating system** from the [Setup v1.0.0 release](https://github.com/Dvlce/alba-tramonto/releases/tag/setup-v1.0.0). Each file embeds the same Alba, Tramonto and Notte application sources, browser libraries, fonts and public documentation. You do not need Git or a repository checkout. Internet access is needed for Python, dependencies, Ollama and model downloads; this is not an offline model bundle.
+Download **one file for your operating system** from the [Setup v1.0.1 release](https://github.com/Dvlce/alba-tramonto/releases/tag/setup-v1.0.1). Each file embeds the same Alba, Tramonto and Notte application sources, browser libraries, fonts and public documentation. You do not need Git or a repository checkout. Internet access is needed for Python, dependencies, Ollama and model downloads; this is not an offline model bundle.
 
 | System | Download | Run from the download directory |
 |---|---|---|
-| Linux 64-bit: Debian, Ubuntu, Raspberry Pi OS | [alba-setup-linux.sh](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.0/alba-setup-linux.sh) | `sh alba-setup-linux.sh` |
-| macOS: Apple Silicon or Intel, macOS 14+ for Ollama | [alba-setup-macos.command](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.0/alba-setup-macos.command) | `sh alba-setup-macos.command` |
-| Windows 10/11 64-bit | [alba-setup-windows.ps1](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.0/alba-setup-windows.ps1) | `powershell -NoProfile -ExecutionPolicy Bypass -File .\alba-setup-windows.ps1` |
+| Linux 64-bit: Debian, Ubuntu, Raspberry Pi OS | [alba-setup-linux.sh](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.1/alba-setup-linux.sh) | `sh alba-setup-linux.sh` |
+| macOS: Apple Silicon or Intel, macOS 14+ for Ollama | [alba-setup-macos.command](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.1/alba-setup-macos.command) | `sh alba-setup-macos.command` |
+| Windows 10/11 64-bit | [alba-setup-windows.ps1](https://github.com/Dvlce/alba-tramonto/releases/download/setup-v1.0.1/alba-setup-windows.ps1) | `powershell -NoProfile -ExecutionPolicy Bypass -File .\alba-setup-windows.ps1` |
 
 Run as the user who will own the installation. Linux asks for sudo when installing packages and its systemd service. macOS asks for an administrator password only if Python must be installed. Windows installs Python and Ollama for the current user. Do not run the Windows setup as another administrator account.
 

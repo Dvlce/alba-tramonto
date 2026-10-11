@@ -47,9 +47,10 @@ class SelfLearningTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_reddit_dedup_and_diary_do_not_claim_tested_learning(self):
         self.core.learning.public_get=AsyncMock(return_value=b'<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Python</title><link href="https://www.reddit.com/r/learnpython/comments/abc/"/><content>Discuss functions.</content></entry></feed>')
-        await self.core.learning.reddit()
-        self.store.set_setting('core_reddit_topic','0') # repeat the same feed to exercise the cache
-        await self.core.learning.reddit()
+        with patch('core.knowledge.RSS_END',10**11):
+            await self.core.learning.reddit()
+            self.store.set_setting('core_reddit_topic','0') # repeat the same feed to exercise the cache
+            await self.core.learning.reddit()
         self.assertEqual(self.store.rows('SELECT count(*) n FROM core_reddit')[0]['n'],1)
         diary=self.core.learning.diary();self.assertEqual(len(diary),1);self.assertEqual(diary[0]['status'],'read')
         self.assertTrue(all(r['origin']=='project-authored' for r in examples(diary)))

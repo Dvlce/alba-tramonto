@@ -8,6 +8,7 @@ import test_core
 from core.knowledge import source_request
 from core.reddit import reddit_entries, subreddit_name, RSS_END, RETENTION_SECONDS
 from core.generation_policy import plan
+from core.learning import PublicSourceError
 
 
 def feed(group='learnpython', title='Python functions', text='Use clear names for Python functions.', ident='abc'):
@@ -22,6 +23,7 @@ class RedditParserTests(unittest.TestCase):
         self.assertFalse(plan('Raccontami una battuta sulla programmazione Python')['coding'])
         self.assertEqual(plan('Raccontami una battuta sulla programmazione Python')['output_tokens'],224)
         self.assertTrue(plan('Scrivi una funzione Python per generare battute')['coding'])
+        self.assertTrue(plan('Scrivi codice Python, senza battute')['coding'])
 
     def test_subreddit_names_public_urls_and_limits(self):
         for value in ('LearnPython','r/LearnPython','/r/LearnPython/','https://www.reddit.com/r/LearnPython/'):
@@ -60,7 +62,11 @@ class RedditParserTests(unittest.TestCase):
 
 
 class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
-    asyncSetUp=test_core.CoreTests.asyncSetUp
+    async def asyncSetUp(self):
+        await test_core.CoreTests.asyncSetUp(self)
+        # Imported fixtures remain deterministic after public RSS is retired.
+        patcher=patch('core.knowledge.RSS_END',10**11)
+        patcher.start();self.addCleanup(patcher.stop)
     asyncTearDown=test_core.CoreTests.asyncTearDown
     req=test_core.CoreTests.req
 
@@ -111,11 +117,19 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
         second=await self.core.knowledge.import_sources(request)
         self.assertEqual(first,second);self.assertEqual(api.await_count,1)
         self.store.set_setting('core_reddit_read_learnpython',str(time.time()-601))
+        self.store.set_setting('core_reddit_retry_after','0')
         api.return_value=feed(text='A revised replacement explanation.')
         self.assertEqual(first,await self.core.knowledge.import_sources(request))
         state=self.core.knowledge.snapshot();self.assertEqual(state['reddit']['documents'],1)
         content=' '.join(r['content'] for r in self.store.rows('SELECT content FROM core_chunks'))
         self.assertIn('revised replacement',content);self.assertNotIn('first original',content)
+
+    async def test_cache_subreddit_underscore_is_literal_not_a_sql_wildcard(self):
+        self.core.learning.public_get=AsyncMock(return_value=feed('myxgroup'))
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'myxgroup'})
+        self.store.set_setting('core_reddit_read_my_group',str(time.time()))
+        self.assertEqual(await self.core.knowledge.import_sources({'kind':'reddit','query':'my_group'}),[])
+        self.assertEqual(self.core.knowledge.snapshot()['jobs'][0]['status'],'error')
 
     async def test_failure_is_visible_and_backoff_prevents_immediate_retry(self):
         api=self.core.learning.public_get=AsyncMock(side_effect=ValueError('HTTP 403'))
@@ -125,6 +139,30 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
         state=self.core.knowledge.snapshot();self.assertEqual(state['reddit']['documents'],0)
         self.assertEqual(api.await_count,1);self.assertEqual(state['jobs'][0]['status'],'error')
         self.assertIn('10 minuti',state['jobs'][0]['detail']);self.assertGreater(self.core.config['last_reddit'],0)
+
+    async def test_rate_limit_pauses_all_communities_and_respects_retry_after(self):
+        api=self.core.learning.public_get=AsyncMock(side_effect=PublicSourceError('HTTP 429',429,7200))
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'learnpython'})
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'dadjokes'})
+        self.assertEqual(api.await_count,1)
+        self.assertGreater(self.core.knowledge.snapshot()['reddit']['retry_after'],time.time()+7190)
+        self.assertIn('in pausa',self.core.knowledge.snapshot()['jobs'][0]['detail'])
+
+    async def test_http_reader_requests_atom_and_preserves_server_retry_after(self):
+        response=test_core.Response({})
+        response.status=429;response.headers={'Retry-After':'7200'}
+        with patch.object(self.core.engine.session,'get',return_value=response,create=True) as get:
+            with self.assertRaises(PublicSourceError) as raised:
+                await self.core.learning.public_get('https://www.reddit.com/r/dadjokes/.rss')
+        self.assertEqual(raised.exception.status,429);self.assertEqual(raised.exception.retry_seconds,7200)
+        self.assertIn('application/atom+xml',get.call_args.kwargs['headers']['Accept'])
+
+    async def test_successful_read_also_spaces_requests_to_other_communities(self):
+        api=self.core.learning.public_get=AsyncMock(return_value=feed())
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'learnpython'})
+        await self.core.knowledge.import_sources({'kind':'reddit','query':'dadjokes'})
+        self.assertEqual(api.await_count,1)
+        self.assertEqual(self.core.knowledge.snapshot()['jobs'][0]['status'],'error')
 
     async def test_cancel_is_recorded_and_import_can_restart(self):
         begun=asyncio.Event()
@@ -146,7 +184,9 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_autonomous_rotation_alternates_programming_and_humor(self):
         api=self.core.learning.public_get=AsyncMock(side_effect=[feed(),feed('dadjokes','A test joke','Original test punchline.')])
-        await self.core.learning.reddit();await self.core.learning.reddit()
+        await self.core.learning.reddit()
+        self.store.set_setting('core_reddit_retry_after','0') # the next hourly slot
+        await self.core.learning.reddit()
         self.assertIn('/r/learnpython/',api.await_args_list[0].args[0]);self.assertIn('/r/dadjokes/',api.await_args_list[1].args[0])
         self.assertEqual(self.core.knowledge.snapshot()['reddit']['documents'],2)
         self.assertEqual({r['status'] for r in self.core.learning.diary()},{'read'})
@@ -154,7 +194,7 @@ class RedditKnowledgeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_announced_rss_sunset_reports_limitation_without_network_calls(self):
         api=self.core.learning.public_get=AsyncMock(return_value=feed())
-        with patch('core.knowledge.time.time',return_value=RSS_END+1):
+        with patch('core.knowledge.RSS_END',RSS_END),patch('core.knowledge.time.time',return_value=RSS_END+1):
             self.assertEqual(await self.core.knowledge.import_sources({'kind':'reddit','query':'learnpython'}),[])
         self.assertEqual(api.await_count,0);self.assertIn('accesso approvato',self.core.knowledge.snapshot()['jobs'][0]['detail'])
 

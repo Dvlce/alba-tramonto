@@ -58,17 +58,17 @@
       "fingerprints": {
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
-        "notte.html": "afabb61aa3cb88ad4df77c19bd870a969cf91ed91f5c802c7d65ad01978344a2",
-        "notte.css": "8f5ee113cb82eda1bb81d7a0e73de01fe56d2866861c8a681bfafcf6e972a674"
+        "notte.html": "7e93b92ccccb0dda407b9d5817abb9bbb0cb764781d11f826f8951d3b4add18f",
+        "notte.css": "9afcd3d50584f6f1cd07606492fdf485ec7f907ad44ad202962f6079e3bcb11a"
       },
       "drafts": {
         "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
           "title": "Notte \u00b7 Apprendimento",
-          "visualDirection": "Approved dark sage dashboard, complete inline navigation icons, grouped system settings, full-width touch and keyboard sliders with percent outputs; drafts survive live updates and reloads.",
-          "currentVersion": 8
+          "visualDirection": "Approved dark sage dashboard, complete inline navigation icons, grouped system settings, full-width touch and keyboard sliders with percent outputs; drafts survive live updates and reloads. Reddit source selection, public programming/humor communities, real reading counts and RSS availability notice.",
+          "currentVersion": 9
         }
       },
-      "updatedAt": "2026-10-11T08:57:33.038172+00:00"
+      "updatedAt": "2026-10-11T13:16:04.563636+00:00"
     },
     "android/tramonto": {
       "targetKind": "existing-ui",
