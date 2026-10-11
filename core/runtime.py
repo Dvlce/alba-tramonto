@@ -14,7 +14,7 @@ from .reddit import RSS_END, humor_request
 log = logging.getLogger('alba.core')
 EMOTIONS = {'rabbia': .12, 'curiosità': .7, 'affetto': .35, 'noia': .15,
             'frustrazione': .1, 'euforia': .2, 'disprezzo': .05, 'tenerezza': .25}
-CONNECTORS = ('chat', 'web', 'notes', 'summaries', 'whatsapp', 'telegram', 'files', 'github', 'diary', 'reddit', 'training', 'activity')
+CONNECTORS = ('chat', 'web', 'notes', 'summaries', 'whatsapp', 'telegram', 'files', 'github', 'diary', 'reddit', 'stackoverflow', 'jokes', 'training', 'activity')
 CATEGORIES = ('chat', 'web', 'summaries', 'consolidation', 'whatsapp', 'telegram', 'system', 'study')
 SCHEMA = {'type': 'object', 'properties': {
     **{k: {'type': 'string'} for k in ('text', 'note', 'summary', 'query', 'whatsapp', 'telegram')},
@@ -69,7 +69,7 @@ class Core:
                     'training_enabled': True, 'training_hour': 3, 'personal_model': '', 'personal_adapter': '',
                     'personal_enabled': False, 'personal_preference_set': False, 'online_lookup': True,
                     'ssd_enabled': False, 'ssd_policy': 'auto',
-                    'reddit_enabled': True, 'last_reddit': 0, 'language': 'auto', 'study_enabled': True, 'study_minutes': 30, 'last_study': 0,
+                    'reddit_enabled': False, 'last_reddit': 0, 'language': 'auto', 'study_enabled': True, 'study_minutes': 30, 'last_study': 0,
                     'output_tokens':384, 'enabled': True, 'interval': 10, 'reflection_minutes': 10,
                     'initiative': .55, 'volatility': .45, 'web_enabled': True,
                     'whatsapp_enabled': False, 'telegram_enabled': False, 'telegram_matt_id': 0, 'matt_number': '', 'rest_until': 0,
@@ -523,7 +523,7 @@ class Core:
                 if previous:await asyncio.gather(previous,return_exceptions=True)
                 await self.work(mode,text)
             self.task=asyncio.create_task(after_training(),name='core-chat-follow');return
-        if mode in ('chat','personal_chat','test_lab') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'):
+        if mode in ('chat','personal_chat','test_lab') and self.task and not self.task.done() and self.task.get_name()!='core-chat-follow' and self.mode in ('reflection','consolidation','study','repository','tool','reddit','community','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'):
             if mode=='test_lab' and self.mode=='test_lab':raise ValueError('Una prova è già in corso.')
             self.task.cancel()
             # Schedule after cancellation has released the inference lock.
@@ -534,7 +534,7 @@ class Core:
             self.task=asyncio.create_task(follow_chat(),name='core-chat-follow');return
         if self.task and not self.task.done(): raise ValueError('Un ciclo è già in corso.')
         if mode in ('chat','personal_chat') and (not isinstance(text,str) or not 1<=len(text.strip())<=3500): raise ValueError('Messaggio non valido.')
-        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'): raise ValueError('Ciclo non valido.')
+        if mode not in ('chat','personal_chat','reflection','consolidation','study','repository','tool','reddit','community','benchmark','ssd_benchmark','ssd_cache_probe','test_lab'): raise ValueError('Ciclo non valido.')
         if mode=='personal_chat' and not self.config['personal_model']:raise ValueError('Modello personale non disponibile.')
         if mode=='repository':
             from .learning import repo_name
@@ -556,6 +556,7 @@ class Core:
                 if mode=='consolidation': await self.consolidate()
                 elif mode=='study': await self.learning.study()
                 elif mode=='reddit': await self.learning.reddit()
+                elif mode=='community': await self.knowledge.community.study()
                 elif mode=='benchmark':await self.inference.run(text)
                 elif mode=='ssd_benchmark':await self.ssd.benchmark(text or self.config['advanced_code_model'])
                 elif mode=='ssd_cache_probe':await self.ssd.cache_probe(text or self.config['advanced_code_model'])
@@ -575,7 +576,7 @@ class Core:
             self.error = str(exc)[:180] if isinstance(exc,ValueError) else type(exc).__name__
             # An unavailable public feed has its own connector cooldown. It
             # must not suspend unrelated Wikipedia/GitHub study or reflection.
-            if mode!='reddit':
+            if mode not in ('reddit','community'):
                 self.failures += 1
                 self.retry_after = time.time()+min(3600,60*2**min(6,self.failures))
             log.warning('Ciclo core fallito (%s)',type(exc).__name__)
@@ -599,8 +600,10 @@ class Core:
                 if time.time()<self.retry_after or not self.config['enabled'] or self.running or (self.task and not self.task.done()) or self.engine.lock.locked() or self.engine.waiting: continue
                 if self.resources()['overloaded']: continue
                 if self.store.setting('bot_paused')=='1': continue
-                if self.config['reddit_enabled'] and self.config['web_enabled'] and self.config['connectors']['reddit'] and (time.time()<RSS_END or self.learning.reddit_client.configured) and time.time()>=float(self.store.setting('core_reddit_retry_after','0')) and time.time()-self.config['last_reddit']>=3600:
+                if self.config['reddit_enabled'] and self.config['web_enabled'] and self.config['connectors']['reddit'] and self.learning.reddit_client.configured and time.time()>=float(self.store.setting('core_reddit_retry_after','0')) and time.time()-self.config['last_reddit']>=3600:
                     self.start('reddit')
+                elif self.knowledge.community.due():
+                    self.start('community')
                 elif self.config['study_enabled'] and time.time()-self.config['last_study']>=self.config['study_minutes']*60:
                     self.start('study')
                 elif time.time()-self.config['last_consolidation']>=self.config['interval']*60:

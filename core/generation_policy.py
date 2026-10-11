@@ -63,7 +63,7 @@ def assemble(system, query, history, memories, state, policy):
         return cache_friendly_messages(messages)
     rows = [dict(r) for r in history]
     if rows and rows[-1]['role']=='user' and rows[-1]['content']==query: rows.pop()
-    notes = [{**m, 'content': m['content'][:1000 if m.get('category')=='reddit' and humor_request(query) else 700 if policy['coding'] else 400]} for m in memories[:4 if policy['coding'] else 2]]
+    notes = [{**m, 'content': m['content'][:1000 if m.get('category') in ('reddit','jokes') and humor_request(query) else 700 if policy['coding'] else 400]} for m in memories[:4 if policy['coding'] else 2]]
     messages = build(rows, notes)
     while tokens(messages)+maximum+64 > context and rows:
         rows.pop(0)

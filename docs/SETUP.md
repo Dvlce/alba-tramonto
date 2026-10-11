@@ -61,3 +61,5 @@ From a checked-out repository, run `python3 tools/build_setup.py`. Only tracked,
 The **Portable setup** CI workflow installs the bundle in a temporary directory on Linux, Windows and macOS, starts the native portal, logs in with its newly generated administrator, saves a persistent lesson, and verifies that rerunning setup retains credentials and encryption keys. Models and OS autostart are excluded from this smoke test. Installer unit tests cover malformed archives, path traversal, symlinks, changed code, configuration preservation and URL validation.
 
 Runtime download references: [Python 3.13.16](https://www.python.org/downloads/release/python-31316/), [Ollama Windows](https://docs.ollama.com/windows), [Ollama macOS](https://docs.ollama.com/macos).
+
+The setup includes keyless Stack Overflow and JokeAPI readers for Python/web and humor. Public-source reading creates searchable knowledge; their texts do not enter weight training. Reddit access remains optional and limited by the platform. See [Notte learning](NOTTE_LEARNING.md).

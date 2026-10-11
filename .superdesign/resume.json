@@ -58,17 +58,17 @@
       "fingerprints": {
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
-        "notte.html": "97add46aeb4d87f8dd75e97a0b5b6ed8fdd46cccdb49d92db9f263db1bcd01a5",
+        "notte.html": "344dffc7aa32e7525ecdda72a6c22e3dcd6eca3b99a0c5f17cb3fa3791b57f10",
         "notte.css": "9afcd3d50584f6f1cd07606492fdf485ec7f907ad44ad202962f6079e3bcb11a"
       },
       "drafts": {
         "5254c5f7-3743-436b-9dc2-ca01c64d19c8": {
           "title": "Notte \u00b7 Apprendimento",
-          "visualDirection": "Approved dark sage dashboard, complete inline navigation icons, grouped system settings, full-width touch and keyboard sliders with percent outputs; drafts survive live updates and reloads. Reddit source selection, public programming/humor communities, real reading counts and RSS availability notice. Authorized Reddit OAuth connection support; actual source access errors stay visible.",
-          "currentVersion": 10
+          "visualDirection": "Approved dark sage dashboard, complete inline navigation icons, grouped system settings, full-width touch and keyboard sliders with percent outputs; drafts survive live updates and reloads. Reddit source selection, public programming/humor communities, real reading counts and RSS availability notice. Authorized Reddit OAuth connection support; actual source access errors stay visible. Keyless Stack Overflow accepted answers and JokeAPI humor sources with presets, provenance, real reading statistics and quota-aware autonomous rotation.",
+          "currentVersion": 11
         }
       },
-      "updatedAt": "2026-10-11T13:39:39.359437+00:00"
+      "updatedAt": "2026-10-11T13:55:11.294887+00:00"
     },
     "android/tramonto": {
       "targetKind": "existing-ui",

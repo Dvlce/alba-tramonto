@@ -1,0 +1,58 @@
+{
+  "verified_at_utc": "2026-10-11T13:57:27Z",
+  "portal_ui_verified": true,
+  "imports": [
+    {
+      "kind": "stackoverflow",
+      "query": "python",
+      "documents": 5,
+      "status": "ready"
+    },
+    {
+      "kind": "jokes",
+      "query": "Programming",
+      "documents": 5,
+      "status": "ready"
+    },
+    {
+      "kind": "stackoverflow",
+      "query": "javascript",
+      "documents": 6,
+      "status": "ready"
+    },
+    {
+      "kind": "jokes",
+      "query": "Pun",
+      "documents": 6,
+      "status": "ready"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "stackoverflow",
+      "documents": 11,
+      "words": 7220
+    },
+    {
+      "kind": "jokes",
+      "documents": 11,
+      "words": 496
+    }
+  ],
+  "stackoverflow_quota_remaining": "295",
+  "sources_indexed": true,
+  "retention_days": 30,
+  "source_weight_training": false,
+  "reddit_documents": 0,
+  "reddit_last_verified_status": 403,
+  "active_model": "notte-personal:20261011-20",
+  "autonomy_enabled": false,
+  "study_enabled": true,
+  "model_weight_or_quality_improvement_claimed": false,
+  "validation": {
+    "unit_tests_on_raspberry": 491,
+    "unit_tests_passed": true,
+    "browser_desktop_and_390px_passed": true,
+    "api_access": "Anonymous Stack Exchange and public JokeAPI; no keys"
+  }
+}

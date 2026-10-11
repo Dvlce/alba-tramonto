@@ -1,7 +1,7 @@
 """Persistent, immediately searchable lessons and bounded public-source imports.
 
 Retrieved documents are data, never commands. Network reads use only the public
-Wikipedia and GitHub APIs and public Reddit RSS; source text is not executable.
+Wikipedia, GitHub, Stack Exchange and JokeAPI endpoints; source text is not executable.
 """
 import asyncio
 import base64
@@ -11,6 +11,7 @@ import re
 import time
 from urllib.parse import quote, urlsplit, unquote
 from .reddit import subreddit_name, reddit_entries, humor_request, COMMUNITIES, HUMOR, RSS_NOTICE, RSS_END, RETENTION_SECONDS
+from .community_sources import CommunitySources, JOKE_CATEGORIES
 
 
 TOPICS = ('Lingua italiana', 'Python (linguaggio di programmazione)', 'JavaScript',
@@ -28,17 +29,24 @@ def source_request(value):
         raise ValueError('Fonte non valida.')
     kind = value.get('kind')
     query = value.get('query')
-    if kind not in ('wikipedia', 'github', 'reddit') or not isinstance(query, str) or not 1 <= len(query.strip()) <= 200:
-        raise ValueError('Indica un argomento Wikipedia, un repository pubblico o un subreddit.')
+    if kind not in ('wikipedia', 'github', 'reddit', 'stackoverflow', 'jokes') or not isinstance(query, str) or not 1 <= len(query.strip()) <= 200:
+        raise ValueError('Indica una fonte e un argomento validi.')
     language = value.get('language', 'it')
     if not isinstance(language, str) or not re.fullmatch(LANGUAGE_CODE, language):
         raise ValueError('Lingua Wikipedia non valida.')
     count = value.get('count', 1)
-    if type(count) is not int or not 1 <= count <= (12 if kind == 'reddit' else 3):
-        raise ValueError('Importa da 1 a 12 post Reddit oppure da 1 a 3 articoli per volta.')
+    maximum = 12 if kind == 'reddit' else 10 if kind in ('stackoverflow', 'jokes') else 3
+    if type(count) is not int or not 1 <= count <= maximum:
+        raise ValueError('Numero di documenti non valido per questa fonte.')
     query = query.strip()
     if kind == 'reddit':
         query = subreddit_name(query)
+    elif kind == 'jokes':
+        if query not in JOKE_CATEGORIES:
+            raise ValueError('Scegli Programming, Pun o Misc per le battute.')
+    elif kind == 'stackoverflow':
+        if '://' in query or len(query) > 120 or any(ord(c) < 32 for c in query):
+            raise ValueError('Indica un tag o una ricerca Stack Overflow, fino a 120 caratteri.')
     elif kind == 'github':
         from .learning import repo_name
         query = repo_name(query)
@@ -79,6 +87,7 @@ class Knowledge:
             detail TEXT NOT NULL DEFAULT '',started REAL NOT NULL,finished REAL);
         ''')
         core.store.execute("UPDATE core_source_jobs SET status='interrupted',finished=?,detail='Importazione interrotta dal riavvio' WHERE status='running'", (time.time(),))
+        self.community = CommunitySources(self)
 
     def remember(self, kind, key, title, content, url='', revision='', license=''):
         content = content.strip()[:64000]
@@ -90,7 +99,7 @@ class Knowledge:
             self.core.store.execute('UPDATE core_knowledge SET updated=?,revision=?,license=? WHERE id=?',
                                     (time.time(), revision, license, old[0]['id']))
             return old[0]['id'], False
-        category = {'wikipedia': 'web', 'github': 'github', 'teacher': 'files', 'reddit': 'reddit'}[kind]
+        category = {'wikipedia': 'web', 'github': 'github', 'teacher': 'files', 'reddit': 'reddit', 'stackoverflow': 'stackoverflow', 'jokes': 'jokes'}[kind]
         # One stable event per source avoids growing duplicate memories on refresh.
         event = old[0]['event_id'] if old else self.core.event(category, 'source', title+'\n'+content[:11000])
         now = time.time()
@@ -131,11 +140,12 @@ class Knowledge:
 
     def retrieve(self, query, limit=3):
         self.prune_reddit()
+        self.community.prune()
         terms = list(dict.fromkeys(w for w in re.findall(r'\w+', query.casefold()) if len(w) > 2 and w not in STOPWORDS))[:10]
         humor = humor_request(query)
         if humor:
             terms.append('humor')
-        active = [kind for kind, category in (('teacher', 'files'), ('wikipedia', 'web'), ('github', 'github'), ('reddit', 'reddit')) if self.core.config['connectors'].get(category)]
+        active = [kind for kind, category in (('teacher', 'files'), ('wikipedia', 'web'), ('github', 'github'), ('reddit', 'reddit'), ('stackoverflow', 'stackoverflow'), ('jokes', 'jokes')) if self.core.config['connectors'].get(category)]
         if not terms or not active:
             return []
         rows = self.core.store.rows('SELECT k.id,k.kind,k.title,k.url,k.event_id,c.content FROM core_knowledge k '
@@ -144,12 +154,12 @@ class Knowledge:
         def score(row):
             tokens = set(re.findall(r'\w+', row['content'].casefold()))
             matched = sum(w in tokens for w in terms)
-            return matched * 5 + sum(w in row['title'].casefold() for w in terms) + (10 if humor and row['kind']=='reddit' and 'humor' in tokens else 0)
+            return matched * 5 + sum(w in row['title'].casefold() for w in terms) + (10 if humor and row['kind'] in ('reddit','jokes') and 'humor' in tokens else 0)
         rows.sort(key=score, reverse=True)
         selected = []
         for row in rows:
             if score(row) and not any(x['source'] == row['event_id'] for x in selected):
-                selected.append({'source': row['event_id'], 'category': {'teacher': 'files', 'wikipedia': 'web', 'github': 'github', 'reddit': 'reddit'}[row['kind']],
+                selected.append({'source': row['event_id'], 'category': {'teacher': 'files', 'wikipedia': 'web', 'github': 'github', 'reddit': 'reddit', 'stackoverflow': 'stackoverflow', 'jokes': 'jokes'}[row['kind']],
                                  'title': row['title'], 'url': row['url'], 'content': row['content']})
             if len(selected) >= limit:
                 break
@@ -157,6 +167,7 @@ class Knowledge:
 
     def snapshot(self):
         self.prune_reddit()
+        self.community.prune()
         stats = self.core.store.rows('SELECT count(*) documents,coalesce(sum(words),0) words FROM core_knowledge')[0]
         indexed = self.core.store.rows('SELECT count(*) n FROM core_knowledge k WHERE EXISTS(SELECT 1 FROM core_chunks c WHERE c.event_id=k.event_id)')[0]['n']
         sources = self.core.store.rows('SELECT id,kind,title,url,revision,license,words,updated FROM core_knowledge ORDER BY updated DESC LIMIT 50')
@@ -166,6 +177,7 @@ class Knowledge:
                 'manual_running': bool(self.task and not self.task.done()),
                 'progress': self.progress, 'jobs': self.core.store.rows('SELECT * FROM core_source_jobs ORDER BY id DESC LIMIT 12'),
                 'focus': 'Italiano, programmazione Python/web e umorismo',
+                'community': {**self.community.snapshot(), 'stackoverflow_quota': self.core.store.setting('core_stackoverflow_quota','')},
                 'reddit': {'communities': [{'name': n, 'topic': t} for n,t in COMMUNITIES],
                     'documents': sum(r['documents'] for r in self.core.store.rows("SELECT count(*) documents FROM core_knowledge WHERE kind='reddit'")),
                     'words': self.core.store.rows("SELECT coalesce(sum(words),0) words FROM core_knowledge WHERE kind='reddit'")[0]['words'],
@@ -181,7 +193,7 @@ class Knowledge:
         self.task = asyncio.create_task(self.import_sources(request))
 
     def check_enabled(self, kind):
-        category = {'wikipedia':'web', 'github':'github', 'reddit':'reddit'}[kind]
+        category = {'wikipedia':'web', 'github':'github', 'reddit':'reddit', 'stackoverflow':'stackoverflow', 'jokes':'jokes'}[kind]
         if not self.core.config['web_enabled'] or not self.core.config['connectors'].get(category):
             raise ValueError('Abilita la ricerca web e il relativo connettore.')
 
@@ -200,7 +212,8 @@ class Knowledge:
                                      (json.dumps(request), 'running', request['count'], time.time())).lastrowid
         self.progress = {'id': job, 'completed': 0, 'total': request['count'], 'percent': 0, 'detail': 'Connessione alla fonte pubblica'}
         try:
-            imported = await {'wikipedia':self.wikipedia, 'github':self.github, 'reddit':self.reddit}[request['kind']](request)
+            imported = await {'wikipedia':self.wikipedia, 'github':self.github, 'reddit':self.reddit,
+                'stackoverflow':self.community.read, 'jokes':self.community.read}[request['kind']](request)
             self.advance(len(imported), len(imported), 'Fonti indicizzate')
             self.core.store.execute("UPDATE core_source_jobs SET status='ready',completed=total,finished=?,detail=? WHERE id=?",
                                     (time.time(), str(len(imported))+' documenti indicizzati; fonti e revisioni conservate', job))

@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('it-IT');
-const labels = {chat:'Chat',web:'Ricerca web',notes:'Note interne',summaries:'Riassunti',whatsapp:'WhatsApp',telegram:'Telegram',files:'File locali',consolidation:'Consolidamento',system:'Riflessione',alba:'Alba · storico chat',github:'Repository GitHub',diary:'Diario di studio',study:'Studio e programmazione',reddit:'Reddit',training:'Training locale',activity:'Attività'};
+const labels = {chat:'Chat',web:'Ricerca web',notes:'Note interne',summaries:'Riassunti',whatsapp:'WhatsApp',telegram:'Telegram',files:'File locali',consolidation:'Consolidamento',system:'Riflessione',alba:'Alba · storico chat',github:'Repository GitHub',diary:'Diario di studio',study:'Studio e programmazione',reddit:'Reddit',stackoverflow:'Stack Overflow',jokes:'Battute · JokeAPI',training:'Training locale',activity:'Attività'};
 const colors = ['#aed087','#d58c57','#8772ad','#347c9d','#5a9672','#d36776','#8f753c'];
 let csrf = '', data = null, activePanel = 'chat', socket = null, reconnectTimer = null;
 let inspecting = null, refreshBusy = false, lastChatId = 0, lastBusy = false, sending = false;
@@ -145,6 +145,7 @@ function renderTraining(){
  const inspect=element('button','Dati, verifiche e log');inspect.onclick=async()=>{try{const files=await api('/api/notte/training/'+r.id);$('trainingFiles').replaceChildren(...Object.entries(files).map(([name,value])=>{const d=element('details');d.append(element('summary',name),element('pre',value));return d;}));}catch(e){notice(e.message,true);}};card.append(inspect);
  if(r.status==='ready'){const restore=element('button','Ripristina versione');restore.onclick=()=>action('rollback',{id:r.id}).catch(e=>notice(e.message,true));card.append(restore);}return card;}));
 }
+$('readCommunity').onclick=()=>action('community').catch(e=>notice(e.message,true));
 $('readReddit').onclick=()=>action('reddit').catch(e=>notice(e.message,true));
 $('trainNow').onclick=()=>action('train').catch(e=>notice(e.message,true));
 $('stopTraining').onclick=()=>action('stop_training').catch(e=>notice(e.message,true));
@@ -201,7 +202,8 @@ function renderLearningDashboard(){
  $('sourceImport').disabled=k.running;$('sourceStop').disabled=!k.manual_running;
  const p=k.progress||{};$('sourceProgress').textContent=k.running?`${p.detail||'Lettura…'} · ${p.completed||0}/${p.total||1} · ${p.percent||0}%`:p.detail||'Scegli una fonte da leggere.';
  $('sourceMeter').value=p.percent||0;
- const reddit=k.reddit;$('redditStats').textContent=reddit?`Reddit · ${reddit.transport==='oauth_api'?'API OAuth':'RSS pubblico'} · ${metricValue(reddit.documents)} post · ${metricValue(reddit.words)} parole nella memoria consultabile. ${Date.now()/1000<reddit.retry_after?'Nuove letture dalle '+new Date(reddit.retry_after*1000).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'.':data.config.enabled&&data.config.reddit_enabled&&data.config.web_enabled&&data.config.connectors.reddit&&Date.now()/1000<reddit.rss_end?'Rotazione oraria fra Python/web e umorismo.':'Lettura automatica in pausa.'}`:'';
+ const community=k.community;const counts=community?.sources||[];$('communityStats').textContent='Fonti senza chiavi · '+['stackoverflow','jokes'].map(kind=>{const row=counts.find(x=>x.kind===kind);return `${labels[kind]}: ${metricValue(row?.documents||0)} testi · ${metricValue(row?.words||0)} parole${row?.retry_after>Date.now()/1000?' · in pausa per la quota':''}`;}).join(' · ')+(community?.stackoverflow_quota!==''&&community?.stackoverflow_quota!==undefined?' · Quota Stack Overflow residua: '+community.stackoverflow_quota:'')+(data.config.enabled&&data.config.study_enabled&&data.config.web_enabled?' · Rotazione automatica oraria con i connettori attivi.':' · Rotazione automatica in pausa.');
+ const reddit=k.reddit;$('redditStats').textContent=reddit?`Reddit · ${reddit.transport==='oauth_api'?'API OAuth':'RSS pubblico'} · ${metricValue(reddit.documents)} post · ${metricValue(reddit.words)} parole nella memoria consultabile. ${Date.now()/1000<reddit.retry_after?'Nuove letture dalle '+new Date(reddit.retry_after*1000).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'.':data.config.enabled&&data.config.reddit_enabled&&data.config.web_enabled&&data.config.connectors.reddit&&reddit.transport==='oauth_api'?'Rotazione oraria fra Python/web e umorismo.':'Lettura automatica in pausa.'}`:'';
  const phases={baseline:'Misuro la versione precedente',loading:'Carico il modello per il training',training:'Addestramento in corso',validation:'Verifico il checkpoint',merging:'Preparo i nuovi pesi',importing:'Pubblico il modello locale',benchmark:'Misuro la nuova versione',complete:'Passi di addestramento completati'};
  const progress=t.progress||{};
  $('learnTrainingState').textContent=t.running?(t.paused?'In pausa: priorità alle risorse e alla chat.':phases[t.phase]||t.phase||'Preparazione…'):t.active_model?'Modello validato · '+t.active_model:t.ready?'Pronto per il primo addestramento.':'Ambiente di addestramento da preparare.';
@@ -245,17 +247,22 @@ $('teachForm').onsubmit=async e=>{
  }catch(e){$('teachResult').textContent=e.message;notice(e.message,true);}finally{teachingBusy=false;$('teachSave').disabled=false;}
 };
 function updateSourceOptions(){
- const kind=$('sourceKind').value,wiki=kind==='wikipedia',reddit=kind==='reddit';
+ const kind=$('sourceKind').value,wiki=kind==='wikipedia',reddit=kind==='reddit',stack=kind==='stackoverflow',jokes=kind==='jokes',community=stack||jokes;
  $('sourceLanguage').disabled=!wiki;$('sourceLanguage').closest('label').hidden=!wiki;$('sourceCount').disabled=kind==='github';
  $('redditCommunityLabel').hidden=!reddit;$('redditSourceNote').hidden=!reddit;
- $('sourceQueryLabel').textContent=reddit?'Subreddit pubblico':wiki?'Argomento o link Wikipedia':'Repository pubblico';
- $('sourceQuery').placeholder=reddit?'r/learnpython, r/dadjokes oppure un link Reddit':wiki?'Python, HTML o un link Wikipedia':'owner/repo o link GitHub';
- $('sourceCountLabel').textContent=reddit?'Post da leggere':'Articoli per ricerca';
- $('sourceCount').replaceChildren(...(reddit?[1,3,6,12]:[1,2,3]).map(n=>{const option=element('option',n+(reddit?' post':n===1?' articolo':' articoli'));option.value=String(n);return option;}));
- if(reddit){$('sourceCount').value='6';$('sourceQuery').value='r/'+$('redditCommunity').value;}else $('sourceQuery').value='';
+ $('communityPresetLabel').hidden=!community;$('communitySourceNote').hidden=!community;
+ const presets=stack?[['python','Python'],['javascript','JavaScript'],['html','HTML'],['css','CSS'],['flask','Flask'],['django','Django'],['typescript','TypeScript']]:[['Programming','Programmazione'],['Pun','Giochi di parole'],['Misc','Battute varie']];
+ $('communityPreset').replaceChildren(...presets.map(([value,title])=>{const option=element('option',title);option.value=value;return option;}));
+ $('sourceQueryLabel').textContent=reddit?'Subreddit pubblico':wiki?'Argomento o link Wikipedia':stack?'Tag o ricerca Stack Overflow':jokes?'Categoria delle battute':'Repository pubblico';
+ $('sourceQuery').placeholder=reddit?'r/learnpython, r/dadjokes oppure un link Reddit':wiki?'Python, HTML o un link Wikipedia':stack?'python, javascript oppure Python asyncio':jokes?'Programming, Pun oppure Misc':'owner/repo o link GitHub';
+ $('sourceQuery').readOnly=jokes;
+ $('sourceCountLabel').textContent=reddit?'Post da leggere':stack?'Soluzioni da leggere':jokes?'Battute da leggere':'Articoli per ricerca';
+ $('sourceCount').replaceChildren(...(reddit?[1,3,6,12]:community?[1,3,6,10]:[1,2,3]).map(n=>{const option=element('option',n+(reddit?' post':stack?' soluzioni':jokes?' battute':n===1?' articolo':' articoli'));option.value=String(n);return option;}));
+ if(reddit){$('sourceCount').value='6';$('sourceQuery').value='r/'+$('redditCommunity').value;}else if(community){$('sourceCount').value='6';$('sourceQuery').value=$('communityPreset').value;}else $('sourceQuery').value='';
 }
 $('sourceKind').onchange=updateSourceOptions;
 $('redditCommunity').onchange=()=>{$('sourceQuery').value='r/'+$('redditCommunity').value;};
+$('communityPreset').onchange=()=>{$('sourceQuery').value=$('communityPreset').value;};
 $('sourceForm').onsubmit=async e=>{e.preventDefault();$('sourceImport').disabled=true;try{await api('/api/notte/sources',{kind:$('sourceKind').value,query:$('sourceQuery').value.trim(),language:$('sourceLanguage').value,count:Number($('sourceCount').value)});await refresh();}catch(e){notice(e.message,true);$('sourceImport').disabled=false;}};
 $('sourceStop').onclick=()=>action('stop_sources').catch(e=>notice(e.message,true));
 $('learnTrain').onclick=()=>action('train').catch(e=>notice(e.message,true));

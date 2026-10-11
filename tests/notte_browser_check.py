@@ -48,7 +48,7 @@ async def main():
                 await page.locator('#chatEvents .night-event.assistant').wait_for()
                 assert await page.locator('#chatEvents strong').inner_text()=='Interessante.'
                 await page.locator('#tab-memory').click()
-                assert await page.locator('.connector').count()==12
+                assert await page.locator('.connector').count()==14
                 await page.locator('.connector').filter(has_text='Note interne').get_by_text('Ispeziona').click()
                 await page.locator('#inspection .night-event').first.wait_for()
                 assert await page.locator('#inspection script').count()==0
@@ -124,8 +124,32 @@ async def main():
                 await page.set_viewport_size({'width':390,'height':844})
                 assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 assert await page.locator('#redditSourceNote').is_visible()
+                await page.locator('#sourceKind').select_option('stackoverflow')
+                assert await page.locator('#communityPresetLabel').is_visible()
+                assert not await page.locator('#redditCommunityLabel').is_visible()
+                assert not await page.locator('#sourceLanguage').is_visible()
+                await page.locator('#communityPreset').select_option('javascript')
+                assert await page.locator('#sourceQuery').input_value()=='javascript'
+                from test_core_community import question,answer,joke
+                async def public_community(url,*a,**k):
+                    return json.dumps(joke() if 'jokeapi.dev' in url else {'items':[answer() if '/answers/' in url else question()],'quota_remaining':298}).encode()
+                service.core.learning.public_get=public_community
+                await page.locator('#sourceImport').click()
+                await page.locator('#communityStats').filter(has_text='Stack Overflow: 1 testi').wait_for()
+                assert await page.locator('#learnSources a[href="https://stackoverflow.com/a/73"]').count()==1
+                await page.locator('#sourceKind').select_option('jokes')
+                assert await page.locator('#sourceQuery').get_attribute('readonly') is not None
+                assert await page.locator('#sourceQuery').input_value()=='Programming'
+                assert await page.locator('#sourceCount option').count()==4
+                await page.locator('#sourceImport').click()
+                await page.locator('#communityStats').filter(has_text='JokeAPI: 1 testi').wait_for()
+                assert service.core.knowledge.retrieve('battuta')[0]['category']=='jokes'
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 await page.locator('#sourceKind').select_option('wikipedia')
                 assert not await page.locator('#redditCommunityLabel').is_visible()
+                assert not await page.locator('#communityPresetLabel').is_visible()
+                assert not await page.locator('#communitySourceNote').is_visible()
+                assert await page.locator('#sourceQuery').get_attribute('readonly') is None
                 assert await page.locator('#sourceLanguage').is_enabled()
                 assert await page.locator('#sourceCount option').count()==3
                 await page.set_viewport_size({'width':1440,'height':1000})
