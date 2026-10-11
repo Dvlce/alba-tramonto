@@ -80,8 +80,8 @@ class Core:
         self.telegram_send = None
         self.emotions = {**EMOTIONS, **json.loads(self.store.setting('core_emotions', '{}'))}
         self.owner = next(iter(self.settings.admins), None) or int(self.store.setting('bootstrap_admin', '0'))
-        self.prompt = (Path(__file__).parent/'system.txt').read_text()
-        self.chat_prompt = (Path(__file__).parent/'chat.txt').read_text()
+        self.prompt = (Path(__file__).parent/'system.txt').read_text(encoding='utf-8')
+        self.chat_prompt = (Path(__file__).parent/'chat.txt').read_text(encoding='utf-8')
         from .learning import Learning
         self.learning = Learning(self)
         from .knowledge import Knowledge

@@ -97,7 +97,7 @@ def install_ollama(skip=False):
 
 
 def env_values(path):
-    return {k.strip():v.strip().strip('\"\'') for line in path.read_text().splitlines() if '=' in line and not line.lstrip().startswith('#') for k,v in [line.split('=',1)]}
+    return {k.strip():v.strip().strip('\"\'') for line in path.read_text(encoding='utf-8').splitlines() if '=' in line and not line.lstrip().startswith('#') for k,v in [line.split('=',1)]}
 
 
 def validate_public_url(value):
@@ -137,7 +137,7 @@ def configure(python,model,unattended=False):
     url='' if unattended else validate_public_url(input('Public HTTPS URL (optional): ').strip())
     values={'TELEGRAM_BOT_TOKEN':token,'ADMIN_IDS':admin or '-1000000000','MODEL':model,'LLM_BACKEND':'ollama','LLM_URL':'http://127.0.0.1:11434','PUBLIC_URL':url,'CORE_MODEL':'qwen2.5:1.5b','CORE_CODE_MODEL':'qwen2.5-coder:3b','CORE_ADVANCED_CODE_MODEL':'qwen2.5-coder:3b','MAX_USERS':'20','MAX_ONLINE':'5'}
     pending=ROOT/'data/setup-initializing';pending.touch(mode=0o600)
-    path.write_text(''.join(k+'='+v+'\n' for k,v in values.items()));path.chmod(0o600)
+    path.write_text(''.join(k+'='+v+'\n' for k,v in values.items()),encoding='utf-8');path.chmod(0o600)
     run([python,'-c',BOOTSTRAP],cwd=ROOT)
     pending.unlink()
     print('Initial credentials: data/first-access.txt (private).')

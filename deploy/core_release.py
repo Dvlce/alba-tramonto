@@ -18,7 +18,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT_FILES = {'app.py','service.py','telegram_bot.py','runtime_features.py','http_guard.py','install.py',
-              'requirements.txt','deploy/portable_install.py','deploy/setup_bundle.py','deploy/alba.service',
+              'config.py','requirements.txt','deploy/portable_install.py','deploy/setup_bundle.py','deploy/alba.service',
               'web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js',
               'tramonto-lab.js','notte.html','notte.css','notte.js',
               'optimization.html','optimization.css','optimization.js'}
