@@ -104,8 +104,8 @@ public final class NativeUiSmoke extends Instrumentation {
             if(root!=null){
                 boolean dispatched=false;
                 for(android.view.accessibility.AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText(name)){
-                    if(!node.isVisibleToUser()){node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SHOW_ON_SCREEN);continue;}
-                    node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SHOW_ON_SCREEN);
+                    if(!node.isVisibleToUser()){node.performAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());continue;}
+                    node.performAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());
                     for(int parent=0;node!=null&&parent<4;parent++,node=node.getParent()){
                         if(node.isClickable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)){dispatched=true;break;}
                     }
@@ -115,7 +115,7 @@ public final class NativeUiSmoke extends Instrumentation {
             }
             Thread.sleep(200);
         }
-        throw new AssertionError("Font selection did not complete: "+name);
+        throw new AssertionError("Font selection did not complete: "+name+"; active window: "+windowText(getUiAutomation().getRootInActiveWindow()));
     }
     private void ui(Task task){runOnMainSync(()->{try{task.run();}catch(Throwable e){failure=e;}});}
     private Object field(String name) throws Exception {Field field=MainActivity.class.getDeclaredField(name);field.setAccessible(true);return field.get(activity);}
