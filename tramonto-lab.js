@@ -98,6 +98,7 @@ PARTS.voltmeter.path=box+'M-10-10 0 10 10-10';
 PARTS.scope.ports=[[-36,50],[-12,50],[12,50],[36,50]];
 PARTS.scope.path='M-48-34h96v68h-96zM-36 34v16M-12 34v16M12 34v16M36 34v16';
 PARTS.scope.bounds={x:-58,y:-42,width:116,height:104};PARTS.scope.portLabels=['A+','A−','B+','B−'];
+PARTS.opamp.portLabels=['IN−','IN+','OUT','V+','V−'];for(const type of ['npn','pnp'])PARTS[type].portLabels=['B','C','E'];for(const type of ['nmos','pmos'])PARTS[type].portLabels=['G','D','S'];PARTS.diode.portLabels=['A','K'];PARTS.transformer.portLabels=['P+','P−','S+','S−'];
 PARTS.transformer.path='M-28-18h8c12 0 12 9 0 9c12 0 12 9 0 9c12 0 12 9 0 9c12 0 12 9 0 9h-8M28-18h-8c-12 0-12 9 0 9c-12 0-12 9 0 9c-12 0-12 9 0 9c-12 0-12 9 0 9h8M-4-23v46M4-23v46';
 for(const [type,name,base]of [['nand','Porta NAND','and'],['nor','Porta NOR','or'],['xor','Porta XOR','or'],['xnor','Porta XNOR','or']]){
  let path=PARTS[base].path;if(type.includes('xor'))path+='M-25-22Q-11 0-25 22';if(['nand','nor','xnor'].includes(type))path+='M21 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0';PARTS[type]={name,prefix:'U',value:'',ports:gatePorts,path};const b=button(name,()=>{});b.dataset.component=type;document.querySelector('#pane-circuit .component-palette').appendChild(b);
@@ -238,7 +239,7 @@ function createOscilloscope(){
  function channelScale(ch){const automatic=autoScales[ch]||{div:1,center:0},raw=$('scopeVolts'+ch).value;return{div:raw==='auto'?automatic.div:Number(raw)||1,center:raw==='auto'?automatic.center:Number($('scopeOffset'+ch).value)||0};}
  let autoScales={};
  function chooseChannels(){const series=data?.series||[],chosen=device==='all'?series:series.filter(s=>s.scope_id===device);channels={};if(device==='all'){const scoped=chosen.filter(s=>s.channel==='A'||s.channel==='B');if(scoped.length){for(const ch of ['A','B'])channels[ch]=scoped.find(s=>s.channel===ch);}else{channels.A=chosen[0];channels.B=chosen[1];}}else{for(const ch of ['A','B'])channels[ch]=chosen.find(s=>s.channel===ch);}
-  autoScales={};for(const ch of ['A','B']){autoScales[ch]=autoScale(channels[ch]);$('scopeShow'+ch).disabled=!channels[ch];$('scopeScale'+ch).textContent=channels[ch]?.name||'Terminali del canale non collegati';$('scopeOffset'+ch).value=autoScales[ch].center;}scheduleDraw();measure();
+  autoScales={};for(const ch of ['A','B']){autoScales[ch]=autoScale(channels[ch]);$('scopeShow'+ch).disabled=!channels[ch];$('scopeScale'+ch).textContent=channels[ch]?.name||'Terminali del canale non collegati';if(channels[ch]){const values=channels[ch].values;let low=Infinity,high=-Infinity;for(const v of values){low=Math.min(low,v);high=Math.max(high,v);}if(high-low<Math.max(1e-9,Math.abs(high)*1e-8))$('scopeScale'+ch).textContent+=' · segnale costante '+format(low,channels[ch].unit);}$('scopeOffset'+ch).value=autoScales[ch].center;}scheduleDraw();measure();
  }
  function controls(enabled){for(const id of ['scopeRewind','scopePrevious','scopePlay','scopeNext','scopeTimeline','scopeCursor1','scopeCursor2','scopeCursorToHead','scopeTimeDiv','scopeZoomIn','scopeZoomOut','scopePanLeft','scopePanRight','scopeFit'])$(id).disabled=!enabled;}
  function pause(){playing=false;cancelAnimationFrame(animation);animation=0;$('scopePlay').textContent='▶ Riproduci';$('scopePlay').setAttribute('aria-pressed','false');}
