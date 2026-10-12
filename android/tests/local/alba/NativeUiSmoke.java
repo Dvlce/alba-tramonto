@@ -90,7 +90,7 @@ public final class NativeUiSmoke extends Instrumentation {
     }
     private void capture(String name) throws Exception {Thread.sleep(450);waitForIdleSync();android.graphics.Bitmap bitmap=getUiAutomation().takeScreenshot();if(bitmap==null)throw new AssertionError("Screenshot unavailable");try(java.io.FileOutputStream out=new java.io.FileOutputStream(new java.io.File(getTargetContext().getExternalFilesDir(null),"smoke-"+name+".png"))){bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();}
     private void click(String text) throws Exception {for(int retry=0;retry<20;retry++){Thread.sleep(200);android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();if(root==null)continue;for(android.view.accessibility.AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText(text)){android.graphics.Rect bounds=new android.graphics.Rect();node.getBoundsInScreen(bounds);if(bounds.isEmpty()||!node.isVisibleToUser())continue;long now=android.os.SystemClock.uptimeMillis();android.view.MotionEvent down=android.view.MotionEvent.obtain(now,now,android.view.MotionEvent.ACTION_DOWN,bounds.centerX(),bounds.centerY(),0),up=android.view.MotionEvent.obtain(now,now+50,android.view.MotionEvent.ACTION_UP,bounds.centerX(),bounds.centerY(),0);down.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);up.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);boolean clicked=getUiAutomation().injectInputEvent(down,true)&&getUiAutomation().injectInputEvent(up,true);down.recycle();up.recycle();if(clicked)return;}if(retry%2==1)scrollList(root);}capture("font-choices");throw new AssertionError("Cannot select "+text+"; active window: "+windowText(getUiAutomation().getRootInActiveWindow()));}
-    private boolean scrollList(android.view.accessibility.AccessibilityNodeInfo node){if(node==null)return false;if("android.widget.ListView".contentEquals(node.getClassName())&&node.isScrollable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))return true;for(int i=0;i<node.getChildCount();i++)if(scrollList(node.getChild(i)))return true;return false;}
+    private boolean scrollList(android.view.accessibility.AccessibilityNodeInfo node){if(node==null)return false;if(node.isScrollable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))return true;for(int i=0;i<node.getChildCount();i++)if(scrollList(node.getChild(i)))return true;return false;}
     private String windowText(android.view.accessibility.AccessibilityNodeInfo node){if(node==null)return "none";StringBuilder out=new StringBuilder();if(node.getText()!=null)out.append(node.getText()).append(" | ");if(node.getContentDescription()!=null)out.append(node.getContentDescription()).append(" | ");for(int i=0;i<node.getChildCount()&&out.length()<3000;i++)out.append(windowText(node.getChild(i)));return out.toString();}
     private interface Task {void run() throws Exception;}
     /** Dialog rows can be partly clipped: accepted input injection is not selection. */
@@ -104,13 +104,14 @@ public final class NativeUiSmoke extends Instrumentation {
             if(root!=null){
                 boolean dispatched=false;
                 for(android.view.accessibility.AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText(name)){
-                    if(!node.isVisibleToUser())continue;
+                    if(!node.isVisibleToUser()){node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SHOW_ON_SCREEN);continue;}
+                    node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SHOW_ON_SCREEN);
                     for(int parent=0;node!=null&&parent<4;parent++,node=node.getParent()){
                         if(node.isClickable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)){dispatched=true;break;}
                     }
                     if(dispatched)break;
                 }
-                if(!dispatched)scrollList(root);
+                if(!dispatched||retry%3==2)scrollList(root);
             }
             Thread.sleep(200);
         }
