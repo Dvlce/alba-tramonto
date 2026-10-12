@@ -21,6 +21,7 @@ jobs:
       - run: python tests/function_study_browser_check.py
       - run: python tests/handwritten_math_browser_check.py
       - run: python tests/network_tools_browser_check.py
+      - run: python tests/device_properties_browser_check.py
       - run: python tests/scope_browser_check.py
       - run: python tests/circuit_import_browser_check.py
       - run: python tests/appearance_network_check.py

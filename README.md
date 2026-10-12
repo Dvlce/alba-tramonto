@@ -102,7 +102,7 @@ To integrate the engine into an existing system, see [alba-local-kit](https://gi
 .venv/bin/python -m unittest discover -s tests
 ```
 
-The backend suite contains 416 tests and runs on Raspberry Pi and in Linux CI, including four circuits executed in isolated ngspice. Simulator tests require Linux, ngspice, bubblewrap, and available user namespaces. Native Android instrumentation verifies 123 UI and transport checks on an emulator with a fixture API.
+The backend suite contains 497 tests and runs on Raspberry Pi and in Linux CI, including four circuits executed in isolated ngspice. Simulator tests require Linux, ngspice, bubblewrap, and available user namespaces. Native Android instrumentation verifies 123 UI and transport checks on an emulator with a fixture API.
 
 Browser checks use Playwright and Chromium:
 
@@ -127,4 +127,4 @@ The standalone **notebook-only** desktop apps for Windows, Mac Intel and Mac App
 
 Make changes to the shared web notebook, circuit/network data and Android app in **this repository**. Work on the desktop launcher, frozen local notebook server and Windows/macOS packaging in **tramonto-desktop**; refresh its public notebook snapshot after shared UI changes. That repository records the exact source revision and asset hashes.
 
-The notebook now supports independently sized selections, transparent formulas, preview insertion without updating a saved formula, charts from points, freely positioned images, repeated wiring, junctions on cable corners and R rotation. Network links select both physical ports; each device saves CLI notes. Double-click an oscilloscope to open its movable, resizable controls, acquire data and inspect a numerical Fourier spectrum of the actual transient samples. The network CLI is educational; it does not execute IOS or commands on real devices.
+The notebook now supports independently sized selections, transparent formulas, preview insertion without updating a saved formula, charts from points, freely positioned images, repeated wiring, junctions on cable corners and R rotation. Network links select both physical ports; each device saves CLI notes. Double-click any electronic component to edit its values in a focused window. Double-click a network device for Properties, CLI and Ports; local commands can update its name, IPv4 address, gateway, VLAN and enabled state. A single-tap Properties button and keyboard tabs provide alternatives. Double-click an oscilloscope to open its movable, resizable controls, acquire data and inspect a numerical Fourier spectrum of the actual transient samples. The network CLI is educational; it does not execute IOS or commands on real devices.

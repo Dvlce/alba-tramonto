@@ -14,7 +14,7 @@
         "tramonto-study.js",
         "tramonto-font.js",
         "tramonto.css:15:110",
-        "tramonto.css:453:527",
+        "tramonto.css:453:554",
         "tramonto-lab.js",
         "tramonto-tools.js"
       ],
@@ -24,9 +24,9 @@
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
         "tramonto-study.js": "55895a44bca3ff91b70a75e9d0a5a25e32152f6f6e14e18488b8a792adf3fb7c",
         "tramonto-font.js": "2a00f765cdbb380b5591f149d41236e85d15cf50e5b137f9244d9e8440b51a72",
-        "tramonto.css": "2cd239e1e7d748415837b4f7657fc829685f985fbdd3ff4a71169914fe910510",
+        "tramonto.css": "a090aac4a9a44eab2d90b68f0e0ec621a3a2a927c6afeffb8e825f282787954d",
         "tramonto-tools.js": "dd20bfceab54a30490a1953c15243fb379678f5caa1b9bbd539440f49bcf0a5e",
-        "tramonto-lab.js": "3af872a071ce50de0553c2253d5b5d908c59517b977e78a0b7a50d7ee038ce52"
+        "tramonto-lab.js": "93d5d5e79250c37387f0c2e9e60ef640863cdad00aed37e04540f9e5a43af4fa"
       },
       "components": [
         {
@@ -38,11 +38,11 @@
       "drafts": {
         "b562c42e-8f4a-4b42-9425-a2b1d5f397d6": {
           "title": "Tramonto Portal Transition",
-          "visualDirection": "Compact viewport workspace, settings dialogs, ordered page footer, readable mobile focus and nondestructive multi-page print with typography/paper options. Independent selected text size and transparent formulas; physical network ports and device CLI; movable adjustable scope with acquisition and Fourier. Desktop is notebook only.",
-          "currentVersion": 21
+          "visualDirection": "Compact viewport workspace, settings dialogs, ordered page footer, readable mobile focus and nondestructive multi-page print with typography/paper options. Independent selected text size and transparent formulas; physical network ports and device CLI; movable adjustable scope with acquisition and Fourier. Desktop is notebook only. Double-click component/device properties windows, scoped educational value commands, keyboard tabs and physical port inspection.",
+          "currentVersion": 22
         }
       },
-      "updatedAt": "2026-10-12T07:31:16.598897+00:00",
+      "updatedAt": "2026-10-12T08:52:37.408966+00:00",
       "referenceIds": [
         "9475faae-cb80-4115-b66c-d533ea9d2223",
         "89b5b07b-622f-4e3b-8da6-25c1ae4f24a2"

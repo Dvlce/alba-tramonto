@@ -535,3 +535,20 @@
 .port-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;max-height:55vh;overflow:auto}.port-choices button{text-align:left}#networkDeviceCli{min-height:150px;font-family:ui-monospace,monospace}#networkWire[aria-pressed=true]{outline:2px solid var(--accent)}
 
 .rich-editor{position:relative}.rich-editor img[data-layout=free]{position:absolute;float:none;margin:0;cursor:move;touch-action:none}#dataChartSvg,#fourierSvg{width:100%;height:auto}#chartPoints{width:100%;font-family:ui-monospace,monospace}#fourierDialog{width:min(900px,96vw)}
+
+/* Device properties stay reachable beside the diagram or in a focused window. */
+.component-settings-dialog{width:min(700px,calc(100vw - 24px));max-height:90dvh;padding:20px;overscroll-behavior:contain}
+.component-settings-dialog[open]{animation:device-properties-in .16s ease-out}
+.component-settings-dialog .component-properties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:14px;margin:0}
+.component-settings-dialog .component-properties>div{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.component-settings-dialog .component-properties :is(p,button,#summerThreeParams){grid-column:1/-1}
+.component-settings-dialog .component-properties label{min-width:0;font-size:12px}
+.component-settings-dialog :is(input:not([type=checkbox]),textarea,select){width:100%;max-width:100%;box-sizing:border-box;min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);padding:9px;font-size:13px}
+.component-settings-dialog input[type=checkbox]{width:auto;min-height:0}.component-settings-dialog #switchParams{display:flex;align-items:center;flex-wrap:wrap}
+.component-settings-dialog .network-console{max-height:300px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px}
+.component-settings-dialog #networkCli{display:flex;align-items:end;gap:10px}.component-settings-dialog #networkCli label{flex:1;min-width:0;display:grid;gap:5px;font-size:12px}
+.device-window-tabs{display:flex;gap:6px;margin-bottom:18px}.device-window-tabs button{flex:1;min-height:40px}.device-window-tabs [aria-selected=true]{background:var(--accent);color:var(--accent-text)}
+.device-port-list{overflow:auto;max-height:55dvh}.device-port-list table{width:100%;font-size:12px}.device-port-list th{position:sticky;top:0;background:var(--surface)}
+@keyframes device-properties-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:520px){.component-settings-dialog{padding:14px}.component-settings-dialog .dialog-heading h2{font-size:19px}.component-settings-dialog .component-properties,.component-settings-dialog .component-properties>div{grid-template-columns:1fr}.component-settings-dialog #networkCli{flex-direction:column;align-items:stretch}}
+@media(prefers-reduced-motion:reduce){.component-settings-dialog[open]{animation:none}}
