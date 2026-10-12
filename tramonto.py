@@ -17,14 +17,29 @@ SUBJECTS={'generale','italiano','storia','matematica','telecomunicazioni','siste
 TAGS={'p','div','br','strong','b','em','i','u','s','h1','h2','h3','h4','ul','ol','li','blockquote','pre','code','table','thead','tbody','tr','td','th','sub','sup','hr','img','span','mark'}
 HIGHLIGHT_COLORS={'#fff19c','#bce8b5','#f6bad6','#b8ddf5'}
 
+def inline_style(value):
+    """Allow bounded text sizes and the notebook highlight palette only."""
+    clean=[];seen=set()
+    for declaration in value.split(';'):
+        if not declaration.strip(): continue
+        name,separator,raw=declaration.partition(':');name=name.strip().lower();raw=raw.strip().lower()
+        if not separator or name in seen: return ''
+        seen.add(name)
+        if name=='background-color' and raw in HIGHLIGHT_COLORS:
+            clean.append('background-color: '+raw+';')
+        elif name=='font-size' and re.fullmatch(r'\d+(?:\.\d+)?px',raw) and float(raw[:-2]).is_integer() and 8<=float(raw[:-2])<=72:
+            clean.append('font-size: '+format(float(raw[:-2]),'g')+'px;')
+        else: return ''
+    return ' '.join(clean)
+
 class RichText(HTMLParser):
     def __init__(self,images=(),formula_sources=None): super().__init__(convert_charrefs=True); self.output=[]; self.images=set(images); self.formula_sources=formula_sources or {}
     def handle_starttag(self,tag,attrs):
         if tag not in TAGS: return
         attributes={k:v or '' for k,v in attrs}; safe=[]
         if tag in ('span','mark'):
-            match=re.fullmatch(r'\s*background-color\s*:\s*(#[a-fA-F0-9]{6})\s*;?\s*',attributes.get('style',''))
-            if match and match[1].lower() in HIGHLIGHT_COLORS: safe.append(('style','background-color: '+match[1].lower()+';'))
+            style=inline_style(attributes.get('style',''))
+            if style: safe.append(('style',style))
         if tag=='img':
             match=re.fullmatch(r'/api/tramonto/images/([0-9]+)(?:\?v=[0-9]+)?',attributes.get('src',''))
             if not match or int(match[1]) not in self.images: return
@@ -33,7 +48,11 @@ class RichText(HTMLParser):
             if not width.isdigit() or not 40<=int(width)<=674: width='400'
             safe.append(('width',width)); safe.append(('alt',attributes.get('alt','Immagine')[:180]))
             layout=attributes.get('data-layout','inline')
-            if layout in ('inline','left','right','center'): safe.append(('data-layout',layout))
+            if layout in ('inline','left','right','center','free'): safe.append(('data-layout',layout))
+            if layout=='free':
+                for axis,maximum in (('x',674),('y',920)):
+                    raw=attributes.get('data-'+axis,'0')
+                    if re.fullmatch(r'\d{1,3}(?:\.\d{1,2})?',raw) and float(raw)<=maximum:safe.append(('data-'+axis,raw))
             formula=attributes.get('data-latex',self.formula_sources.get(int(match[1])))
             if formula is not None: safe.append(('data-latex',text(formula,4000)))
         if tag in ('p','div','td','th','h1','h2','h3','h4','li','blockquote','pre') and attributes.get('align') in ('left','center','right','justify'): safe.append(('align',attributes['align']))
@@ -101,6 +120,13 @@ def content_data(data):
     formulas=data.get('formulas',[])
     if not isinstance(formulas,list) or len(formulas)>50: raise ValueError('Troppe formule.')
     result['formulas']=[text(value,4000) for value in formulas]
+    if 'chart' in data:
+        chart=data['chart']
+        if not isinstance(chart,dict) or chart.get('kind') not in ('line','scatter','bar'):raise ValueError('Tipo di grafico non valido.')
+        points=chart.get('points')
+        if not isinstance(points,list) or len(points)>200:raise ValueError('Massimo 200 punti nel grafico.')
+        if any(not isinstance(p,list) or len(p)!=2 for p in points):raise ValueError('Punto del grafico non valido.')
+        result['chart']={'kind':chart['kind'],'title':text(chart.get('title',''),120),'points':[[number(x),number(y)] for x,y in points]}
     graph=data.get('graph',{'expressions':['sin(x)','cos(x)'],'x_min':-10,'x_max':10,'y_min':-2,'y_max':2})
     if not isinstance(graph,dict) or not isinstance(graph.get('expressions'),list) or not 1<=len(graph['expressions'])<=3: raise ValueError('Grafico non valido.')
     result['graph']={'expressions':[text(value,250,False) for value in graph['expressions']]}
@@ -211,7 +237,7 @@ def setup_tramonto(app,service):
         return web.FileResponse(service.settings.root/'tramonto.html')
     async def asset(request):
         admin(request); name=request.match_info['name']
-        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
+        if name not in ('tramonto.js','tramonto.css','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js','tramonto-tools.js') and not (name.startswith('vendor/') and Path(name).suffix in ('.js','.css','.woff2')): raise web.HTTPNotFound()
         target=(service.settings.root/name).resolve()
         if '..' in Path(name).parts or not target.is_relative_to(service.settings.root.resolve()) or not target.is_file(): raise web.HTTPNotFound()
         return web.FileResponse(target)

@@ -16,7 +16,7 @@ from test_circuit_import import RC,native_xml,literal_container,connected
 async def main():
  with tempfile.TemporaryDirectory() as folder:
   root=Path(folder)
-  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js'):shutil.copy2(ROOT/name,root/name)
+  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js','tramonto-tools.js'):shutil.copy2(ROOT/name,root/name)
   shutil.copytree(ROOT/'vendor',root/'vendor');settings=Settings(root=root,admins=(1,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'));service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings));store.register(1,'Import test');server=TestServer(web_app(service));await server.start_server();errors=[]
   try:
    async with async_playwright() as p:
@@ -31,7 +31,7 @@ async def main():
     assert [await page.locator('[data-component=scope] svg circle').nth(i).get_attribute('cy') for i in range(4)]==['50']*4
     await page.locator('[data-component=switch]').click();await svg.scroll_into_view_if_needed();box=await svg.bounding_box();await svg.click(position={'x':480*box['width']/1000,'y':220*box['height']/640});c=await circuit();assert len(c['components'])==4 and len(c['wires'])==2,c
     switch=c['components'][-1];assert switch['type']=='switch' and not switch['params']['closed'];assert all(w['color']=='#3159a4' for w in c['wires']);assert connected(c,('R1',1),(switch['id'],0)) and connected(c,('C1',0),(switch['id'],1));assert not connected(c,('R1',1),('C1',0))
-    await svg.locator('[data-component-id="'+switch['id']+'"]').dblclick();assert (await circuit())['components'][-1]['params']['closed'],('toggle',await circuit());await page.locator('#undoCircuit').click();assert not (await circuit())['components'][-1]['params']['closed'],('undo_toggle',await circuit());await page.locator('#undoCircuit').click();assert await circuit()==baseline,('undo_insert',await circuit(),baseline)
+    await svg.locator('[data-component-id="'+switch['id']+'"]').click();assert (await circuit())['components'][-1]['params']['closed'],('toggle',await circuit());await page.locator('#undoCircuit').click();assert not (await circuit())['components'][-1]['params']['closed'],('undo_toggle',await circuit());await page.locator('#undoCircuit').click();assert await circuit()==baseline,('undo_insert',await circuit(),baseline)
     await svg.locator('[data-component-id="OSC1"]').dblclick();assert await page.locator('#oscilloscopePanel').is_visible();await page.locator('#scopeClose').click()
     # Upload converts, but review is atomic until the user applies it.
     before=await circuit();await page.locator('#circuitImportFile').set_input_files({'name':'Filtro.cir','mimeType':'text/plain','buffer':RC});await page.locator('#circuitImportPreview').wait_for(state='visible');assert await circuit()==before;assert 'Netlist SPICE' in await page.locator('#circuitImportSummary').inner_text()

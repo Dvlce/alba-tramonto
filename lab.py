@@ -12,6 +12,7 @@ import tempfile
 import time
 from pathlib import Path
 from aiohttp import web
+from network_catalog import NETWORK_MODELS,model_for
 
 PORTS={'resistor':2,'capacitor':2,'inductor':2,'diode':2,'voltage':2,'ac':2,'ground':1,'switch':2,'npn':3,'opamp':5,
        'battery':2,'current':2,'function':2,'pot':3,'led':2,'zener':2,'pnp':3,'nmos':3,'pmos':3,'transformer':4,
@@ -355,7 +356,7 @@ def import_circuit(data,filename):
     return {'circuit':clean,'title':title[:80],'format':'Multisim nativo' if native else 'Netlist SPICE','warnings':list(dict.fromkeys(warnings)),'components':len(clean['components']),'wires':len(clean['wires'])}
 
 
-NODE_TYPES={'router','switch','pc','server','laptop','accesspoint','firewall','cloud','printer'}
+NODE_TYPES={'router','switch','pc','server','laptop','accesspoint','firewall','cloud','printer','phone'}
 
 def numeric(value,low,high):
     if type(value) not in (int,float) or not math.isfinite(value) or not low<=value<=high: raise ValueError('Parametro numerico fuori intervallo.')
@@ -413,14 +414,29 @@ def validate_network(value):
         if type(enabled) is not bool or type(item.get('vlan',1)) is not int: raise ValueError('Stato/VLAN non valido.')
         nodes.append({'id':ident,'type':item['type'],'name':label(item.get('name','Dispositivo'),60),'x':numeric(item.get('x'),40,960),'y':numeric(item.get('y'),40,600),
                       'ip':interface(item.get('ip','')),'gateway':gateway,'vlan':numeric(item.get('vlan',1),1,4094),'enabled':enabled,'interfaces':[interface(ip) for ip in interfaces]})
+    for original,clean in zip(value['nodes'],nodes):
+        model_for(original)
+        if 'model' in original:clean['model']=original['model']
+        if 'cli' in original:clean['cli']=label(original['cli'],16000)
+    by_id={n['id']:n for n in nodes};occupied=set()
     links=[]; seen=set()
     for item in value['links']:
         if not isinstance(item,dict) or not isinstance(item.get('from'),str) or not isinstance(item.get('to'),str) or item.get('from') not in ids or item.get('to') not in ids or item['from']==item['to']: raise ValueError('Collegamento di rete non valido.')
         ident=key(item.get('id'))
         if ident in seen: raise ValueError('Collegamento duplicato.')
         seen.add(ident); kind=item.get('kind','ethernet'); enabled=item.get('enabled',True)
-        if kind not in ('ethernet','fiber','serial','wifi') or type(enabled) is not bool: raise ValueError('Tipo di collegamento non valido.')
-        links.append({'id':ident,'from':item['from'],'to':item['to'],'kind':kind,'enabled':enabled})
+        if kind not in ('ethernet','fiber','serial','wifi','console','crossover') or type(enabled) is not bool: raise ValueError('Tipo di collegamento non valido.')
+        clean={'id':ident,'from':item['from'],'to':item['to'],'kind':kind,'enabled':enabled}
+        explicit=any(field in item for field in ('from_port','to_port'))
+        if explicit:
+            for side in ('from','to'):
+                port=item.get(side+'_port');catalog={p['id']:p['kind'] for p in model_for(by_id[item[side]])['ports']}
+                expected='ethernet' if kind=='crossover' else kind
+                if port not in catalog or catalog[port]!=expected:raise ValueError('Porta incompatibile con il cavo.')
+                use=(item[side],port)
+                if kind!='wifi' and use in occupied:raise ValueError('Porta già occupata da un collegamento.')
+                occupied.add(use);clean[side+'_port']=port
+        links.append(clean)
     return {'nodes':nodes,'links':links}
 
 def component_value(value,default,positive=False):
@@ -623,7 +639,7 @@ def setup_labs(app,service,admin,owned,body):
             except ValueError as exc:return web.json_response({'error':str(exc)},status=422)
         return web.json_response(result)
     async def capabilities(request):
-        admin(request); return web.json_response({'spice_available':spice.available,'analyses':['op','tran','ac','dc'],'components':list(PORTS),'network':'didactic_ipv4','timeout_seconds':12})
+        admin(request); return web.json_response({'spice_available':spice.available,'analyses':['op','tran','ac','dc'],'components':list(PORTS),'network':'didactic_ipv4','network_models':NETWORK_MODELS,'timeout_seconds':12})
     async def cleanup(_):
         tasks=[entry['task'] for entry in jobs.values() if not entry['task'].done()]
         for task in tasks: task.cancel()

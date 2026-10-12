@@ -23,7 +23,7 @@ from test_scope import scope_circuit
 async def main():
  with tempfile.TemporaryDirectory() as folder:
   root=Path(folder)
-  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js'):shutil.copy2(ROOT/name,root/name)
+  for name in ('web.html','web.css','web.js','portal-motion.js','tramonto.html','tramonto.css','tramonto.js','tramonto-lab.js','tramonto-font.js','tramonto-math.js','tramonto-study.js','tramonto-tools.js'):shutil.copy2(ROOT/name,root/name)
   shutil.copytree(ROOT/'vendor',root/'vendor');settings=Settings(root=root,admins=(1,));store=Store(settings.data/'alba.sqlite3');keys=Keys(store,secret_file(settings.data/'auth.key'));service=Service(store,settings,keys,Engine(store,settings,None),Backups(store,settings));store.register(1,'Scope test');server=TestServer(web_app(service));errors=[]
   async def simulation(_self,prepared):
    await asyncio.sleep(.65)
@@ -42,7 +42,11 @@ async def main():
      await page.evaluate('(c)=>{doc.content.circuit=c;renderCircuit();changed();}',scope_circuit());await page.evaluate('TramontoTools.saveDoc()')
      assert await page.locator('[data-component-id="OSC1"] [data-port]').count()==4
      assert 'A+' in await page.locator('[data-component-id="OSC1"]').text_content();assert 'B−' in await page.locator('[data-component-id="OSC1"]').text_content()
+     await page.locator('[data-component-id="OSC1"]').dblclick();assert 'scope-floating' in await page.locator('#oscilloscopePanel').get_attribute('class');assert (await page.locator('#scopeDevice').input_value())=='OSC1'
+     header=page.locator('#oscilloscopePanel .scope-title');box=await header.bounding_box();before=await page.locator('#oscilloscopePanel').bounding_box();await page.mouse.move(box['x']+10,box['y']+10);await page.mouse.down();await page.mouse.move(box['x']+50,box['y']+30);await page.mouse.up();after=await page.locator('#oscilloscopePanel').bounding_box();assert abs(after['x']-before['x']-40)<2,(before,after)
      await page.locator('#spiceAnalysis').select_option('tran');await page.locator('#simulateCircuit').click();assert await page.locator('#oscilloscopePanel').get_attribute('data-state')=='acquiring';await page.wait_for_function('()=>document.querySelector("#simulationStatus").textContent.includes("completata")')
+     assert 'scope-floating' in await page.locator('#oscilloscopePanel').get_attribute('class');await page.locator('#scopeClose').click()
+     fourier=await page.evaluate('()=>TramontoNotebookTools.spectrum(TramontoLab.oscilloscope.samples(),"B")');peak=max(fourier['points'],key=lambda p:p[1]);assert abs(peak[0]-1000)<fourier['resolution'],peak;assert abs(peak[1]-.5)<.02,peak
      state=await page.evaluate('TramontoLab.oscilloscope.state()');assert state['playing'] and state['count']==12001,state
      await page.locator('#scopePlay').click();state=await page.evaluate('TramontoLab.oscilloscope.state()');assert not state['playing']
      await page.locator('#scopeTimeline').fill('2000');await page.locator('#scopeTimeline').dispatch_event('input');await page.locator('#scopeNext').click();assert (await page.evaluate('TramontoLab.oscilloscope.state()'))['head']==2001;await page.locator('#scopePrevious').click();assert (await page.evaluate('TramontoLab.oscilloscope.state()'))['head']==2000

@@ -14,15 +14,19 @@
         "tramonto-study.js",
         "tramonto-font.js",
         "tramonto.css:15:110",
-        "tramonto.css:453:527"
+        "tramonto.css:453:527",
+        "tramonto-lab.js",
+        "tramonto-tools.js"
       ],
       "fingerprints": {
-        "tramonto.html": "afa75ea4950c3663168ec8926816246a6427ac02392da5dc33c22b0f755f0268",
+        "tramonto.html": "3aceda0e44b8ce4994ab1cdaa543f28698eb5dd015e804b6447c38ccc1a66f32",
         ".superdesign/context/tramonto-tokens.md": "fc26d5d760b8e1088977e56e1a87e48d518519056ef9a4ab0313e45a5aa0761d",
         ".superdesign/design-system.md": "5c449efe23ebf41c2fea8f688cc0f73f5bff7200ba4c6d8f6468160e63502adf",
         "tramonto-study.js": "55895a44bca3ff91b70a75e9d0a5a25e32152f6f6e14e18488b8a792adf3fb7c",
-        "tramonto-font.js": "c191354b50ffdc139401917397b35e761126c6f15a097e3d96fb5297c5c787aa",
-        "tramonto.css": "3d14a71087eb4f86e83154a2f0c6f24ffe319caf5cd01650dc1040cde6f9c0a7"
+        "tramonto-font.js": "2a00f765cdbb380b5591f149d41236e85d15cf50e5b137f9244d9e8440b51a72",
+        "tramonto.css": "2cd239e1e7d748415837b4f7657fc829685f985fbdd3ff4a71169914fe910510",
+        "tramonto-tools.js": "dd20bfceab54a30490a1953c15243fb379678f5caa1b9bbd539440f49bcf0a5e",
+        "tramonto-lab.js": "0ea462a2a82d9c179b8042b728e58b41e64ebc2a70c50c0f52efbe578115de9c"
       },
       "components": [
         {
@@ -34,11 +38,11 @@
       "drafts": {
         "b562c42e-8f4a-4b42-9425-a2b1d5f397d6": {
           "title": "Tramonto Portal Transition",
-          "visualDirection": "Compact viewport workspace, settings dialogs, ordered page footer, readable mobile focus and nondestructive multi-page print with typography/paper options.",
-          "currentVersion": 20
+          "visualDirection": "Compact viewport workspace, settings dialogs, ordered page footer, readable mobile focus and nondestructive multi-page print with typography/paper options. Independent selected text size and transparent formulas; physical network ports and device CLI; movable adjustable scope with acquisition and Fourier. Desktop is notebook only.",
+          "currentVersion": 21
         }
       },
-      "updatedAt": "2026-10-10T20:03:22.995965+00:00",
+      "updatedAt": "2026-10-12T07:31:16.598897+00:00",
       "referenceIds": [
         "9475faae-cb80-4115-b66c-d533ea9d2223",
         "89b5b07b-622f-4e3b-8da6-25c1ae4f24a2"

@@ -24,7 +24,7 @@ async def main():
     with tempfile.TemporaryDirectory() as folder:
         root = Path(folder)
         for name in ('web.html', 'web.css', 'web.js', 'portal-motion.js',
-                     'tramonto.html', 'tramonto.css', 'tramonto.js', 'tramonto-lab.js', 'tramonto-font.js', 'tramonto-math.js', 'tramonto-study.js',
+                     'tramonto.html', 'tramonto.css', 'tramonto.js', 'tramonto-lab.js', 'tramonto-font.js', 'tramonto-math.js', 'tramonto-study.js','tramonto-tools.js',
                      'notte.html', 'notte.css', 'notte.js'):
             shutil.copy2(ROOT / name, root / name)
         shutil.copytree(ROOT / 'vendor', root / 'vendor')

@@ -20,6 +20,11 @@ jobs:
       - run: python tests/math_font_browser_check.py
       - run: python tests/function_study_browser_check.py
       - run: python tests/handwritten_math_browser_check.py
+      - run: python tests/network_tools_browser_check.py
+      - run: python tests/scope_browser_check.py
+      - run: python tests/circuit_import_browser_check.py
+      - run: python tests/appearance_network_check.py
+      - run: python tests/text_size_browser_check.py
       - run: python tests/notebook_editor_check.py
       - run: python tests/notebook_pages_browser_check.py
       - run: python tests/workspace_browser_check.py

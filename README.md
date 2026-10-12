@@ -120,3 +120,11 @@ Additional checks are available in `tests/browser_check.py`, `tests/tramonto_bro
 Alba supports reflection and everyday problem-solving; it is not a clinical or emergency service. Source tracking reduces errors, but a model can still produce inaccurate responses. The installation operator configures privacy information, contact details, access, and maintenance.
 
 Original code is MIT-licensed. Libraries in `vendor/` include their own licenses, and models have separate licenses. The repository contains no application telemetry, personal archives, tokens, or keys.
+
+## Desktop notebook and source locations
+
+The standalone **notebook-only** desktop apps for Windows, Mac Intel and Mac Apple Silicon live in [Dvlce/tramonto-desktop](https://github.com/Dvlce/tramonto-desktop). [Download desktop installers](https://github.com/Dvlce/tramonto-desktop/releases/latest). They keep their data on the local computer, work offline and include ngspice. They do not install AI models or connect to the Raspberry.
+
+Make changes to the shared web notebook, circuit/network data and Android app in **this repository**. Work on the desktop launcher, frozen local notebook server and Windows/macOS packaging in **tramonto-desktop**; refresh its public notebook snapshot after shared UI changes. That repository records the exact source revision and asset hashes.
+
+The notebook now supports independently sized selections, transparent formulas, preview insertion without updating a saved formula, charts from points, freely positioned images, repeated wiring, junctions on cable corners and R rotation. Network links select both physical ports; each device saves CLI notes. Double-click an oscilloscope to open its movable, resizable controls, acquire data and inspect a numerical Fourier spectrum of the actual transient samples. The network CLI is educational; it does not execute IOS or commands on real devices.

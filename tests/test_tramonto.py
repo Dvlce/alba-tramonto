@@ -173,6 +173,23 @@ class TramontoTests(unittest.IsolatedAsyncioTestCase):
         for style in ('background-color: #000000;','background-color: #fff19c;position:fixed','background-image:url(https://bad.test)','color:red'):
             self.assertEqual(rich_text('<span style="'+style+'" onclick="bad()">Testo</span>'),'<span>Testo</span>')
 
+    def test_selected_font_size_is_bounded_and_combines_with_highlight(self):
+        from tramonto import rich_text
+        self.assertEqual(rich_text('<p>Prima <span style="font-size: 24px; background-color: #fff19c;">grande <b>e forte</b></span> dopo</p>'),
+            '<p>Prima <span style="font-size: 24px; background-color: #fff19c;">grande <b>e forte</b></span> dopo</p>')
+        for size in ('8','72','24.0'):
+            self.assertIn('font-size: '+str(int(float(size)))+'px;',rich_text('<span style="font-size:'+size+'px">Testo</span>'))
+        for style in ('font-size:7px','font-size:73px','font-size:24.5px','font-size:2em','font-size:calc(24px)',
+                      'font-size:24px;position:fixed','font-size:24px;font-size:36px','font-size:24px;background-image:url(https://bad.test)'):
+            self.assertEqual(rich_text('<span style="'+style+'">Testo</span>'),'<span>Testo</span>')
+
+    async def test_selected_size_persists_without_changing_page_size(self):
+        value=await self.document();value['content'].update(html='<p>Normale <span style="font-size:32px">Grande</span></p>',font_size=18)
+        response=await self.req('/notes/'+str(self.note),'PUT',value)
+        self.assertEqual(response.status,200)
+        content=(await self.document())['content']
+        self.assertEqual(content['font_size'],18);self.assertIn('font-size: 32px;',content['html'])
+
     def test_legacy_page_order_migrates_once(self):
         import sqlite3
         from store import SCHEMA
