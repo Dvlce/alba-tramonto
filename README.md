@@ -90,7 +90,7 @@ To restore a backup, stop the service first and run `maintenance.py restore FILE
 
 ## Android and integration
 
-Get [Android 1.8.0](https://github.com/Dvlce/alba-tramonto/releases/tag/v1.8.0), or `/download/alba-albi.apk` when it has been installed on the server. It uses native Android Views, with Italian/English UI, bottom navigation, light/dark themes, searchable notebook pages, automatic saving, and short transitions. Ruled paper follows text baselines; chat updates preserve existing messages and newly typed drafts. Install over the existing app without uninstalling. Verified Android App Links support personal Telegram login links. Send `/notte` in Alba's private administrator chat to pair the administrator with autonomous messages.
+Get [Android 1.8.1](https://github.com/Dvlce/alba-tramonto/releases/tag/v1.8.1), or `/download/alba-albi.apk` when it has been installed on the server. It uses native Android Views, with Italian/English UI, bottom navigation, light/dark themes, searchable notebook pages, automatic saving, and short transitions. Ruled paper follows text baselines; chat updates preserve existing messages and newly typed drafts. Install over the existing app without uninstalling. Verified Android App Links support personal Telegram login links. Send `/notte` in Alba's private administrator chat to pair the administrator with autonomous messages.
 
 The native editor saves text, drawing, and JSON while preserving advanced objects. Full labs, images, and A4 PDF remain available in the web portal. The app contains neither personal data nor a bundled LLM and requires a server connection. Its HTTPS server address can be changed in the app. See [Android source and build instructions](android/README.md).
 
